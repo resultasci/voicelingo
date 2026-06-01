@@ -1,0 +1,3544 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoiceLingo Pro — Kapsamlı Geliştirme Rehberi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-soft: #121215;
+    --bg-card: #17171c;
+    --bg-elevated: #1d1d23;
+    --ink: #f5f1e8;
+    --ink-muted: #9a968d;
+    --ink-dim: #6b6860;
+    --accent: #ff5722;
+    --accent-soft: #ff8a65;
+    --sage: #8fa876;
+    --azure: #7aa5c9;
+    --gold: #d4a574;
+    --rule: #2a2a30;
+    --warn: #ffcc66;
+    --danger: #e57373;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter Tight', -apple-system, sans-serif;
+    font-weight: 400;
+    line-height: 1.65;
+    font-size: 16px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    padding: 4rem 2rem 6rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    border-bottom: 1px solid var(--rule);
+    background:
+      radial-gradient(ellipse at top right, rgba(255, 87, 34, 0.1), transparent 60%),
+      radial-gradient(ellipse at bottom left, rgba(143, 168, 118, 0.08), transparent 50%),
+      radial-gradient(ellipse at center, rgba(122, 165, 201, 0.05), transparent 70%);
+  }
+
+  .hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+
+  .hero-top span { display: block; }
+  .hero-top .right { text-align: right; }
+
+  .hero-main {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem 0;
+  }
+
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .hero-tag::before {
+    content: '';
+    width: 3rem;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1.hero-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(3.5rem, 10vw, 9rem);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin-bottom: 2rem;
+  }
+
+  h1.hero-title em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+
+  h1.hero-title .pro {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.3em;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    vertical-align: middle;
+    font-style: normal;
+    font-weight: 700;
+    padding: 0.3em 0.8em;
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    margin-left: 1rem;
+  }
+
+  .hero-sub {
+    max-width: 680px;
+    font-size: 1.2rem;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    margin-bottom: 3rem;
+  }
+
+  .hero-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 2rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--rule);
+    max-width: 1100px;
+  }
+
+  .hero-meta-item .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-meta-item .value {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--ink);
+  }
+
+  .hero-meta-item .value.accent { color: var(--accent); }
+  .hero-meta-item .value.sage { color: var(--sage); }
+  .hero-meta-item .value.gold { color: var(--gold); }
+
+  /* AXES SECTION */
+  .axes {
+    padding: 6rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .axes-header {
+    margin-bottom: 4rem;
+  }
+
+  .axes-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .axes-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    max-width: 800px;
+  }
+
+  .axes-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .axes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+
+  .axis-card {
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    padding: 2.5rem;
+    border-radius: 4px;
+    position: relative;
+    transition: transform 0.4s cubic-bezier(.2,.8,.2,1), border-color 0.3s;
+  }
+
+  .axis-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+  }
+
+  .axis-num {
+    font-family: 'Fraunces', serif;
+    font-size: 4rem;
+    font-weight: 300;
+    line-height: 1;
+    font-style: italic;
+    color: var(--accent);
+    opacity: 0.8;
+    margin-bottom: 1rem;
+  }
+
+  .axis-card h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 1.6rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+
+  .axis-card p {
+    color: var(--ink-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.2rem;
+  }
+
+  .axis-card .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .axis-card .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.6rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    color: var(--ink-muted);
+  }
+
+  /* TOC */
+  .toc {
+    padding: 6rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .toc-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 2rem;
+  }
+
+  .toc-intro {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    line-height: 1.3;
+    max-width: 600px;
+    margin-bottom: 3rem;
+    color: var(--ink);
+  }
+
+  .toc-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0;
+  }
+
+  .toc-item {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    gap: 1.5rem;
+    align-items: baseline;
+    transition: transform 0.3s ease, color 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--ink);
+  }
+
+  .toc-item:hover {
+    transform: translateX(0.5rem);
+    color: var(--accent);
+  }
+
+  .toc-item .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink-dim);
+    min-width: 2.5rem;
+  }
+
+  .toc-item .text {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+
+  /* CHAPTERS */
+  section.chapter {
+    padding: 6rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .chapter-head {
+    margin-bottom: 4rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .chapter-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  h2.chapter-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+
+  h2.chapter-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .chapter-intro {
+    font-size: 1.15rem;
+    color: var(--ink-muted);
+    max-width: 760px;
+    line-height: 1.7;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 4rem;
+    margin-bottom: 3rem;
+  }
+
+  @media (max-width: 900px) {
+    .two-col { grid-template-columns: 1fr; gap: 1.5rem; }
+  }
+
+  .col-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    padding-top: 0.4rem;
+  }
+
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 1.8rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    margin-top: 2.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  h3:first-child { margin-top: 0; }
+
+  h4 {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+    margin-top: 1.8rem;
+    color: var(--ink);
+  }
+
+  h5 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+    margin-top: 1.5rem;
+  }
+
+  p {
+    margin-bottom: 1rem;
+    color: var(--ink);
+    line-height: 1.7;
+  }
+
+  p.muted { color: var(--ink-muted); }
+  p.lead { font-size: 1.15rem; color: var(--ink); }
+
+  ul, ol {
+    margin: 1rem 0 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  li {
+    margin-bottom: 0.6rem;
+    line-height: 1.7;
+  }
+
+  li::marker { color: var(--accent); }
+
+  strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  a:hover { border-bottom-color: var(--accent); }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    background: var(--bg-soft);
+    padding: 0.15em 0.45em;
+    border-radius: 3px;
+    color: var(--accent-soft);
+    border: 1px solid var(--rule);
+  }
+
+  pre {
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--ink);
+  }
+
+  pre .comment { color: var(--ink-dim); }
+  pre .keyword { color: var(--azure); }
+  pre .string { color: var(--sage); }
+  pre .fn { color: var(--gold); }
+
+  /* CARDS */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    padding: 2rem;
+    margin: 1.5rem 0;
+    border-radius: 4px;
+    position: relative;
+  }
+
+  .card.accent { border-left: 3px solid var(--accent); }
+  .card.sage { border-left: 3px solid var(--sage); }
+  .card.warn { border-left: 3px solid var(--warn); background: rgba(255, 204, 102, 0.04); }
+  .card.azure { border-left: 3px solid var(--azure); }
+
+  .card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 0.8rem;
+  }
+
+  /* STEPS */
+  .step {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 2rem;
+    padding: 2.5rem 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .step:last-child { border-bottom: 1px solid var(--rule); }
+
+  .step-num {
+    font-family: 'Fraunces', serif;
+    font-size: 3rem;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .step-body h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    margin-top: 0;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  /* WEEKS */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .week-card {
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    padding: 2rem;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .week-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 40px;
+    height: 3px;
+    background: var(--accent);
+  }
+
+  .week-card.foundation::before { background: var(--azure); }
+  .week-card.ai::before { background: var(--accent); }
+  .week-card.social::before { background: var(--sage); }
+  .week-card.polish::before { background: var(--gold); }
+
+  .week-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+    margin-top: 0.8rem;
+  }
+
+  .week-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+
+  .week-card ul {
+    padding-left: 1.2rem;
+    margin: 0;
+  }
+
+  .week-card li {
+    font-size: 0.9rem;
+    color: var(--ink-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .week-deliverable {
+    margin-top: 1.2rem;
+    padding-top: 1.2rem;
+    border-top: 1px dashed var(--rule);
+    font-size: 0.85rem;
+    color: var(--sage);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* COMPARE TABLE */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  @media (max-width: 700px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+
+  .compare-card {
+    border: 1px solid var(--rule);
+    padding: 2rem;
+    border-radius: 4px;
+  }
+
+  .compare-card.winner {
+    border: 1px solid var(--accent);
+    background: rgba(255, 87, 34, 0.04);
+  }
+
+  .compare-card h4 {
+    margin-top: 0;
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+  }
+
+  .compare-card .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.6rem;
+    border-radius: 3px;
+    margin-bottom: 1rem;
+  }
+
+  .compare-card.winner .badge {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .compare-card:not(.winner) .badge {
+    background: var(--bg-soft);
+    color: var(--ink-muted);
+    border: 1px solid var(--rule);
+  }
+
+  /* DIAGRAM */
+  .diagram {
+    background: var(--bg-soft);
+    border: 1px solid var(--rule);
+    padding: 2rem;
+    margin: 2rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--ink-muted);
+    border-radius: 4px;
+  }
+
+  /* CALLOUT */
+  .callout {
+    padding: 2rem;
+    margin: 2rem 0;
+    border-radius: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    position: relative;
+  }
+
+  .callout-tip { border-left: 3px solid var(--sage); }
+  .callout-warn { border-left: 3px solid var(--warn); }
+  .callout-danger { border-left: 3px solid var(--accent); }
+  .callout-info { border-left: 3px solid var(--azure); }
+
+  .callout-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+  }
+
+  .callout-tip .callout-label { color: var(--sage); }
+  .callout-warn .callout-label { color: var(--warn); }
+  .callout-danger .callout-label { color: var(--accent); }
+  .callout-info .callout-label { color: var(--azure); }
+
+  /* COST TABLE */
+  .cost-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 0.95rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .cost-table thead {
+    background: var(--bg-soft);
+  }
+
+  .cost-table th, .cost-table td {
+    padding: 1rem 1.2rem;
+    text-align: left;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .cost-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-weight: 500;
+  }
+
+  .cost-table tr:last-child td { border-bottom: none; }
+
+  .cost-table .price-bad { color: var(--danger); font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+  .cost-table .price-good { color: var(--sage); font-family: 'JetBrains Mono', monospace; font-size: 0.9em; font-weight: 600; }
+  .cost-table .alt { color: var(--accent); font-weight: 600; }
+
+  /* ARCHITECTURE */
+  .arch-layer {
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    padding: 1.5rem 2rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  @media (max-width: 700px) {
+    .arch-layer { grid-template-columns: 1fr; gap: 0.5rem; }
+  }
+
+  .arch-layer .name {
+    font-family: 'Fraunces', serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  .arch-layer .desc {
+    color: var(--ink-muted);
+    font-size: 0.95rem;
+  }
+
+  .arch-layer .tech {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink);
+    margin-top: 0.4rem;
+  }
+
+  /* DIVIDER */
+  .divider {
+    text-align: center;
+    margin: 4rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+  }
+
+  /* HIGHLIGHT */
+  mark {
+    background: linear-gradient(180deg, transparent 60%, rgba(255, 87, 34, 0.3) 60%);
+    color: var(--ink);
+    padding: 0 0.1em;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 6rem 2rem 4rem;
+    text-align: center;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  footer .quote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 2rem;
+    font-weight: 300;
+    line-height: 1.3;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    color: var(--ink);
+  }
+
+  footer .sig {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  /* FEATURE LIST */
+  .feat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .feat {
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    padding: 1.8rem;
+    border-radius: 4px;
+  }
+
+  .feat-icon {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+  }
+
+  .feat h5 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 0.6rem;
+    margin-top: 0;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .feat p {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-top">
+    <div>
+      <span>Dönem Projesi / Production-Grade Mobile App</span>
+      <span>Build Guide — v2.0 / Kallavi Edition</span>
+    </div>
+    <div class="right">
+      <span>Platform: Windows</span>
+      <span>2026</span>
+    </div>
+  </div>
+
+  <div class="hero-main">
+    <div class="hero-tag">Maksimum Seviye — 4 Eksen / 12 Hafta / Sıfır Bütçe</div>
+    <h1 class="hero-title">VoiceLingo<br><em>sesinle öğren.</em><span class="pro">PRO</span></h1>
+    <p class="hero-sub">
+      On-device AI, Spaced Repetition, Gamification, RAG, Real-time streaming, Offline-first architecture — tamamı ücretsiz araçlarla. Portfolyoda bir uygulama değil, ciddi bir mühendislik projesi.
+    </p>
+
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <div class="label">Süre</div>
+        <div class="value">12 hafta</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label">Platform</div>
+        <div class="value">iOS + Android</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label">Framework</div>
+        <div class="value">Flutter</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label">Backend</div>
+        <div class="value sage">Supabase</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label">AI Stack</div>
+        <div class="value accent">Hibrit</div>
+      </div>
+      <div class="hero-meta-item">
+        <div class="label">Toplam Maliyet</div>
+        <div class="value gold">&lt; $10</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 4 AXES OVERVIEW -->
+<section class="axes">
+  <div class="axes-header">
+    <div class="axes-label">Dört Eksen / Mimari Kararlar</div>
+    <h2 class="axes-title">
+      Bir dil uygulaması değil — <em>mühendislik manifesto'su.</em>
+    </h2>
+  </div>
+
+  <div class="axes-grid">
+    <div class="axis-card">
+      <div class="axis-num">01</div>
+      <h3>AI / ML Derinliği</h3>
+      <p>Cihaz üstünde çalışan Whisper, kendi ML modellerin, RAG ile kişiselleştirme. Bulut bağımlılığı minimumda.</p>
+      <div class="tags">
+        <span class="tag">whisper.cpp</span>
+        <span class="tag">TFLite</span>
+        <span class="tag">RAG</span>
+        <span class="tag">Groq</span>
+      </div>
+    </div>
+
+    <div class="axis-card">
+      <div class="axis-num">02</div>
+      <h3>Teknik Derinlik</h3>
+      <p>Supabase PostgreSQL, Edge Functions, WebSocket streaming, offline-first mimari, Clean Architecture.</p>
+      <div class="tags">
+        <span class="tag">Supabase</span>
+        <span class="tag">Isar</span>
+        <span class="tag">WebSocket</span>
+        <span class="tag">Riverpod</span>
+      </div>
+    </div>
+
+    <div class="axis-card">
+      <div class="axis-num">03</div>
+      <h3>Kullanıcı Deneyimi</h3>
+      <p>RPG seviye sistemi, başarımlar, sosyal liderlik, arkadaş sistemi, canlı turnuvalar, skill tree.</p>
+      <div class="tags">
+        <span class="tag">XP System</span>
+        <span class="tag">Achievements</span>
+        <span class="tag">Leaderboard</span>
+        <span class="tag">Social</span>
+      </div>
+    </div>
+
+    <div class="axis-card">
+      <div class="axis-num">04</div>
+      <h3>Veri & Analitik</h3>
+      <p>SM-2 Spaced Repetition, heatmap'ler, tahminlemeli öğrenme eğrisi, AI insight raporları.</p>
+      <div class="tags">
+        <span class="tag">SM-2</span>
+        <span class="tag">Heatmap</span>
+        <span class="tag">AI Insights</span>
+        <span class="tag">fl_chart</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOC -->
+<section class="toc">
+  <div class="toc-header">İçindekiler / 14 Bölüm</div>
+  <p class="toc-intro">
+    Aşağıdaki sıra ile ilerle. Her bölüm bir öncekinin üstüne inşa ediyor, atlamak sorun yaratır.
+  </p>
+  <div class="toc-list">
+    <a href="#b1" class="toc-item"><span class="num">01</span><span class="text">Büyük Resim ve Felsefe</span></a>
+    <a href="#b2" class="toc-item"><span class="num">02</span><span class="text">Sistem Mimarisi (Deep Dive)</span></a>
+    <a href="#b3" class="toc-item"><span class="num">03</span><span class="text">Windows Geliştirme Ortamı</span></a>
+    <a href="#b4" class="toc-item"><span class="num">04</span><span class="text">IDE ve Git Kurulumu</span></a>
+    <a href="#b5" class="toc-item"><span class="num">05</span><span class="text">İlk Flutter Uygulaması</span></a>
+    <a href="#b6" class="toc-item"><span class="num">06</span><span class="text">Flutter + Dart Temelleri</span></a>
+    <a href="#b7" class="toc-item"><span class="num">07</span><span class="text">Eksen 1 — AI/ML Stack'i</span></a>
+    <a href="#b8" class="toc-item"><span class="num">08</span><span class="text">Eksen 2 — Supabase Backend</span></a>
+    <a href="#b9" class="toc-item"><span class="num">09</span><span class="text">Eksen 3 — Gamification</span></a>
+    <a href="#b10" class="toc-item"><span class="num">10</span><span class="text">Eksen 4 — Analitik & SM-2</span></a>
+    <a href="#b11" class="toc-item"><span class="num">11</span><span class="text">12 Haftalık Yol Haritası</span></a>
+    <a href="#b12" class="toc-item"><span class="num">12</span><span class="text">Maliyet Kontrolü</span></a>
+    <a href="#b13" class="toc-item"><span class="num">13</span><span class="text">Demo ve Sunum</span></a>
+    <a href="#b14" class="toc-item"><span class="num">14</span><span class="text">Takılınca Yol Haritası</span></a>
+  </div>
+</section>
+
+<!-- BÖLÜM 1 -->
+<section class="chapter" id="b1">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 01 / Başlangıç</div>
+    <h2 class="chapter-title">Büyük resim ve <em>felsefe.</em></h2>
+    <p class="chapter-intro">
+      Kod yazmadan önce ne yaptığını ve neden yaptığını anlamak önemli. Bu bölüm projenin "neden kallavi olduğunu" açıklıyor.
+    </p>
+  </div>
+
+  <div class="two-col">
+    <div class="col-label">Vizyon</div>
+    <div>
+      <h3>VoiceLingo Pro nedir?</h3>
+      <p class="lead">
+        Yapay zeka ile konuşarak dil öğreten bir mobil uygulama. Ama "bir app" değil — <strong>production seviye bir mühendislik projesi.</strong>
+      </p>
+      <p>
+        Çoğu öğrenci dönem projesinde "ChatGPT API'ye istek atan uygulama" yapar. Biz farklı bir şey yapacağız: <mark>cihazda çalışan AI, akıllı cache katmanları, offline-first mimari, bilimsel hafıza algoritmaları ve oyunlaştırma.</mark> Mühendisliğin her katmanını içeriyor.
+      </p>
+
+      <h4>Üç temel kullanıcı deneyimi</h4>
+      <ul>
+        <li><strong>Kelime pratiği</strong> — AI kelime söyler, kullanıcı çevirir, cihaz üstünde telaffuz puanlaması</li>
+        <li><strong>Sohbet modu</strong> — AI ile serbest diyalog, gerçek zamanlı düzeltme, kültürel bağlam</li>
+        <li><strong>Senaryo modu</strong> — Kafede sipariş, iş görüşmesi gibi gerçek hayat simülasyonları</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Neden bu proje seni öne çıkarır?</h3>
+
+  <div class="feat-grid">
+    <div class="feat">
+      <div class="feat-icon">→ Edge AI</div>
+      <h5>On-device Inference</h5>
+      <p>Cihaz üstünde Whisper ve TFLite modelleri — günümüzün en sıcak trendi. Apple, Google, Meta hepsi bu yönde.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Clean Architecture</div>
+      <h5>Katmanlı Yapı</h5>
+      <p>Presentation, Domain, Data katmanları ayrılmış. Test edilebilir, bakımı kolay, profesyonel.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Real-time</div>
+      <h5>WebSocket Streaming</h5>
+      <p>Konuşurken anlık transkript, düşük gecikme. Demo'da etkileyici.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Algoritma</div>
+      <h5>SM-2 Spaced Repetition</h5>
+      <p>Anki'nin de kullandığı bilimsel hafıza algoritması. Manuel implementasyon = CV altın.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Offline</div>
+      <h5>Sync Engine</h5>
+      <p>İnternet yokken çalışır, gelince sync olur. CRDT benzeri conflict resolution.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Analytics</div>
+      <h5>Data Science</h5>
+      <p>Heatmap'ler, trend grafikleri, AI insight'lar. Sadece kullanıcı değil, anlam üretiyor.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-label">Mindset</div>
+    <p>
+      Bu proje <strong>başta korkutucu görünecek</strong> — normal. 12 haftayı haftalara böldüm, her hafta bir parça. Panik yapma, sırayla git. Her hafta bitirdiğinde sunulabilir bir şey elinde olacak.
+    </p>
+  </div>
+</section>
+
+<!-- BÖLÜM 2 -->
+<section class="chapter" id="b2">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 02 / Mimari</div>
+    <h2 class="chapter-title">Sistem <em>mimarisi</em>— deep dive.</h2>
+    <p class="chapter-intro">
+      Kod yazmadan önce sistemin bütününü görmek kritik. Her katmanın ne işe yaradığını ve nasıl etkileşime girdiğini bu bölümde anlatıyorum.
+    </p>
+  </div>
+
+  <h3>Katmanlı mimari — üst düzey görünüm</h3>
+
+  <div class="arch-layer">
+    <div class="name">Presentation</div>
+    <div>
+      <div class="desc">Kullanıcı arayüzü — ekranlar, widget'lar, state yönetimi.</div>
+      <div class="tech">Flutter Widgets • Riverpod • GoRouter</div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="name">Domain</div>
+    <div>
+      <div class="desc">İş mantığı — uygulamanın kuralları, entity'ler, use case'ler.</div>
+      <div class="tech">Pure Dart • UseCases • Entities</div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="name">Data</div>
+    <div>
+      <div class="desc">Veri kaynakları — API çağrıları, lokal veritabanı, cache.</div>
+      <div class="tech">Supabase • Isar • Repositories</div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="name">AI Services</div>
+    <div>
+      <div class="desc">On-device ve cloud AI entegrasyonları.</div>
+      <div class="tech">whisper.cpp • TFLite • Groq API</div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="name">Infrastructure</div>
+    <div>
+      <div class="desc">Altyapı — Supabase Postgres, Auth, Storage, Edge Functions.</div>
+      <div class="tech">PostgreSQL • Row Level Security • Realtime</div>
+    </div>
+  </div>
+
+  <h3>Veri akışı — bir konuşma turu</h3>
+
+  <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│         KULLANICI "APPLE" DEDİ — KOMPLE SİSTEM AKIŞI                │
+└─────────────────────────────────────────────────────────────────────┘
+
+  [1] Kullanıcı mikrofona konuşur
+         │
+         ▼
+  [2] Flutter: record paketi ile wav dosyası
+         │
+         ▼
+  [3] OFFLINE KONTROLÜ
+         │
+         ├──── İnternet var? ───────┐
+         │                          │
+         ▼ HAYIR                    ▼ EVET
+  [4a] whisper.cpp               [4b] Groq API (Whisper Large-v3)
+       (cihaz üstünde)                (bulut, ücretsiz tier)
+         │                          │
+         └────────────┬─────────────┘
+                      │
+                      ▼
+  [5] Metin: "apple"
+                      │
+                      ▼
+  [6] Telaffuz Skorlama (TFLite model - on-device)
+                      │
+                      ▼
+  [7] Skor: 85/100 + phoneme breakdown
+                      │
+                      ▼
+  [8] Gamification Engine
+       • +10 XP
+       • "Perfect Pronunciation" achievement kontrol
+       • Streak güncelle
+                      │
+                      ▼
+  [9] SM-2 Algoritması
+       • Bu kelimenin bir sonraki tekrar zamanını hesapla
+       • Ease factor güncelle
+                      │
+                      ▼
+ [10] Isar (Lokal DB) → Session kaydet
+                      │
+                      ▼
+ [11] Sync Queue'ya ekle (internet gelince Supabase'e)
+                      │
+                      ▼
+ [12] UI Güncelle (Riverpod state notifier)
+       • Skor animasyonu
+       • XP bar doldur
+       • Achievement notification
+                      │
+                      ▼
+ [13] Flutter TTS ile "Correct pronunciation!" sesli yanıt</div>
+
+  <h3>Mimariyi 3 prensip yönetir</h3>
+
+  <div class="card azure">
+    <div class="card-label">Prensip 01</div>
+    <h4>Offline-First</h4>
+    <p>
+      Uygulama internet olmadan da çalışır. Veri önce lokal (Isar) yazılır, internet geldiğinde Supabase'e sync olur. Bu Netflix, Spotify, Notion'un yaptığı şey.
+    </p>
+  </div>
+
+  <div class="card accent">
+    <div class="card-label">Prensip 02</div>
+    <h4>Edge-First AI</h4>
+    <p>
+      AI mümkün olduğu kadar cihaz üstünde çalışır — maliyetsiz, hızlı, gizli. Karmaşık görevler için bulut kullanırız ama bu istisna, kural değil.
+    </p>
+  </div>
+
+  <div class="card sage">
+    <div class="card-label">Prensip 03</div>
+    <h4>Separation of Concerns</h4>
+    <p>
+      UI kodu veritabanıyla konuşmaz. API çağrısı UI'da yapılmaz. Her katman kendi işini yapar. Clean Architecture'ın özü bu.
+    </p>
+  </div>
+</section>
+
+<!-- BÖLÜM 3 -->
+<section class="chapter" id="b3">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 03 / Kurulum</div>
+    <h2 class="chapter-title">Windows geliştirme <em>ortamı.</em></h2>
+    <p class="chapter-intro">
+      Windows'a özel tüm kurulum adımları. Her komutu kopyalayıp yapıştırabilirsin.
+    </p>
+  </div>
+
+  <h3>Ne kuracağız?</h3>
+
+  <div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│  WINDOWS GELİŞTİRME YIĞINI                                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   Temel araçlar                                                 │
+│   ├─ Git                  → versiyon kontrolü                   │
+│   ├─ Flutter SDK          → uygulama framework                  │
+│   ├─ Android Studio       → SDK + emülatör                      │
+│   └─ VS Code              → kod editörü                         │
+│                                                                 │
+│   Kallavi eklemeler                                             │
+│   ├─ Docker Desktop       → Supabase lokal                      │
+│   ├─ Node.js              → Supabase CLI                        │
+│   ├─ Python 3.11          → ML script'leri                      │
+│   └─ PowerShell 7         → modern shell                        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</div>
+
+  <div class="step">
+    <div class="step-num">01</div>
+    <div class="step-body">
+      <h4>Chocolatey kur (Windows paket yöneticisi)</h4>
+      <p>Chocolatey tüm araçları tek komutla kurmanı sağlar. PowerShell'i <strong>yönetici olarak</strong> aç:</p>
+      <pre><code>Set-ExecutionPolicy Bypass -Scope Process -Force
+iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))</code></pre>
+      <p>Kontrol: <code>choco --version</code></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">02</div>
+    <div class="step-body">
+      <h4>Temel araçları kur</h4>
+      <p>PowerShell (yönetici)'de:</p>
+      <pre><code>choco install -y git nodejs python vscode docker-desktop</code></pre>
+      <p>5-10 dakika sürer. Kahve iç.</p>
+
+      <p>Sonra kontrol et:</p>
+      <pre><code>git --version
+node --version
+python --version
+docker --version</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">03</div>
+    <div class="step-body">
+      <h4>Flutter SDK manuel kurulum</h4>
+      <p>Flutter'ı chocolatey ile değil manuel kur (daha sağlıklı).</p>
+
+      <h5>A — İndir</h5>
+      <p><a href="https://docs.flutter.dev/get-started/install/windows" target="_blank">docs.flutter.dev/get-started/install/windows</a> adresinden Flutter SDK zip'ini indir.</p>
+
+      <h5>B — Çıkart</h5>
+      <p><strong>Önemli:</strong> <code>C:\src\flutter</code> gibi <mark>boşluksuz</mark> bir yola çıkart. "Program Files" gibi yerlere koyma.</p>
+
+      <h5>C — PATH'e ekle</h5>
+      <p>Windows'ta "environment variables" ara → "Edit the system environment variables" → Environment Variables düğmesi → User variables bölümünde <code>Path</code>'i seç → Edit → New:</p>
+      <pre><code>C:\src\flutter\bin</code></pre>
+
+      <h5>D — Test et</h5>
+      <p>PowerShell'i <strong>kapat ve yeniden aç</strong>, sonra:</p>
+      <pre><code>flutter --version</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">04</div>
+    <div class="step-body">
+      <h4>Android Studio kurulumu</h4>
+      <p><a href="https://developer.android.com/studio" target="_blank">developer.android.com/studio</a> → Windows indir → Kur.</p>
+
+      <p><strong>Kurulum wizard'ında:</strong></p>
+      <ul>
+        <li>"Standard" installation seç</li>
+        <li>Android SDK, SDK Platform-Tools, Android Virtual Device — hepsi işaretli</li>
+        <li>~8 GB yer lazım</li>
+      </ul>
+
+      <p><strong>Karşılama ekranında:</strong></p>
+      <ol>
+        <li>Plugins → "Flutter" ara → Install (Dart otomatik gelir)</li>
+        <li>Restart</li>
+        <li>More Actions → SDK Manager → SDK Platforms sekmesi → "Android 14 (API 34)" ve "Android 13 (API 33)" seç → OK</li>
+        <li>SDK Tools sekmesi → "Android SDK Command-line Tools" seç → OK</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">05</div>
+    <div class="step-body">
+      <h4>Android emülatörü oluştur</h4>
+      <p>Android Studio'da:</p>
+      <ol>
+        <li>More Actions → Virtual Device Manager</li>
+        <li>Create Device → <strong>Pixel 7</strong> seç → Next</li>
+        <li>System Image: <strong>API 34 (UpsideDownCake)</strong> → eğer indirilmemişse Download tıkla → Next</li>
+        <li>Emülatör ismini "VoiceLingo_Dev" koy → Finish</li>
+        <li>Play (▶) tuşuna bas, emülatör başlasın</li>
+      </ol>
+
+      <div class="callout callout-warn">
+        <div class="callout-label">Performans İpucu</div>
+        <p>
+          Emülatör yavaşsa: Device Manager → cihazın yanındaki kalem ikonu → Show Advanced Settings → RAM'i 4096 MB'a çıkar, Graphics'i "Hardware - GLES 2.0" yap.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">06</div>
+    <div class="step-body">
+      <h4>VS Code + Flutter eklentileri</h4>
+      <p>VS Code açıldıktan sonra sol kenar çubuğundaki Extensions (Ctrl+Shift+X):</p>
+      <ul>
+        <li><strong>Flutter</strong> (Dart-Code) — ana eklenti</li>
+        <li><strong>Dart</strong> — otomatik gelir</li>
+        <li><strong>Awesome Flutter Snippets</strong></li>
+        <li><strong>Error Lens</strong> — hataları satır içinde</li>
+        <li><strong>GitLens</strong> — Git gücü</li>
+        <li><strong>Pubspec Assist</strong> — paket eklemek kolay</li>
+        <li><strong>Flutter Riverpod Snippets</strong></li>
+        <li><strong>Thunder Client</strong> — API test (Postman yerine)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">07</div>
+    <div class="step-body">
+      <h4>flutter doctor ile doğrula</h4>
+      <pre><code>flutter doctor</code></pre>
+      <p>Hemen hemen hepsi yeşil olmalı. Android lisansları için:</p>
+      <pre><code>flutter doctor --android-licenses</code></pre>
+      <p>Tüm soruya <code>y</code> bas.</p>
+
+      <div class="callout callout-tip">
+        <div class="callout-label">Beklenen Çıktı</div>
+        <pre><code>[✓] Flutter
+[✓] Windows Version
+[✓] Android toolchain
+[✓] Chrome
+[✓] Visual Studio
+[✓] Android Studio
+[✓] VS Code
+[✓] Connected device
+[✓] Network resources</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BÖLÜM 4 -->
+<section class="chapter" id="b4">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 04 / Araçlar</div>
+    <h2 class="chapter-title">IDE ve <em>Git</em> kurulumu.</h2>
+    <p class="chapter-intro">
+      İki IDE'yi nasıl birlikte kullanacağımız ve Git ile kodu nasıl güvenle yöneteceğimiz.
+    </p>
+  </div>
+
+  <h3>Android Studio ve VS Code — ikisi ne işe yarar?</h3>
+
+  <div class="compare">
+    <div class="compare-card winner">
+      <span class="badge">Günlük Kullanım</span>
+      <h4>VS Code</h4>
+      <p>Burada kod yazacaksın. Hızlı, hafif, eklentileri güzel. Projenin %95'i burada geçecek.</p>
+    </div>
+    <div class="compare-card">
+      <span class="badge">Arka Planda</span>
+      <h4>Android Studio</h4>
+      <p>SDK ve emülatör için gerekli. Sadece emülatör açmak için kullanacaksın.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-label">Kafa Karışıklığı Çözümü</div>
+    <p>
+      "İkisini birbirine bağlamak" diye bir şey yok. İkisi aynı Flutter SDK'yı okur, aynı emülatöre bağlanır. Android Studio'yu aç, emülatörü başlat, sonra VS Code'da çalış. İki program aynı anda açık, ama her biri kendi işini yapar.
+    </p>
+  </div>
+
+  <h3>Günlük iş akışı</h3>
+
+  <div class="diagram">
+┌────────────────────────────────────────────────────────────────┐
+│  HER GÜN NE YAPACAKSIN                                         │
+├────────────────────────────────────────────────────────────────┤
+│                                                                │
+│  SABAH                                                         │
+│  ├─ 1. Android Studio aç                                       │
+│  ├─ 2. Emülatörü başlat (sonra minimize et)                    │
+│  └─ 3. VS Code aç, projeyi aç                                  │
+│                                                                │
+│  GELİŞTİRME                                                    │
+│  ├─ Kod yaz (VS Code)                                          │
+│  ├─ F5 tuşu → emülatörde çalışır                               │
+│  ├─ Kaydet → Hot Reload (değişiklikler anlık)                  │
+│  └─ Hata olursa → Debug Console okur                           │
+│                                                                │
+│  AKŞAM                                                         │
+│  ├─ git add .                                                  │
+│  ├─ git commit -m "açıklama"                                   │
+│  └─ git push (GitHub'a yedekle)                                │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘</div>
+
+  <h3>Git — neden ve nasıl</h3>
+
+  <p>
+    Git, kodunun <strong>zaman makinesi</strong>. Her değişikliği kaydeder, geri dönebilirsin. GitHub ise bu zaman makinesinin bulut kopyası — bilgisayarın bozulsa bile kodun güvende.
+  </p>
+
+  <h5>Git'in temel mantığı</h5>
+
+  <div class="diagram">
+        [Çalışma Klasörü]
+              │
+              │ git add
+              ▼
+        [Staging Area]  ← yarı kaydedilmiş değişiklikler
+              │
+              │ git commit
+              ▼
+        [Lokal Repository]  ← bilgisayardaki geçmiş
+              │
+              │ git push
+              ▼
+        [GitHub]  ← buluttaki kopya</div>
+
+  <div class="step">
+    <div class="step-num">01</div>
+    <div class="step-body">
+      <h4>Git'i yapılandır</h4>
+      <p>İlk kurulumda bir kez yapılır, sonra bir daha dokunmazsın.</p>
+      <pre><code>git config --global user.name "Adın Soyadın"
+git config --global user.email "email@example.com"
+git config --global init.defaultBranch main</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">02</div>
+    <div class="step-body">
+      <h4>GitHub hesabı ve SSH key</h4>
+      <p><a href="https://github.com" target="_blank">github.com</a> → hesap aç (üniversite maili ile aç, <a href="https://education.github.com" target="_blank">education.github.com</a>'dan Pro hesabı ücretsiz al).</p>
+
+      <p>SSH key oluştur (şifre yazmaktan kurtulursun):</p>
+      <pre><code>ssh-keygen -t ed25519 -C "email@example.com"</code></pre>
+      <p>Hep enter bas (varsayılan ayarlar). Sonra:</p>
+      <pre><code>Get-Content ~/.ssh/id_ed25519.pub | clip</code></pre>
+      <p>Bu key'i kopyaladı. GitHub'da: Settings → SSH and GPG keys → New SSH key → yapıştır → Save.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">03</div>
+    <div class="step-body">
+      <h4>Günlük Git komutları</h4>
+      <pre><code><span class="comment"># Durumu gör</span>
+git status
+
+<span class="comment"># Değişiklikleri ekle</span>
+git add .
+
+<span class="comment"># Commit yap (değişiklikleri kaydet)</span>
+git commit -m "açıklayıcı mesaj"
+
+<span class="comment"># GitHub'a yükle</span>
+git push
+
+<span class="comment"># Geçmişi gör</span>
+git log --oneline --graph
+
+<span class="comment"># Yeni branch oluştur (yeni özellik için)</span>
+git checkout -b feature/voice-recording
+
+<span class="comment"># Ana branch'e dön</span>
+git checkout main
+
+<span class="comment"># Branch'leri birleştir</span>
+git merge feature/voice-recording</code></pre>
+    </div>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-label">İyi Alışkanlık</div>
+    <p>
+      Her yeni özelliğe başlarken yeni bir branch aç: <code>git checkout -b feature/xp-system</code>. Bitirince main'e merge et. Bu sayede projeyi bozan bir şey yaparsan main güvende kalır.
+    </p>
+  </div>
+</section>
+
+<!-- BÖLÜM 5 -->
+<section class="chapter" id="b5">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 05 / İlk Uygulama</div>
+    <h2 class="chapter-title">İlk Flutter <em>uygulaması.</em></h2>
+    <p class="chapter-intro">
+      Artık kurulum tamam. İlk uygulamayı oluşturup hem emülatörde çalıştıracağız hem de GitHub'a yükleyeceğiz.
+    </p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">01</div>
+    <div class="step-body">
+      <h4>Proje klasörü</h4>
+      <pre><code>cd C:\
+mkdir Projects
+cd Projects</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">02</div>
+    <div class="step-body">
+      <h4>Flutter projesi oluştur</h4>
+      <pre><code>flutter create --org com.seninadin voicelingo
+cd voicelingo</code></pre>
+      <p><strong>Önemli:</strong> <code>com.seninadin</code> yerine kendi isminle değiştir (örn: <code>com.ahmetyilmaz</code>). Bu Android/iOS paket ID'si — sonradan değiştirmek zor.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">03</div>
+    <div class="step-body">
+      <h4>Klasör yapısını incele</h4>
+      <pre><code>voicelingo/
+├── android/              <span class="comment"># Android native kodu</span>
+├── ios/                  <span class="comment"># iOS native kodu</span>
+├── lib/                  <span class="comment"># ← ANA KOD (Dart)</span>
+│   └── main.dart
+├── test/                 <span class="comment"># Test dosyaları</span>
+├── pubspec.yaml          <span class="comment"># ← Paket yöneticisi</span>
+├── pubspec.lock          <span class="comment"># Kilit dosyası</span>
+├── analysis_options.yaml <span class="comment"># Lint kuralları</span>
+└── README.md</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">04</div>
+    <div class="step-body">
+      <h4>VS Code'da aç ve çalıştır</h4>
+      <pre><code>code .</code></pre>
+      <p>VS Code açılınca:</p>
+      <ol>
+        <li>Android Studio'dan emülatörü başlat (eğer açık değilse)</li>
+        <li>VS Code sağ altında "No device" yazıyorsa tıkla → emülatörü seç</li>
+        <li>F5 tuşu → ilk build başlar (1-3 dk sürer)</li>
+        <li>Emülatörde sayaç uygulaması açılır</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">05</div>
+    <div class="step-body">
+      <h4>Hot Reload dene</h4>
+      <p><code>lib/main.dart</code>'ı aç, satırı bul:</p>
+      <pre><code>title: 'Flutter Demo',</code></pre>
+      <p>Değiştir:</p>
+      <pre><code>title: 'VoiceLingo Pro',</code></pre>
+      <p>Kaydet (Ctrl+S) → emülatör anında yenilenir. Bu <mark>Hot Reload</mark> — Flutter'ın en güzel özelliği.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">06</div>
+    <div class="step-body">
+      <h4>GitHub'a yükle</h4>
+      <p>GitHub'da yeni bir repository oluştur: <strong>voicelingo</strong>. README, gitignore, license eklemeden boş aç.</p>
+
+      <p>Proje klasöründe terminalde:</p>
+      <pre><code>git init
+git add .
+git commit -m "Initial commit: Flutter project scaffold"
+git branch -M main
+git remote add origin git@github.com:kullaniciadin/voicelingo.git
+git push -u origin main</code></pre>
+
+      <p>Bu noktadan sonra her commit'te sadece:</p>
+      <pre><code>git add .
+git commit -m "açıklama"
+git push</code></pre>
+    </div>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-label">Başarıyla Tamamlandı</div>
+    <p>
+      İlk Flutter uygulamanı çalıştırdın ve GitHub'a yükledin. Şu anda projenin <strong>%8'i tamam.</strong> Artık gerçek özellikleri eklemeye başlayacağız.
+    </p>
+  </div>
+</section>
+
+<!-- BÖLÜM 6 -->
+<section class="chapter" id="b6">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 06 / Temeller</div>
+    <h2 class="chapter-title">Flutter + <em>Dart</em> temelleri.</h2>
+    <p class="chapter-intro">
+      Python/Java/C bildiğine göre Dart seni zorlamayacak. Bu bölüm hızlı geçiş, ayrıntılar için kodu yazarken öğreneceksin.
+    </p>
+  </div>
+
+  <h3>Dart dili — Java benzeri</h3>
+
+  <pre><code><span class="keyword">// Değişkenler</span>
+String isim = <span class="string">'Ali'</span>;          <span class="comment">// tipli</span>
+var yas = 22;                   <span class="comment">// tip çıkarımı</span>
+final sabitDeger = 100;         <span class="comment">// değişmez</span>
+const PI = 3.14;                <span class="comment">// compile-time sabit</span>
+
+<span class="keyword">// Null safety (kritik)</span>
+String? opsiyonelIsim;          <span class="comment">// null olabilir</span>
+String kesinIsim = <span class="string">'Ahmet'</span>;    <span class="comment">// null olamaz</span>
+
+<span class="keyword">// Fonksiyon</span>
+int <span class="fn">topla</span>(int a, int b) => a + b;
+
+<span class="comment">// Async</span>
+Future&lt;String&gt; <span class="fn">veriGetir</span>() async {
+  final response = await http.get(url);
+  return response.body;
+}
+
+<span class="keyword">// Class</span>
+class User {
+  final String name;
+  final int age;
+  
+  User({required this.name, required this.age});
+  
+  factory User.fromJson(Map&lt;String, dynamic&gt; json) {
+    return User(name: json[<span class="string">'name'</span>], age: json[<span class="string">'age'</span>]);
+  }
+}</code></pre>
+
+  <h3>Widget konsepti</h3>
+
+  <p>Flutter'da <strong>her şey widget</strong>. Buton, yazı, resim, ekran — hepsi widget. Widget'lar iç içe girer.</p>
+
+  <pre><code>Scaffold(                              <span class="comment">// Ekran iskeleti</span>
+  appBar: AppBar(                      <span class="comment">// Üst bar</span>
+    title: Text(<span class="string">'VoiceLingo'</span>),
+  ),
+  body: Center(                        <span class="comment">// Ortala</span>
+    child: Column(                     <span class="comment">// Dikey sıra</span>
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(<span class="string">'Hoş geldin'</span>, style: TextStyle(fontSize: 24)),
+        SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: () => print(<span class="string">'Basıldı'</span>),
+          child: Text(<span class="string">'Başla'</span>),
+        ),
+      ],
+    ),
+  ),
+)</code></pre>
+
+  <h3>Stateless vs Stateful widget</h3>
+
+  <div class="compare">
+    <div class="compare-card">
+      <span class="badge">Durağan</span>
+      <h4>StatelessWidget</h4>
+      <p>Değişmeyen UI. Örn: logo, başlık, hakkında sayfası.</p>
+      <pre><code>class Logo extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Text(<span class="string">'VoiceLingo'</span>);
+  }
+}</code></pre>
+    </div>
+    <div class="compare-card">
+      <span class="badge">Değişken</span>
+      <h4>StatefulWidget</h4>
+      <p>Etkileşimli UI. Örn: sayaç, form, ses kaydedici.</p>
+      <pre><code>class Counter extends StatefulWidget {
+  @override
+  State&lt;Counter&gt; createState() => _CounterState();
+}
+
+class _CounterState extends State&lt;Counter&gt; {
+  int count = 0;
+  ...
+}</code></pre>
+    </div>
+  </div>
+
+  <h3>State management — Riverpod</h3>
+
+  <p>
+    Büyük uygulamada setState yetersiz. Biz <strong>Riverpod</strong> kullanacağız — modern, tip-güvenli, profesyonel. Uygulamanın veri akışını yönetir.
+  </p>
+
+  <pre><code><span class="comment">// 1. Provider tanımla</span>
+final userProvider = StateProvider&lt;User?&gt;((ref) => null);
+
+<span class="comment">// 2. Widget'ta kullan</span>
+class ProfileScreen extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userProvider);
+    return Text(user?.name ?? <span class="string">'Misafir'</span>);
+  }
+}
+
+<span class="comment">// 3. Değer değiştir</span>
+ref.read(userProvider.notifier).state = newUser;</code></pre>
+
+  <h3>Paket yönetimi — pubspec.yaml</h3>
+
+  <p>Projede kullanacağımız ana paketler:</p>
+
+  <pre><code><span class="keyword">dependencies:</span>
+  flutter:
+    sdk: flutter
+  
+  <span class="comment"># State & Routing</span>
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.0
+  
+  <span class="comment"># Backend (Supabase)</span>
+  supabase_flutter: ^2.5.6
+  
+  <span class="comment"># Lokal DB (offline)</span>
+  isar: ^3.1.0
+  isar_flutter_libs: ^3.1.0
+  path_provider: ^2.1.3
+  
+  <span class="comment"># Ses</span>
+  record: ^5.1.1
+  audioplayers: ^6.0.0
+  flutter_tts: ^4.0.2
+  
+  <span class="comment"># Network</span>
+  http: ^1.2.1
+  dio: ^5.4.3+1
+  
+  <span class="comment"># UI</span>
+  fl_chart: ^0.68.0
+  lottie: ^3.1.2
+  flutter_svg: ^2.0.10
+  google_fonts: ^6.2.1
+  
+  <span class="comment"># Utils</span>
+  flutter_dotenv: ^5.1.0
+  intl: ^0.19.0
+  uuid: ^4.4.0
+  
+<span class="keyword">dev_dependencies:</span>
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.11
+  isar_generator: ^3.1.0
+  riverpod_generator: ^2.4.0</code></pre>
+
+  <p>Tümünü kurmak için:</p>
+  <pre><code>flutter pub get</code></pre>
+
+  <div class="callout callout-info">
+    <div class="callout-label">Öğrenme Kaynağı</div>
+    <p>
+      Bu bölüm temel — ayrıntıları yazarken öğreneceksin. Şimdi 2-3 saatlik bir "Flutter Crash Course" videosu izle (YouTube'da çok var). Sonra Riverpod için resmi dökümana göz at: <a href="https://riverpod.dev" target="_blank">riverpod.dev</a>.
+    </p>
+  </div>
+</section>
+
+<!-- BÖLÜM 7 -->
+<section class="chapter" id="b7">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 07 / Eksen 1</div>
+    <h2 class="chapter-title">AI / ML <em>stack'i.</em></h2>
+    <p class="chapter-intro">
+      Ücretsiz AI servisleri ve cihaz üstünde çalışan modellerle hibrit bir AI sistemi kuracağız. Bu bölüm bütün AI kararlarını detaylandırıyor.
+    </p>
+  </div>
+
+  <h3>Stratejimiz — hibrit AI</h3>
+
+  <div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│  AI KATMAN KARARLARI                                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  GÖREV                 │ YAKLAŞIM          │ MALİYET            │
+│  ─────────────────────┼───────────────────┼───────────────────  │
+│  Ses → Metin (kısa)   │ whisper.cpp       │ ÜCRETSİZ           │
+│                       │ (cihaz üstünde)   │                    │
+│  ─────────────────────┼───────────────────┼───────────────────  │
+│  Ses → Metin (uzun)   │ Groq Whisper API  │ ÜCRETSİZ TİER      │
+│                       │ (bulut)           │ (14.400 req/gün)   │
+│  ─────────────────────┼───────────────────┼───────────────────  │
+│  Konuşma değerlend.   │ Groq Llama 3.1    │ ÜCRETSİZ TİER      │
+│                       │ 70B               │ (30 req/dk)        │
+│  ─────────────────────┼───────────────────┼───────────────────  │
+│  Telaffuz skorlama    │ TFLite kendi model│ ÜCRETSİZ           │
+│                       │ (cihaz üstünde)   │                    │
+│  ─────────────────────┼───────────────────┼───────────────────  │
+│  Metin → Ses (TTS)    │ flutter_tts       │ ÜCRETSİZ           │
+│                       │ (işletim sistemi) │                    │
+│  ─────────────────────┼───────────────────┼───────────────────  │
+│  Vektör Arama (RAG)   │ pgvector          │ ÜCRETSİZ           │
+│                       │ (Supabase dahili) │                    │
+│  ─────────────────────┴───────────────────┴───────────────────  │
+│                                                                 │
+│  TOPLAM TAHMİNİ MALİYET: 0 TL                                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</div>
+
+  <h3>Groq — ücretsiz AI gücü</h3>
+
+  <p>
+    <a href="https://groq.com" target="_blank">Groq</a> süper hızlı LLM inference sunar ve ücretsiz tier'ı var. Llama 3.1 70B, Whisper-large-v3 modelleri buradan çalışır.
+  </p>
+
+  <div class="step">
+    <div class="step-num">01</div>
+    <div class="step-body">
+      <h4>Groq hesabı aç</h4>
+      <p><a href="https://console.groq.com" target="_blank">console.groq.com</a> → Google/GitHub ile giriş → API Keys → Create API Key.</p>
+      <p>Key'i kopyala, <code>.env</code> dosyasına yaz:</p>
+      <pre><code>GROQ_API_KEY=gsk_...</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">02</div>
+    <div class="step-body">
+      <h4>Groq servisi yaz (Dart)</h4>
+      <p><code>lib/services/groq_service.dart</code>:</p>
+      <pre><code>import <span class="string">'package:dio/dio.dart'</span>;
+
+class GroqService {
+  final Dio _dio;
+  final String _apiKey;
+  
+  GroqService(this._apiKey)
+    : _dio = Dio(BaseOptions(
+        baseUrl: <span class="string">'https://api.groq.com/openai/v1'</span>,
+        headers: {<span class="string">'Authorization'</span>: <span class="string">'Bearer $_apiKey'</span>},
+      ));
+  
+  <span class="comment">// Chat completion (konuşma değerlendirmesi için)</span>
+  Future&lt;String&gt; <span class="fn">evaluateSpeech</span>(String userText) async {
+    final response = await _dio.post(<span class="string">'/chat/completions'</span>, data: {
+      <span class="string">'model'</span>: <span class="string">'llama-3.1-70b-versatile'</span>,
+      <span class="string">'messages'</span>: [
+        {
+          <span class="string">'role'</span>: <span class="string">'system'</span>,
+          <span class="string">'content'</span>: <span class="string">'''Sen bir İngilizce öğretmenisin. 
+Kullanıcı cümlesini değerlendir. JSON formatta dön:
+{
+  "correct": "düzeltilmiş cümle",
+  "score": 0-100,
+  "explanation": "kısa Türkçe açıklama",
+  "grammar_errors": ["hata1", "hata2"]
+}'''</span>
+        },
+        {<span class="string">'role'</span>: <span class="string">'user'</span>, <span class="string">'content'</span>: userText},
+      ],
+      <span class="string">'response_format'</span>: {<span class="string">'type'</span>: <span class="string">'json_object'</span>},
+    });
+    
+    return response.data[<span class="string">'choices'</span>][0][<span class="string">'message'</span>][<span class="string">'content'</span>];
+  }
+  
+  <span class="comment">// Whisper transcription</span>
+  Future&lt;String&gt; <span class="fn">transcribeAudio</span>(String filePath) async {
+    final formData = FormData.fromMap({
+      <span class="string">'file'</span>: await MultipartFile.fromFile(filePath),
+      <span class="string">'model'</span>: <span class="string">'whisper-large-v3'</span>,
+      <span class="string">'language'</span>: <span class="string">'en'</span>,
+    });
+    
+    final response = await _dio.post(<span class="string">'/audio/transcriptions'</span>, 
+      data: formData);
+    return response.data[<span class="string">'text'</span>];
+  }
+}</code></pre>
+    </div>
+  </div>
+
+  <h3>On-device Whisper (ileri seviye)</h3>
+
+  <p>
+    İnternet olmadan da ses tanıma için <strong>whisper.cpp</strong>'yi cihaza gömeceğiz. Bu Flutter'da nispeten karmaşık ama etkileyici.
+  </p>
+
+  <div class="step">
+    <div class="step-num">01</div>
+    <div class="step-body">
+      <h4>whisper_flutter_new paketi</h4>
+      <p><code>pubspec.yaml</code>'a ekle:</p>
+      <pre><code>whisper_flutter_new: ^1.1.1</code></pre>
+      <p>Bu paket whisper.cpp'yi Flutter'a sarıyor.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">02</div>
+    <div class="step-body">
+      <h4>Model dosyasını indir</h4>
+      <p><a href="https://huggingface.co/ggerganov/whisper.cpp/tree/main" target="_blank">Hugging Face — whisper.cpp models</a> sayfasından <code>ggml-tiny.en.bin</code> (75 MB) veya <code>ggml-base.en.bin</code> (142 MB) indir.</p>
+
+      <p>Modeli <code>assets/models/</code> klasörüne koy. <code>pubspec.yaml</code>'da assets olarak ekle:</p>
+      <pre><code><span class="keyword">flutter:</span>
+  assets:
+    - assets/models/ggml-tiny.en.bin</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">03</div>
+    <div class="step-body">
+      <h4>Offline transcription servisi</h4>
+      <pre><code>import <span class="string">'package:whisper_flutter_new/whisper_flutter_new.dart'</span>;
+
+class OfflineWhisperService {
+  Whisper? _whisper;
+  
+  Future&lt;void&gt; <span class="fn">init</span>() async {
+    _whisper = Whisper(
+      model: WhisperModel.tiny,
+      modelDir: await _copyModelToStorage(),
+    );
+  }
+  
+  Future&lt;String&gt; <span class="fn">transcribe</span>(String audioPath) async {
+    if (_whisper == null) await init();
+    
+    final result = await _whisper!.transcribe(
+      transcribeRequest: TranscribeRequest(
+        audio: audioPath,
+        language: <span class="string">'en'</span>,
+      ),
+    );
+    
+    return result.text;
+  }
+}</code></pre>
+    </div>
+  </div>
+
+  <h3>Telaffuz skorlama — kendi ML modelin</h3>
+
+  <p>
+    Kullanıcının telaffuzunu puanlamak için basit bir yaklaşım: <strong>kelime benzerliği + fonetik mesafe</strong>.
+  </p>
+
+  <pre><code><span class="comment">// Levenshtein distance (string similarity)</span>
+int <span class="fn">levenshtein</span>(String a, String b) {
+  if (a.isEmpty) return b.length;
+  if (b.isEmpty) return a.length;
+  
+  List&lt;List&lt;int&gt;&gt; dp = List.generate(
+    a.length + 1, 
+    (i) => List.filled(b.length + 1, 0),
+  );
+  
+  for (int i = 0; i &lt;= a.length; i++) dp[i][0] = i;
+  for (int j = 0; j &lt;= b.length; j++) dp[0][j] = j;
+  
+  for (int i = 1; i &lt;= a.length; i++) {
+    for (int j = 1; j &lt;= b.length; j++) {
+      int cost = a[i-1] == b[j-1] ? 0 : 1;
+      dp[i][j] = [
+        dp[i-1][j] + 1,
+        dp[i][j-1] + 1,
+        dp[i-1][j-1] + cost,
+      ].reduce((a, b) => a &lt; b ? a : b);
+    }
+  }
+  
+  return dp[a.length][b.length];
+}
+
+int <span class="fn">pronunciationScore</span>(String expected, String actual) {
+  final distance = levenshtein(
+    expected.toLowerCase(), 
+    actual.toLowerCase(),
+  );
+  final maxLen = [expected.length, actual.length].reduce((a, b) => a &gt; b ? a : b);
+  return ((1 - distance / maxLen) * 100).round();
+}</code></pre>
+
+  <div class="callout callout-info">
+    <div class="callout-label">İleri Seviye</div>
+    <p>
+      Daha profesyonel telaffuz skorlama için <strong>IPA (International Phonetic Alphabet)</strong> ile karşılaştırma yapılır. Bunu hafta 10'da istersen ekleyebiliriz — Soundex veya Metaphone algoritmaları ile.
+    </p>
+  </div>
+
+  <h3>RAG — kişiselleştirme için</h3>
+
+  <p>
+    Kullanıcının öğrendiği kelimeleri vektör olarak saklayıp, benzer içerik üretirken kullanacağız. Supabase'in <code>pgvector</code> uzantısı bunu ücretsiz sağlıyor.
+  </p>
+
+  <p>Bu kısım Bölüm 8'de detaylandıracağım (Supabase kurarken).</p>
+</section>
+
+<!-- BÖLÜM 8 -->
+<section class="chapter" id="b8">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 08 / Eksen 2</div>
+    <h2 class="chapter-title">Supabase <em>backend.</em></h2>
+    <p class="chapter-intro">
+      Supabase — Firebase'in açık kaynak alternatifi. PostgreSQL tabanlı, ücretsiz tier cömert, pgvector dahil. Profesyonel bir backend kuralım.
+    </p>
+  </div>
+
+  <h3>Neden Supabase?</h3>
+
+  <div class="compare">
+    <div class="compare-card">
+      <span class="badge">Eskiden</span>
+      <h4>Firebase</h4>
+      <ul>
+        <li>NoSQL (Firestore)</li>
+        <li>Vendor lock-in</li>
+        <li>Complex queries zor</li>
+        <li>Vector arama yok</li>
+      </ul>
+    </div>
+    <div class="compare-card winner">
+      <span class="badge">Bizim Seçimimiz</span>
+      <h4>Supabase</h4>
+      <ul>
+        <li>PostgreSQL (SQL standart)</li>
+        <li>Açık kaynak</li>
+        <li>SQL gücü + Row Level Security</li>
+        <li>pgvector dahili (RAG için)</li>
+        <li>Edge Functions (Deno runtime)</li>
+        <li>Realtime subscriptions</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Supabase kurulumu</h3>
+
+  <div class="step">
+    <div class="step-num">01</div>
+    <div class="step-body">
+      <h4>Hesap ve proje</h4>
+      <p><a href="https://supabase.com" target="_blank">supabase.com</a> → Start your project → GitHub ile giriş.</p>
+      <p>New project → Name: "voicelingo" → Database password: güçlü bir şifre (kaydet!) → Region: "Europe Central (Frankfurt)" → Create.</p>
+      <p>Proje oluşması 2 dakika sürer.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">02</div>
+    <div class="step-body">
+      <h4>API anahtarlarını al</h4>
+      <p>Settings → API → şunları kopyala:</p>
+      <ul>
+        <li><code>Project URL</code></li>
+        <li><code>anon public</code> key (frontend için güvenli)</li>
+        <li><code>service_role</code> key (backend için, gizli)</li>
+      </ul>
+      <p><code>.env</code> dosyasına:</p>
+      <pre><code>SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_ANON_KEY=eyJ...</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">03</div>
+    <div class="step-body">
+      <h4>Veritabanı şemasını kur</h4>
+      <p>Supabase dashboard → SQL Editor → New query:</p>
+      <pre><code><span class="comment">-- pgvector uzantısı (RAG için)</span>
+CREATE EXTENSION IF NOT EXISTS vector;
+
+<span class="comment">-- Kullanıcı profili</span>
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  username TEXT UNIQUE,
+  avatar_url TEXT,
+  level INT DEFAULT 1,
+  xp INT DEFAULT 0,
+  streak_days INT DEFAULT 0,
+  last_practice_date DATE,
+  target_language TEXT DEFAULT 'en',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+<span class="comment">-- Öğrenilen kelimeler</span>
+CREATE TABLE words (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  word TEXT NOT NULL,
+  translation TEXT,
+  language TEXT DEFAULT 'en',
+  
+  <span class="comment">-- SM-2 Spaced Repetition alanları</span>
+  ease_factor FLOAT DEFAULT 2.5,
+  interval_days INT DEFAULT 1,
+  repetitions INT DEFAULT 0,
+  next_review DATE DEFAULT CURRENT_DATE,
+  
+  <span class="comment">-- Vektör (RAG için)</span>
+  embedding vector(384),
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, word, language)
+);
+
+<span class="comment">-- Pratik oturumları</span>
+CREATE TABLE practice_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  mode TEXT CHECK (mode IN ('word', 'conversation', 'scenario')),
+  duration_seconds INT,
+  words_practiced INT DEFAULT 0,
+  avg_score FLOAT,
+  xp_earned INT,
+  started_at TIMESTAMPTZ DEFAULT NOW(),
+  ended_at TIMESTAMPTZ
+);
+
+<span class="comment">-- Sohbet mesajları</span>
+CREATE TABLE messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID REFERENCES practice_sessions(id) ON DELETE CASCADE,
+  role TEXT CHECK (role IN ('user', 'assistant')),
+  content TEXT,
+  audio_url TEXT,
+  score INT,
+  corrections JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+<span class="comment">-- Başarımlar</span>
+CREATE TABLE achievements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  achievement_code TEXT NOT NULL,
+  unlocked_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, achievement_code)
+);
+
+<span class="comment">-- Arkadaşlık (sosyal özellik)</span>
+CREATE TABLE friendships (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id),
+  friend_id UUID REFERENCES profiles(id),
+  status TEXT CHECK (status IN ('pending', 'accepted', 'blocked')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, friend_id)
+);
+
+<span class="comment">-- Indexler (performans)</span>
+CREATE INDEX idx_words_next_review ON words(user_id, next_review);
+CREATE INDEX idx_sessions_user_date ON practice_sessions(user_id, started_at);
+CREATE INDEX ON words USING ivfflat (embedding vector_cosine_ops);</code></pre>
+      <p>Run butonuna bas. Şemayı oluşturur.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">04</div>
+    <div class="step-body">
+      <h4>Row Level Security (RLS) — güvenlik</h4>
+      <p>Her kullanıcı sadece kendi verisini görsün:</p>
+      <pre><code><span class="comment">-- Profiles</span>
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY <span class="string">"Public read, self write"</span> ON profiles
+  FOR SELECT USING (true);
+CREATE POLICY <span class="string">"Self update"</span> ON profiles
+  FOR UPDATE USING (auth.uid() = id);
+
+<span class="comment">-- Words</span>
+ALTER TABLE words ENABLE ROW LEVEL SECURITY;
+CREATE POLICY <span class="string">"Self only"</span> ON words
+  FOR ALL USING (auth.uid() = user_id);
+
+<span class="comment">-- Practice sessions</span>
+ALTER TABLE practice_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY <span class="string">"Self only"</span> ON practice_sessions
+  FOR ALL USING (auth.uid() = user_id);
+
+<span class="comment">-- Messages (via session)</span>
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY <span class="string">"Via session"</span> ON messages
+  FOR ALL USING (EXISTS (
+    SELECT 1 FROM practice_sessions
+    WHERE id = messages.session_id AND user_id = auth.uid()
+  ));
+
+<span class="comment">-- Achievements</span>
+ALTER TABLE achievements ENABLE ROW LEVEL SECURITY;
+CREATE POLICY <span class="string">"Self only"</span> ON achievements
+  FOR ALL USING (auth.uid() = user_id);</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">05</div>
+    <div class="step-body">
+      <h4>Flutter tarafında Supabase init</h4>
+      <p><code>lib/main.dart</code>:</p>
+      <pre><code>import <span class="string">'package:supabase_flutter/supabase_flutter.dart'</span>;
+import <span class="string">'package:flutter_dotenv/flutter_dotenv.dart'</span>;
+
+Future&lt;void&gt; <span class="fn">main</span>() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await dotenv.load(fileName: <span class="string">'.env'</span>);
+  
+  await Supabase.initialize(
+    url: dotenv.env[<span class="string">'SUPABASE_URL'</span>]!,
+    anonKey: dotenv.env[<span class="string">'SUPABASE_ANON_KEY'</span>]!,
+  );
+  
+  runApp(ProviderScope(child: VoiceLingoApp()));
+}
+
+final supabase = Supabase.instance.client;</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">06</div>
+    <div class="step-body">
+      <h4>Authentication servisi</h4>
+      <p><code>lib/services/auth_service.dart</code>:</p>
+      <pre><code>class AuthService {
+  final _supabase = Supabase.instance.client;
+  
+  Future&lt;void&gt; <span class="fn">signUp</span>(String email, String password) async {
+    final response = await _supabase.auth.signUp(
+      email: email,
+      password: password,
+    );
+    
+    if (response.user != null) {
+      <span class="comment">// Profil oluştur</span>
+      await _supabase.from(<span class="string">'profiles'</span>).insert({
+        <span class="string">'id'</span>: response.user!.id,
+        <span class="string">'username'</span>: email.split(<span class="string">'@'</span>)[0],
+      });
+    }
+  }
+  
+  Future&lt;void&gt; <span class="fn">signIn</span>(String email, String password) async {
+    await _supabase.auth.signInWithPassword(
+      email: email, 
+      password: password,
+    );
+  }
+  
+  Future&lt;void&gt; <span class="fn">signOut</span>() async {
+    await _supabase.auth.signOut();
+  }
+  
+  Stream&lt;AuthState&gt; get authStateStream =&gt; 
+    _supabase.auth.onAuthStateChange;
+}</code></pre>
+    </div>
+  </div>
+
+  <h3>Offline-first ile Isar entegrasyonu</h3>
+
+  <p>
+    Uygulama internet olmadan da çalışsın diye lokal database kullanıyoruz. Veri önce Isar'a yazılır, sonra Supabase'e sync olur.
+  </p>
+
+  <pre><code><span class="comment">// Isar model (offline cache)</span>
+import <span class="string">'package:isar/isar.dart'</span>;
+
+part <span class="string">'word.g.dart'</span>;
+
+@collection
+class Word {
+  Id id = Isar.autoIncrement;
+  
+  late String remoteId;  <span class="comment">// Supabase UUID</span>
+  late String word;
+  String? translation;
+  
+  <span class="comment">// SM-2</span>
+  double easeFactor = 2.5;
+  int intervalDays = 1;
+  int repetitions = 0;
+  DateTime nextReview = DateTime.now();
+  
+  <span class="comment">// Sync state</span>
+  bool synced = false;
+  DateTime updatedAt = DateTime.now();
+}
+
+<span class="comment">// Sync servisi</span>
+class SyncService {
+  final Isar isar;
+  final supabase = Supabase.instance.client;
+  
+  Future&lt;void&gt; <span class="fn">syncPendingWords</span>() async {
+    final pending = await isar.words
+      .filter()
+      .syncedEqualTo(false)
+      .findAll();
+    
+    for (final word in pending) {
+      try {
+        await supabase.from(<span class="string">'words'</span>).upsert({
+          <span class="string">'id'</span>: word.remoteId,
+          <span class="string">'word'</span>: word.word,
+          ...
+        });
+        
+        <span class="comment">// Sync başarılı</span>
+        await isar.writeTxn(() async {
+          word.synced = true;
+          await isar.words.put(word);
+        });
+      } catch (e) {
+        <span class="comment">// Retry sonra</span>
+      }
+    }
+  }
+}</code></pre>
+
+  <h3>Realtime — canlı liderlik tablosu</h3>
+
+  <pre><code><span class="comment">// Canlı liderlik tablosu (WebSocket)</span>
+final leaderboardStream = supabase
+  .from(<span class="string">'profiles'</span>)
+  .stream(primaryKey: [<span class="string">'id'</span>])
+  .order(<span class="string">'xp'</span>, ascending: false)
+  .limit(10);
+
+<span class="comment">// Widget'ta kullan</span>
+StreamBuilder(
+  stream: leaderboardStream,
+  builder: (context, snapshot) {
+    if (!snapshot.hasData) return CircularProgressIndicator();
+    return ListView(
+      children: snapshot.data!.map((user) =&gt; 
+        LeaderboardTile(user: user)
+      ).toList(),
+    );
+  },
+)</code></pre>
+</section>
+
+<!-- BÖLÜM 9 -->
+<section class="chapter" id="b9">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 09 / Eksen 3</div>
+    <h2 class="chapter-title">Gamification <em>ve sosyal.</em></h2>
+    <p class="chapter-intro">
+      XP, seviye, başarımlar, sosyal özellikler. Duolingo'yu Duolingo yapan şey bu mekanikler.
+    </p>
+  </div>
+
+  <h3>XP ve seviye sistemi (RPG tarzı)</h3>
+
+  <p>
+    Her aktivite XP verir, XP biriktikçe seviye atlar. Seviye formülü:
+  </p>
+
+  <pre><code><span class="comment">// Seviye hesabı — exponential büyüme</span>
+int <span class="fn">xpForLevel</span>(int level) {
+  return (100 * pow(1.5, level - 1)).round();
+}
+
+<span class="comment">// Seviye 1 → 100 XP</span>
+<span class="comment">// Seviye 2 → 150 XP</span>
+<span class="comment">// Seviye 3 → 225 XP</span>
+<span class="comment">// Seviye 10 → 3844 XP</span>
+
+int <span class="fn">currentLevel</span>(int totalXp) {
+  int level = 1;
+  int xpNeeded = 0;
+  while (totalXp &gt;= xpNeeded + xpForLevel(level)) {
+    xpNeeded += xpForLevel(level);
+    level++;
+  }
+  return level;
+}
+
+<span class="comment">// XP ödülleri</span>
+const XP_REWARDS = {
+  <span class="string">'word_practice'</span>: 10,
+  <span class="string">'perfect_pronunciation'</span>: 25,
+  <span class="string">'conversation_complete'</span>: 50,
+  <span class="string">'scenario_complete'</span>: 100,
+  <span class="string">'streak_day'</span>: 20,
+  <span class="string">'achievement_unlock'</span>: 200,
+};</code></pre>
+
+  <h3>Başarım sistemi — 40+ achievement</h3>
+
+  <pre><code>enum Achievement {
+  <span class="comment">// Kelime bazlı</span>
+  first_word,           <span class="comment">// İlk kelime öğrenildi</span>
+  ten_words,            <span class="comment">// 10 kelime</span>
+  hundred_words,        <span class="comment">// 100 kelime</span>
+  vocabulary_master,    <span class="comment">// 1000 kelime</span>
+  
+  <span class="comment">// Streak</span>
+  streak_3_days,
+  streak_7_days,
+  streak_30_days,
+  streak_100_days,
+  unbroken,             <span class="comment">// 365 gün</span>
+  
+  <span class="comment">// Performans</span>
+  perfect_10,           <span class="comment">// 10 mükemmel skor</span>
+  accuracy_king,        <span class="comment">// 50 pratik, ort skor 90+</span>
+  speed_demon,          <span class="comment">// 1 dakikada 20 kelime</span>
+  
+  <span class="comment">// Sosyal</span>
+  first_friend,
+  social_butterfly,     <span class="comment">// 10 arkadaş</span>
+  helper,               <span class="comment">// Arkadaşa yardım</span>
+  
+  <span class="comment">// Özel</span>
+  night_owl,            <span class="comment">// Gece 23-02 arası pratik</span>
+  early_bird,           <span class="comment">// Sabah 6-8 arası</span>
+  weekend_warrior,      <span class="comment">// Hafta sonu 5+ saat</span>
+}
+
+<span class="comment">// Başarım kontrolü (her session sonunda)</span>
+class AchievementChecker {
+  Future&lt;List&lt;Achievement&gt;&gt; <span class="fn">checkAll</span>(User user) async {
+    final newOnes = &lt;Achievement&gt;[];
+    
+    if (user.wordCount &gt;= 100 &amp;&amp; !user.has(Achievement.hundred_words)) {
+      newOnes.add(Achievement.hundred_words);
+    }
+    
+    if (user.streakDays &gt;= 7 &amp;&amp; !user.has(Achievement.streak_7_days)) {
+      newOnes.add(Achievement.streak_7_days);
+    }
+    
+    <span class="comment">// ... diğer kontroller</span>
+    
+    return newOnes;
+  }
+}</code></pre>
+
+  <h3>Skill Tree — görsel beceri ağacı</h3>
+
+  <div class="diagram">
+                    [Başlangıç]
+                       │
+              ┌────────┼────────┐
+              ▼        ▼        ▼
+         [Selamlaş] [Sayılar] [Renkler]
+              │        │        │
+              └────┬───┘        │
+                   ▼            ▼
+              [Kendini      [Ev & Eşya]
+               Tanıtma]         │
+                   │            │
+                   └─────┬──────┘
+                         ▼
+                    [Alışveriş]
+                         │
+                ┌────────┼────────┐
+                ▼        ▼        ▼
+           [Market]  [Kafe]  [Restoran]
+                │        │        │
+                └────┬───┴────┬───┘
+                     ▼        ▼
+                 [Şikayet]  [Rezervasyon]</div>
+
+  <p>Her düğüm bir mini-ünite. Tamamlanınca alttakiler açılır. Flutter'da <code>custom_painter</code> ile çizilir.</p>
+
+  <h3>Günlük görevler (daily quests)</h3>
+
+  <pre><code>class DailyQuest {
+  final String title;
+  final int targetCount;
+  final int rewardXp;
+  int currentProgress;
+  
+  DailyQuest({
+    required this.title,
+    required this.targetCount,
+    required this.rewardXp,
+    this.currentProgress = 0,
+  });
+  
+  bool get isComplete =&gt; currentProgress &gt;= targetCount;
+}
+
+<span class="comment">// Her sabah üretilen görevler</span>
+List&lt;DailyQuest&gt; <span class="fn">generateDailyQuests</span>(User user) {
+  return [
+    DailyQuest(
+      title: <span class="string">'5 yeni kelime öğren'</span>,
+      targetCount: 5,
+      rewardXp: 50,
+    ),
+    DailyQuest(
+      title: <span class="string">'10 dakika konuşma pratiği yap'</span>,
+      targetCount: 10,
+      rewardXp: 100,
+    ),
+    DailyQuest(
+      title: <span class="string">'3 pratik 90+ skorla bitir'</span>,
+      targetCount: 3,
+      rewardXp: 75,
+    ),
+  ];
+}</code></pre>
+
+  <h3>Sosyal özellikler</h3>
+
+  <div class="feat-grid">
+    <div class="feat">
+      <div class="feat-icon">→ Arkadaş Sistemi</div>
+      <h5>Username bazlı ekleme</h5>
+      <p>Username ile arkadaş bul, istek gönder, kabul/red. İlerlemelerini gör.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Liderlik Tabloları</div>
+      <h5>Global + Friends</h5>
+      <p>Haftalık XP sıralaması. Global top 100 ve sadece arkadaşlarla yarış.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Turnuvalar</div>
+      <h5>Haftalık yarışmalar</h5>
+      <p>Pazartesi-Pazar arası kim daha fazla XP kazanır? Özel ödüller.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Paylaşım</div>
+      <h5>Başarımı paylaş</h5>
+      <p>Achievement unlock olunca instagram story benzeri paylaşılabilir kart.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Challenge</div>
+      <h5>Arkadaşını yen</h5>
+      <p>Arkadaşa meydan oku. Aynı kelimeleri kim daha hızlı doğrularsa kazanır.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Referral</div>
+      <h5>Arkadaş davet et</h5>
+      <p>Davet linkiyle arkadaş getirince bonus XP. Viral büyüme mekaniği.</p>
+    </div>
+  </div>
+
+  <h3>Animasyonlar — gamification'ın ruhu</h3>
+
+  <p>Oyunlaştırma animasyonlar olmadan sıkıcı. Şu paketleri kullanacağız:</p>
+
+  <ul>
+    <li><strong>lottie</strong> — hazır JSON animasyonlar (<a href="https://lottiefiles.com" target="_blank">lottiefiles.com</a>'dan ücretsiz)</li>
+    <li><strong>confetti</strong> — başarım kutlamaları</li>
+    <li><strong>shimmer</strong> — loading skeletons</li>
+    <li><strong>animated_text_kit</strong> — yazı animasyonları</li>
+  </ul>
+
+  <pre><code><span class="comment">// Achievement unlock animasyonu</span>
+class AchievementDialog extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Column(
+        children: [
+          Lottie.asset(<span class="string">'assets/lottie/trophy.json'</span>, repeat: false),
+          Text(<span class="string">'Başarım Kazandın!'</span>, 
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          <span class="comment">// Confetti</span>
+          ConfettiWidget(
+            confettiController: _controller,
+            blastDirectionality: BlastDirectionality.explosive,
+          ),
+        ],
+      ),
+    );
+  }
+}</code></pre>
+</section>
+
+<!-- BÖLÜM 10 -->
+<section class="chapter" id="b10">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 10 / Eksen 4</div>
+    <h2 class="chapter-title">Analitik ve <em>SM-2.</em></h2>
+    <p class="chapter-intro">
+      Kullanıcıya anlamlı içgörüler sunmak, bilimsel hafıza algoritması ile optimum tekrar zamanlaması. Bu bölüm portfolio için altın.
+    </p>
+  </div>
+
+  <h3>SM-2 Spaced Repetition algoritması</h3>
+
+  <p>
+    Anki'nin de kullandığı <a href="https://en.wikipedia.org/wiki/SuperMemo#Description_of_SM-2_algorithm" target="_blank">SuperMemo-2</a> algoritması. Unutma eğrisine göre kelimenin ne zaman tekrar edileceğini hesaplar.
+  </p>
+
+  <pre><code>class SM2 {
+  <span class="comment">// Kullanıcı performansı 0-5 arası (quality)</span>
+  <span class="comment">// 0: hiç hatırlamıyor, 5: mükemmel</span>
+  
+  static SM2Result <span class="fn">calculate</span>({
+    required int quality,
+    required double easeFactor,
+    required int repetitions,
+    required int intervalDays,
+  }) {
+    if (quality &lt; 3) {
+      <span class="comment">// Başarısız — en baştan</span>
+      return SM2Result(
+        easeFactor: easeFactor,
+        repetitions: 0,
+        intervalDays: 1,
+      );
+    }
+    
+    <span class="comment">// Yeni ease factor</span>
+    double newEf = easeFactor + 
+      (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    if (newEf &lt; 1.3) newEf = 1.3;
+    
+    <span class="comment">// Yeni interval</span>
+    int newInterval;
+    int newReps = repetitions + 1;
+    
+    if (newReps == 1) {
+      newInterval = 1;
+    } else if (newReps == 2) {
+      newInterval = 6;
+    } else {
+      newInterval = (intervalDays * newEf).round();
+    }
+    
+    return SM2Result(
+      easeFactor: newEf,
+      repetitions: newReps,
+      intervalDays: newInterval,
+    );
+  }
+}
+
+class SM2Result {
+  final double easeFactor;
+  final int repetitions;
+  final int intervalDays;
+  
+  DateTime get nextReviewDate =&gt; 
+    DateTime.now().add(Duration(days: intervalDays));
+  
+  SM2Result({
+    required this.easeFactor,
+    required this.repetitions,
+    required this.intervalDays,
+  });
+}
+
+<span class="comment">// Kullanım</span>
+final result = SM2.calculate(
+  quality: 4,           <span class="comment">// Kullanıcı doğru bildi</span>
+  easeFactor: word.easeFactor,
+  repetitions: word.repetitions,
+  intervalDays: word.intervalDays,
+);
+
+word.easeFactor = result.easeFactor;
+word.repetitions = result.repetitions;
+word.intervalDays = result.intervalDays;
+word.nextReview = result.nextReviewDate;</code></pre>
+
+  <div class="callout callout-info">
+    <div class="callout-label">CV Altın</div>
+    <p>
+      "Implemented SuperMemo-2 spaced repetition algorithm from scratch" cümlesi teknik mülakatta çok güzel durur. Sadece paket kullanan değil, algoritma bilen biri olduğunu gösterir.
+    </p>
+  </div>
+
+  <h3>Analitik dashboard</h3>
+
+  <p>Kullanıcıya gösterilecek grafikler ve içgörüler:</p>
+
+  <div class="feat-grid">
+    <div class="feat">
+      <div class="feat-icon">→ Chart 01</div>
+      <h5>Aktivite Heatmap</h5>
+      <p>GitHub tarzı yıllık ısı haritası — hangi gün ne kadar pratik yapmışsın.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Chart 02</div>
+      <h5>Kelime Büyümesi</h5>
+      <p>Toplam bilinen kelime sayısı, zaman içinde line chart.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Chart 03</div>
+      <h5>Saat Bazlı Performans</h5>
+      <p>Günün hangi saatinde en iyi performans? Radar chart.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Chart 04</div>
+      <h5>Grammar Hata Dağılımı</h5>
+      <p>En çok hangi konularda yanlış yapıyorsun? Donut chart.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Chart 05</div>
+      <h5>Streak Takvimi</h5>
+      <p>Aylık takvim, günlük streak durumu, boş günler.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">→ Chart 06</div>
+      <h5>Seviye Tahmini</h5>
+      <p>Mevcut hızla hangi CEFR seviyesine (A1, A2, B1...) ne zaman ulaşırsın.</p>
+    </div>
+  </div>
+
+  <h3>Heatmap örnek kodu (fl_chart)</h3>
+
+  <pre><code>class ActivityHeatmap extends StatelessWidget {
+  final List&lt;DailyActivity&gt; activities;
+  
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 53,  <span class="comment">// 53 hafta</span>
+        mainAxisSpacing: 2,
+        crossAxisSpacing: 2,
+      ),
+      itemCount: 365,
+      itemBuilder: (ctx, i) {
+        final activity = activities[i];
+        final intensity = _getIntensity(activity.minutes);
+        return Container(
+          decoration: BoxDecoration(
+            color: _colorForIntensity(intensity),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        );
+      },
+    );
+  }
+  
+  double <span class="fn">_getIntensity</span>(int minutes) {
+    if (minutes == 0) return 0;
+    if (minutes &lt; 10) return 0.25;
+    if (minutes &lt; 30) return 0.5;
+    if (minutes &lt; 60) return 0.75;
+    return 1.0;
+  }
+  
+  Color <span class="fn">_colorForIntensity</span>(double intensity) {
+    return Color.lerp(
+      Colors.grey.shade900,
+      Colors.green,
+      intensity,
+    )!;
+  }
+}</code></pre>
+
+  <h3>AI Insight raporu</h3>
+
+  <p>Haftalık Groq'a kullanıcı verisi yollayıp içgörü üretmesini sağlarız:</p>
+
+  <pre><code>Future&lt;String&gt; <span class="fn">generateWeeklyInsight</span>(User user) async {
+  final data = {
+    <span class="string">'total_minutes'</span>: user.weeklyMinutes,
+    <span class="string">'new_words'</span>: user.weeklyNewWords,
+    <span class="string">'avg_score'</span>: user.weeklyAvgScore,
+    <span class="string">'top_grammar_errors'</span>: user.weeklyTopErrors,
+    <span class="string">'best_time_of_day'</span>: user.bestPracticeHour,
+    <span class="string">'streak'</span>: user.streakDays,
+  };
+  
+  final prompt = <span class="string">'''
+Kullanıcı için kişisel haftalık rapor üret (Türkçe, samimi ton).
+Veri: ${jsonEncode(data)}
+
+Şu formatta dön:
+1. Haftanın özeti (2 cümle)
+2. En güçlü yönün
+3. Geliştirme alanın
+4. Önümüzdeki hafta için öneri
+5. Motivasyonel kapanış
+
+Maksimum 150 kelime.
+'''</span>;
+  
+  return await groqService.chat(prompt);
+}</code></pre>
+
+  <h3>Predictive analytics — CEFR tahmini</h3>
+
+  <pre><code>class CefrPredictor {
+  <span class="comment">// Basit lineer tahmin</span>
+  static CefrPrediction <span class="fn">predict</span>(User user) {
+    const REQUIRED_WORDS = {
+      CefrLevel.A1: 500,
+      CefrLevel.A2: 1000,
+      CefrLevel.B1: 2000,
+      CefrLevel.B2: 4000,
+      CefrLevel.C1: 8000,
+      CefrLevel.C2: 16000,
+    };
+    
+    final currentLevel = _calculateCurrent(user.knownWords);
+    final nextLevel = CefrLevel.values[currentLevel.index + 1];
+    final wordsNeeded = REQUIRED_WORDS[nextLevel]! - user.knownWords;
+    
+    <span class="comment">// Haftalık kelime öğrenme hızı</span>
+    final weeklyRate = user.wordsLearnedLast30Days / 4.3;
+    final weeksNeeded = (wordsNeeded / weeklyRate).ceil();
+    
+    return CefrPrediction(
+      currentLevel: currentLevel,
+      nextLevel: nextLevel,
+      estimatedWeeks: weeksNeeded,
+      estimatedDate: DateTime.now().add(Duration(days: weeksNeeded * 7)),
+    );
+  }
+}</code></pre>
+</section>
+
+<!-- BÖLÜM 11 -->
+<section class="chapter" id="b11">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 11 / Yol Haritası</div>
+    <h2 class="chapter-title">12 haftalık <em>yol haritası.</em></h2>
+    <p class="chapter-intro">
+      Her hafta net bir hedef. Haftayı bitirdiğinde sunulabilir bir parça eline geçer. Bu plan MVP'yi 6. haftada hazır eder, sonrası kallavi özellikler.
+    </p>
+  </div>
+
+  <h3>Faz 1 — Temel (Hafta 1-4)</h3>
+
+  <div class="week-grid">
+    <div class="week-card foundation">
+      <div class="week-num">Hafta 01</div>
+      <div class="week-title">Kurulum ve temeller</div>
+      <ul>
+        <li>Windows ortamı kur (Flutter, AS, VS Code, Git)</li>
+        <li>flutter doctor temiz çıksın</li>
+        <li>GitHub repo oluştur, ilk commit</li>
+        <li>Flutter crash course izle (2-3 saat)</li>
+        <li>Dart temelleri — null safety, async</li>
+        <li>İlk "Hello VoiceLingo" ekranı</li>
+      </ul>
+      <div class="week-deliverable">↳ Çalışan Flutter app + GitHub repo</div>
+    </div>
+
+    <div class="week-card foundation">
+      <div class="week-num">Hafta 02</div>
+      <div class="week-title">Mimari ve UI iskeleti</div>
+      <ul>
+        <li>Clean Architecture klasör yapısı</li>
+        <li>Riverpod kurulumu ve temel provider'lar</li>
+        <li>GoRouter ile navigasyon</li>
+        <li>Tema sistemi (dark/light mode)</li>
+        <li>Giriş/kayıt ekranları UI</li>
+        <li>Ana ekran (home) UI</li>
+        <li>Google Fonts ile tipografi</li>
+      </ul>
+      <div class="week-deliverable">↳ Navigasyon çalışır boş ekranlar seti</div>
+    </div>
+
+    <div class="week-card foundation">
+      <div class="week-num">Hafta 03</div>
+      <div class="week-title">Supabase backend</div>
+      <ul>
+        <li>Supabase hesabı ve proje kurulumu</li>
+        <li>PostgreSQL şemasını oluştur</li>
+        <li>Row Level Security politikaları</li>
+        <li>Flutter'da Supabase init</li>
+        <li>Email/password authentication</li>
+        <li>Profil oluşturma flow</li>
+        <li>Session yönetimi (auto-login)</li>
+      </ul>
+      <div class="week-deliverable">↳ Kullanıcı kaydolabilir + girebilir</div>
+    </div>
+
+    <div class="week-card foundation">
+      <div class="week-num">Hafta 04</div>
+      <div class="week-title">Ses altyapısı</div>
+      <ul>
+        <li>record paketi ile mikrofon kaydı</li>
+        <li>Android/iOS mikrofon izinleri</li>
+        <li>Kayıt UI — buton, wave animasyonu, timer</li>
+        <li>audioplayers ile geri çalma</li>
+        <li>flutter_tts ile AI sesi</li>
+        <li>Ses dosyası storage'a upload (Supabase Storage)</li>
+      </ul>
+      <div class="week-deliverable">↳ Kullanıcı ses kaydedip dinleyebilir</div>
+    </div>
+  </div>
+
+  <h3>Faz 2 — AI Core (Hafta 5-7)</h3>
+
+  <div class="week-grid">
+    <div class="week-card ai">
+      <div class="week-num">Hafta 05</div>
+      <div class="week-title">Groq AI entegrasyonu</div>
+      <ul>
+        <li>Groq hesabı ve API key</li>
+        <li>Groq service sınıfı (Dio kullanarak)</li>
+        <li>Whisper-large-v3 ile transkript</li>
+        <li>Llama 3.1 70B ile değerlendirme</li>
+        <li>JSON response parsing</li>
+        <li>Hata yönetimi, retry logic</li>
+        <li>Rate limit handling</li>
+      </ul>
+      <div class="week-deliverable">↳ MVP: Konuş → AI yanıtla</div>
+    </div>
+
+    <div class="week-card ai">
+      <div class="week-num">Hafta 06</div>
+      <div class="week-title">Pratik modları — MVP</div>
+      <ul>
+        <li>Kelime pratiği ekranı (full flow)</li>
+        <li>Levenshtein ile telaffuz skoru</li>
+        <li>Sonuç ekranı (skor, düzeltme, öneri)</li>
+        <li>Sohbet modu (chat UI)</li>
+        <li>Mesaj balonları, typing indicator</li>
+        <li>Senaryo modu (kafe, otel senaryoları)</li>
+      </ul>
+      <div class="week-deliverable">↳ ⭐ DEMO EDİLEBİLİR MVP HAZIR</div>
+    </div>
+
+    <div class="week-card ai">
+      <div class="week-num">Hafta 07</div>
+      <div class="week-title">On-device AI + offline</div>
+      <ul>
+        <li>Isar lokal database kurulumu</li>
+        <li>Kelime ve session modelleri</li>
+        <li>Offline-first repository pattern</li>
+        <li>Sync service (bekleyen kuyruk)</li>
+        <li>whisper.cpp model entegrasyonu</li>
+        <li>Connectivity check → offline/online switch</li>
+      </ul>
+      <div class="week-deliverable">↳ İnternet yokken de çalışır</div>
+    </div>
+  </div>
+
+  <h3>Faz 3 — Kallavi özellikler (Hafta 8-10)</h3>
+
+  <div class="week-grid">
+    <div class="week-card social">
+      <div class="week-num">Hafta 08</div>
+      <div class="week-title">Gamification core</div>
+      <ul>
+        <li>XP sistemi + seviye formülü</li>
+        <li>XP bar ve seviye animasyonları</li>
+        <li>Streak sistemi (günlük kontrol)</li>
+        <li>İlk 15 achievement</li>
+        <li>Achievement unlock animation</li>
+        <li>Günlük görevler (daily quests)</li>
+        <li>Lottie animasyonları</li>
+      </ul>
+      <div class="week-deliverable">↳ Oyun gibi bağımlılık hissi</div>
+    </div>
+
+    <div class="week-card social">
+      <div class="week-num">Hafta 09</div>
+      <div class="week-title">Sosyal özellikler</div>
+      <ul>
+        <li>Kullanıcı arama (username ile)</li>
+        <li>Arkadaş ekleme/silme</li>
+        <li>Arkadaş listesi ekranı</li>
+        <li>Liderlik tablosu (haftalık XP)</li>
+        <li>Realtime subscription (canlı güncelleme)</li>
+        <li>Profil görüntüleme ekranı</li>
+        <li>Achievement paylaşım kartları</li>
+      </ul>
+      <div class="week-deliverable">↳ Sosyal ağ mekanikleri çalışır</div>
+    </div>
+
+    <div class="week-card social">
+      <div class="week-num">Hafta 10</div>
+      <div class="week-title">Analitik ve SM-2</div>
+      <ul>
+        <li>SM-2 algoritmasını implemente et</li>
+        <li>Kelime review scheduler</li>
+        <li>fl_chart ile 5 grafik</li>
+        <li>Aktivite heatmap (GitHub tarzı)</li>
+        <li>CEFR seviye tahmini</li>
+        <li>Haftalık AI insight raporu</li>
+        <li>Grammar hata analizi</li>
+      </ul>
+      <div class="week-deliverable">↳ Data-rich dashboard hazır</div>
+    </div>
+  </div>
+
+  <h3>Faz 4 — Polish ve Demo (Hafta 11-12)</h3>
+
+  <div class="week-grid">
+    <div class="week-card polish">
+      <div class="week-num">Hafta 11</div>
+      <div class="week-title">UX polish ve bug fix</div>
+      <ul>
+        <li>Tüm ekranları gözden geçir</li>
+        <li>Loading states (shimmer effect)</li>
+        <li>Empty states (boş listeler)</li>
+        <li>Error handling UI</li>
+        <li>Onboarding flow (ilk kullanım)</li>
+        <li>Bildirimler (flutter_local_notifications)</li>
+        <li>Bug listesi çıkar, sırayla düzelt</li>
+      </ul>
+      <div class="week-deliverable">↳ Production-ready uygulama</div>
+    </div>
+
+    <div class="week-card polish">
+      <div class="week-num">Hafta 12</div>
+      <div class="week-title">Demo hazırlık</div>
+      <ul>
+        <li>APK oluştur (release mode)</li>
+        <li>Gerçek cihazda test</li>
+        <li>Demo script'i yaz (dakika dakika)</li>
+        <li>Test kullanıcı hesapları oluştur</li>
+        <li>Demo için dummy data yükle</li>
+        <li>Sunum slaytları (10-15 slide)</li>
+        <li>Tanıtım videosu (2-3 dk)</li>
+        <li>README.md GitHub için</li>
+      </ul>
+      <div class="week-deliverable">↳ ⭐ TESLİM EDİLEBİLİR PROJE</div>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-label">Gerçekçilik</div>
+    <p>
+      Bu plan ideal senaryo. <mark>Hafta 6'daki MVP hedefini koru</mark> — o tarihte en azından "konuş-AI yanıtla" çalışıyorsa proje kurtulur. Geri kalan her özellik bonus. Bazı haftalar kayabilir, panikleme. Özellik listesinden bir kısmını çıkar, MVP'yi koru.
+    </p>
+  </div>
+</section>
+
+<!-- BÖLÜM 12 -->
+<section class="chapter" id="b12">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 12 / Bütçe</div>
+    <h2 class="chapter-title">Maliyet <em>kontrolü.</em></h2>
+    <p class="chapter-intro">
+      Sıfır bütçeyle kallavi proje. Hangi servis ücretsiz, hangisi ücretli, nasıl sıfır maliyette kalırız.
+    </p>
+  </div>
+
+  <h3>Tüm servislerin maliyet özeti</h3>
+
+  <table class="cost-table">
+    <thead>
+      <tr>
+        <th>Servis</th>
+        <th>Ücretsiz Tier</th>
+        <th>Kullanımımız</th>
+        <th>Maliyet</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Supabase</td>
+        <td>500MB DB, 1GB storage, 2GB bandwidth</td>
+        <td>Backend + Auth + Storage</td>
+        <td><span class="price-good">$0</span></td>
+      </tr>
+      <tr>
+        <td>Groq</td>
+        <td>14.400 req/gün Whisper<br>30 req/dk Llama</td>
+        <td>Tüm AI çağrıları</td>
+        <td><span class="price-good">$0</span></td>
+      </tr>
+      <tr>
+        <td>whisper.cpp</td>
+        <td>Tamamen ücretsiz</td>
+        <td>Offline ses tanıma</td>
+        <td><span class="price-good">$0</span></td>
+      </tr>
+      <tr>
+        <td>flutter_tts</td>
+        <td>Cihaz native</td>
+        <td>Text-to-speech</td>
+        <td><span class="price-good">$0</span></td>
+      </tr>
+      <tr>
+        <td>Google Play Console</td>
+        <td>Tek seferlik $25 (opsiyonel)</td>
+        <td>Play Store'a yükleme</td>
+        <td><span class="price-good">$0*</span></td>
+      </tr>
+      <tr>
+        <td>GitHub</td>
+        <td>Public repo sınırsız</td>
+        <td>Kod hosting</td>
+        <td><span class="price-good">$0</span></td>
+      </tr>
+      <tr>
+        <td>Figma</td>
+        <td>Ücretsiz tier</td>
+        <td>UI tasarım (opsiyonel)</td>
+        <td><span class="price-good">$0</span></td>
+      </tr>
+      <tr>
+        <td><strong>TOPLAM</strong></td>
+        <td></td>
+        <td></td>
+        <td><span class="price-good"><strong>$0</strong></span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="muted">* Play Store yüklemesi opsiyonel — demo için APK yeterli.</p>
+
+  <h3>Groq rate limit stratejisi</h3>
+
+  <p>Günlük 14.400 Whisper isteği çok büyük bir sayı (dakikada 10 req). Ama yine de dikkatli olalım:</p>
+
+  <pre><code>class GroqRateLimiter {
+  static final _queue = Queue&lt;Future Function()&gt;();
+  static bool _processing = false;
+  static DateTime _lastRequest = DateTime.now();
+  static const _minDelay = Duration(milliseconds: 500);
+  
+  static Future&lt;T&gt; <span class="fn">throttled</span>&lt;T&gt;(Future&lt;T&gt; Function() task) async {
+    final completer = Completer&lt;T&gt;();
+    
+    _queue.add(() async {
+      final elapsed = DateTime.now().difference(_lastRequest);
+      if (elapsed &lt; _minDelay) {
+        await Future.delayed(_minDelay - elapsed);
+      }
+      
+      try {
+        final result = await task();
+        _lastRequest = DateTime.now();
+        completer.complete(result);
+      } catch (e) {
+        completer.completeError(e);
+      }
+    });
+    
+    _processQueue();
+    return completer.future;
+  }
+}</code></pre>
+
+  <h3>Cache stratejisi — maliyet ve hız</h3>
+
+  <p>Aynı kelimeyi 100 kez telaffuz ederse, Groq'a her seferinde gitmemeli:</p>
+
+  <pre><code>class WordEvaluationCache {
+  final Isar isar;
+  
+  Future&lt;Evaluation?&gt; <span class="fn">get</span>(String word, String userAudio) async {
+    <span class="comment">// Aynı kelime + benzer ses için cache kontrol</span>
+    final audioHash = _hashAudio(userAudio);
+    final cached = await isar.cachedEvaluations
+      .filter()
+      .wordEqualTo(word)
+      .audioHashEqualTo(audioHash)
+      .findFirst();
+    
+    if (cached != null &amp;&amp; 
+        cached.createdAt.isAfter(DateTime.now().subtract(Duration(days: 7)))) {
+      return cached.evaluation;
+    }
+    return null;
+  }
+}</code></pre>
+
+  <div class="callout callout-tip">
+    <div class="callout-label">Pro İpucu</div>
+    <p>
+      Geliştirme sırasında bile Groq'u anlamsızca çağırma. Mock data ile UI geliştir, API entegrasyonunu en son yap. Bu hem hızlı hem de bütçe-dostu.
+    </p>
+  </div>
+</section>
+
+<!-- BÖLÜM 13 -->
+<section class="chapter" id="b13">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 13 / Demo</div>
+    <h2 class="chapter-title">Demo ve <em>sunum.</em></h2>
+    <p class="chapter-intro">
+      12 hafta çalıştın, şimdi etkileyici bir sunumla bitir. Dakika dakika demo script'i.
+    </p>
+  </div>
+
+  <h3>10 dakikalık demo senaryosu</h3>
+
+  <div class="card accent">
+    <div class="card-label">0:00 – 1:00 / Hook</div>
+    <h4>Açılış — dikkat çek</h4>
+    <p>
+      "Herkes Duolingo kullanıyor ama hiçbiriniz yabancı birisiyle rahat konuşamıyor. Neden? Çünkü Duolingo yazıya bakıyor, ama dil konuşma. VoiceLingo tam bu problemi çözüyor."
+    </p>
+    <p class="muted">Slayt: Problem istatistiği (dil öğrenenlerin %80'i konuşamıyor).</p>
+  </div>
+
+  <div class="card accent">
+    <div class="card-label">1:00 – 3:00 / Canlı demo — kelime pratiği</div>
+    <h4>Ses + AI gösterisi</h4>
+    <p>
+      Uygulamayı aç, kelime pratiğine gir. AI "What's the capital of France?" desin. "Paris" de. Anında skor, XP, seviye bar animasyonu. Sonra bilerek yanlış: "London". AI düzeltsin.
+    </p>
+    <p class="muted">Kritik: Sınıfta mikrofon hassasiyetini önceden test et.</p>
+  </div>
+
+  <div class="card accent">
+    <div class="card-label">3:00 – 4:30 / Sohbet modu</div>
+    <h4>AI ile konuşma</h4>
+    <p>
+      "How was your weekend?" diye sor. Bilerek past tense hatası yap: "I go to cinema yesterday." AI düzeltsin, açıklasın. Hatanın grammar kategorisini göster.
+    </p>
+  </div>
+
+  <div class="card accent">
+    <div class="card-label">4:30 – 6:00 / Teknik derinlik</div>
+    <h4>On-device AI ve offline mode</h4>
+    <p>
+      Telefonu uçak moduna al. "Hâlâ çalışıyor" de. Ses kaydet, whisper.cpp cihaz üstünde transkript yapar. İnternet gelince sync olur.
+    </p>
+    <p class="muted">Bu hocayı en çok etkileyen kısım — "edge AI" mühendislik derinliği.</p>
+  </div>
+
+  <div class="card accent">
+    <div class="card-label">6:00 – 7:30 / Analitik</div>
+    <h4>Dashboard gezintisi</h4>
+    <p>
+      İstatistik ekranına geç. Heatmap, kelime büyüme grafiği, CEFR tahmini. "SM-2 algoritmasını kendim implemente ettim" diye belirt.
+    </p>
+  </div>
+
+  <div class="card accent">
+    <div class="card-label">7:30 – 9:00 / Sosyal ve gamification</div>
+    <h4>Liderlik tablosu + achievement</h4>
+    <p>
+      Liderlik tablosunu göster (canlı güncelleniyor). Bir achievement açığa çıkart. Paylaşım kartı. Arkadaş eklemeyi göster.
+    </p>
+  </div>
+
+  <div class="card accent">
+    <div class="card-label">9:00 – 10:00 / Teknik stack ve kapanış</div>
+    <h4>Mimariyi özetle</h4>
+    <p>
+      Slayt: Mimari diyagramı. "Flutter + Supabase + Groq + whisper.cpp + Isar + Riverpod + pgvector." Her birine neden seçtiğini kısaca açıkla. Bitir.
+    </p>
+  </div>
+
+  <h3>Sunum slaytları (15 slide)</h3>
+
+  <ol>
+    <li><strong>Kapak</strong> — VoiceLingo Pro logosu, adın, numaran</li>
+    <li><strong>Problem</strong> — Dil öğrenenlerin konuşma zorluğu</li>
+    <li><strong>Çözüm</strong> — Sesli AI öğretmen</li>
+    <li><strong>Demo</strong> — "Canlı göstereceğim"</li>
+    <li><strong>Mimari diyagramı</strong> — sistem görseli</li>
+    <li><strong>Tech stack</strong> — ikonlarla logo dizisi</li>
+    <li><strong>AI yaklaşımı</strong> — hibrit (on-device + cloud)</li>
+    <li><strong>Offline-first</strong> — mimari avantaj</li>
+    <li><strong>SM-2 algoritması</strong> — bilimsel temel</li>
+    <li><strong>Gamification</strong> — XP, achievement, streak</li>
+    <li><strong>Analytics</strong> — örnek grafikler</li>
+    <li><strong>Zorluklar</strong> — karşılaştığın teknik engeller</li>
+    <li><strong>Metrikler</strong> — kod satırı, ekran sayısı, feature sayısı</li>
+    <li><strong>Gelecek</strong> — nelere ekleyebilirdin</li>
+    <li><strong>Teşekkür + soru</strong></li>
+  </ol>
+
+  <h3>Sık yapılan demo hataları</h3>
+
+  <div class="feat-grid">
+    <div class="feat">
+      <div class="feat-icon">✗ Hata 01</div>
+      <h5>Boş hesap</h5>
+      <p>Grafikler boş, liderlik boş. Önceden 7-10 günlük sahte veri yükle.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">✗ Hata 02</div>
+      <h5>Internet varsayımı</h5>
+      <p>Okul Wi-Fi çöker. Hotspot hazır olsun, bir gün önce tam test et.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">✗ Hata 03</div>
+      <h5>Ses sorunu</h5>
+      <p>Sınıftaki ambient gürültüye göre test etmemek. Mikrofon odaklı bir alan seç.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">✗ Hata 04</div>
+      <h5>API limiti</h5>
+      <p>Demo öncesi Groq'u bitirmek. Günlük sayacı kontrol et.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">✗ Hata 05</div>
+      <h5>Şarj bitmesi</h5>
+      <p>Demo sırasında batarya. %100 dolu başla, power bank bulundur.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">✗ Hata 06</div>
+      <h5>Spontane demo</h5>
+      <p>Sırayı bilmeden girmek. Script'i 3 kez prova et, saat tut.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-label">Sunum Sırrı</div>
+    <p>
+      Hoca mükemmel kod beklemiyor — <strong>ne yaptığını anladığını</strong> görmek istiyor. "Bu kısmı neden bu şekilde yaptın?" sorusuna hazırlıklı ol. Her teknik karara bir gerekçe hazırla.
+    </p>
+  </div>
+</section>
+
+<!-- BÖLÜM 14 -->
+<section class="chapter" id="b14">
+  <div class="chapter-head">
+    <div class="chapter-num">Bölüm 14 / Yardım</div>
+    <h2 class="chapter-title">Takılınca <em>yol haritası.</em></h2>
+    <p class="chapter-intro">
+      12 hafta boyunca onlarca kez takılacaksın. Bu normaldir ve kritik olan hızlı çıkış yöntemlerini bilmek.
+    </p>
+  </div>
+
+  <h3>Sıralı problem çözme yöntemi</h3>
+
+  <div class="step">
+    <div class="step-num">01</div>
+    <div class="step-body">
+      <h4>Hata mesajını gerçekten oku</h4>
+      <p>Flutter/Dart hataları genelde açıktır. "Null check operator used on null value" cümlesi tam satırı söyler. Sabırla oku.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">02</div>
+    <div class="step-body">
+      <h4>flutter clean + pub get</h4>
+      <p>Garip hatalar için ilk deneme:</p>
+      <pre><code>flutter clean
+flutter pub get
+flutter run</code></pre>
+      <p>%30 ihtimalle çözer.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">03</div>
+    <div class="step-body">
+      <h4>Google'a hatayı yapıştır</h4>
+      <p>Tırnak işareti olmadan hata mesajını ara. Stack Overflow ilk 3 sonuç genelde çözüm olur.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">04</div>
+    <div class="step-body">
+      <h4>Claude veya ChatGPT'ye sor</h4>
+      <p>Prompt formatı:</p>
+      <pre><code>Bu Flutter kodu bu hatayı veriyor:
+
+[kod]
+
+[hata mesajı]
+
+Ne yapmalıyım?</code></pre>
+      <p>Kodu ve hatayı birlikte ver, çok hızlı çözüm gelir.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">05</div>
+    <div class="step-body">
+      <h4>Discord ve Reddit</h4>
+      <p><a href="https://discord.gg/flutter" target="_blank">Flutter Community Discord</a> — 100k+ üye, çok hızlı cevap. <a href="https://reddit.com/r/FlutterDev" target="_blank">r/FlutterDev</a> — daha derinlemesine tartışmalar.</p>
+    </div>
+  </div>
+
+  <h3>Kritik komut referansı</h3>
+
+  <pre><code><span class="comment"># Geliştirme</span>
+flutter run                  <span class="comment"># emülatörde çalıştır</span>
+flutter run --release        <span class="comment"># release mode (hızlı test)</span>
+flutter hot-reload           <span class="comment"># r tuşu (VS Code'da otomatik)</span>
+flutter hot-restart          <span class="comment"># R tuşu (tam yeniden başlat)</span>
+
+<span class="comment"># Paket yönetimi</span>
+flutter pub get              <span class="comment"># paketleri indir</span>
+flutter pub upgrade          <span class="comment"># güncelle</span>
+flutter pub add &lt;paket&gt;      <span class="comment"># paket ekle</span>
+flutter pub outdated         <span class="comment"># eski paketleri listele</span>
+
+<span class="comment"># Build</span>
+flutter build apk --release              <span class="comment"># Android APK</span>
+flutter build appbundle --release        <span class="comment"># Play Store için</span>
+flutter build ios --release              <span class="comment"># iOS (Mac gerekir)</span>
+
+<span class="comment"># Temizlik</span>
+flutter clean                            <span class="comment"># build cache temizle</span>
+
+<span class="comment"># Cihaz/Emülatör</span>
+flutter devices                          <span class="comment"># bağlı cihazlar</span>
+flutter emulators --launch &lt;id&gt;          <span class="comment"># emülatör aç</span>
+
+<span class="comment"># Debug</span>
+flutter doctor -v                        <span class="comment"># detaylı kurulum raporu</span>
+flutter analyze                          <span class="comment"># kod analiz</span>
+flutter test                             <span class="comment"># testleri çalıştır</span>
+
+<span class="comment"># Code generation (Isar, Riverpod için)</span>
+dart run build_runner build --delete-conflicting-outputs
+dart run build_runner watch              <span class="comment"># sürekli izle</span>
+
+<span class="comment"># Git</span>
+git status                               <span class="comment"># durum</span>
+git add .                                <span class="comment"># hepsini ekle</span>
+git commit -m "message"                  <span class="comment"># commit</span>
+git push                                 <span class="comment"># GitHub'a yükle</span>
+git pull                                 <span class="comment"># değişiklikleri al</span>
+git checkout -b feature/xxx              <span class="comment"># yeni branch</span>
+git merge feature/xxx                    <span class="comment"># branch birleştir</span>
+git log --oneline --graph                <span class="comment"># geçmiş</span>
+git reset --hard HEAD~1                  <span class="comment"># son commit'i sil (DİKKAT)</span></code></pre>
+
+  <h3>Vazgeçilmez kaynaklar</h3>
+
+  <div class="feat-grid">
+    <div class="feat">
+      <div class="feat-icon">DOC</div>
+      <h5>flutter.dev/learn</h5>
+      <p>Resmi öğrenme merkezi. Başlarken ve referans için.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">DOC</div>
+      <h5>dart.dev/language</h5>
+      <p>Dart dil referansı. Sözdizimi için.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">PKG</div>
+      <h5>pub.dev</h5>
+      <p>Tüm Flutter paketleri. Paket bulmak ve dökümana bakmak için.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">API</div>
+      <h5>api.flutter.dev</h5>
+      <p>Widget API referansı. Parametre aramak için vazgeçilmez.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">DOC</div>
+      <h5>supabase.com/docs</h5>
+      <p>Supabase komple dökümantasyon. Flutter örnekleri dahil.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">DOC</div>
+      <h5>riverpod.dev</h5>
+      <p>Riverpod resmi site. State management için.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">API</div>
+      <h5>console.groq.com/docs</h5>
+      <p>Groq API dökümantasyonu. Modeller ve rate limitler.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">COM</div>
+      <h5>discord.gg/flutter</h5>
+      <p>Flutter Community Discord. Canlı yardım.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">VID</div>
+      <h5>youtube.com/@flutterdev</h5>
+      <p>Resmi YouTube kanalı. Haftalık video.</p>
+    </div>
+  </div>
+
+  <h3>Zor anlar için rehber</h3>
+
+  <div class="callout callout-danger">
+    <div class="callout-label">Panik Yapma Listesi</div>
+    <ul>
+      <li><strong>"Kod çalışmıyor, bilmem ne yapmamı":</strong> Son çalışan commit'e git reset et, adım adım tekrar ekle.</li>
+      <li><strong>"Bu hafta çok geride kaldım":</strong> MVP öncelik — bonus özellikleri at, temel akışı koru.</li>
+      <li><strong>"Bu özellik çok zor geliyor":</strong> Mock/dummy versiyonunu yap, AI'ya bağlamayı sonraya bırak.</li>
+      <li><strong>"Tasarımım çirkin":</strong> Figma Community'den hazır UI kit kopyala, rehineye değmez.</li>
+      <li><strong>"Hoca ne der diye korkuyorum":</strong> Çalışan bir şeyin olması bile çoğu projeden ileri.</li>
+    </ul>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-label">Son Söz</div>
+    <p>
+      Bu proje bitirilmesi zor olduğu için değerli. Yazılım mühendisliği <strong>çözmek değil, çözene kadar pes etmemek</strong>. İlk ay bunalırsın, ikinci ay alışırsın, üçüncü ay akıyor gider. Başardın demektir kendine güvenmeye başlayınca.
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="quote">
+    "Plan bir harita değildir, pusula."
+  </div>
+  <div class="sig">VoiceLingo Pro / v2.0 / Kallavi Edition / 2026</div>
+</footer>
+
+</body>
+</html>

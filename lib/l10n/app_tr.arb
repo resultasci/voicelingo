@@ -1,0 +1,134 @@
+{
+  "@@locale": "tr",
+
+  "appName": "VoiceLingo",
+  "@appName": {
+    "description": "Uygulama adı, her zaman büyük 'V' ve 'L' ile yazılır."
+  },
+
+  "common_ok": "Tamam",
+  "common_cancel": "İptal",
+  "common_save": "Kaydet",
+  "common_delete": "Sil",
+  "common_retry": "Tekrar dene",
+  "common_back": "Geri",
+  "common_next": "İleri",
+  "common_done": "Tamam",
+  "common_loading": "Yükleniyor…",
+  "common_error": "Bir hata oluştu",
+
+  "nav_dashboard": "GENEL",
+  "nav_words": "KELİME",
+  "nav_practice": "PRATİK",
+  "nav_profile": "PROFİL",
+  "nav_settings": "Ayarlar",
+  "nav_scenarios": "Senaryolar",
+
+  "auth_signIn": "Giriş yap",
+  "auth_signUp": "Kayıt ol",
+  "auth_signOut": "Çıkış yap",
+  "auth_email": "E-posta",
+  "auth_password": "Şifre",
+  "auth_username": "Kullanıcı adı",
+  "auth_confirmPassword": "Şifreyi doğrula",
+  "auth_forgotPassword": "Şifremi unuttum",
+  "auth_changePassword": "Şifre değiştir",
+  "auth_resetPassword": "Şifre sıfırla",
+  "auth_validation_fillAll": "Tüm alanları doldur",
+  "auth_validation_passwordMismatch": "Şifreler eşleşmiyor",
+  "auth_error_sessionNotFound": "Oturum bulunamadı, lütfen tekrar giriş yap.",
+  "auth_error_sessionExpired": "Oturum süren doldu, lütfen tekrar giriş yap.",
+
+  "error_network": "Bağlantı sorunu. İnternetini kontrol et.",
+  "error_timeout": "Bağlantı zaman aşımına uğradı.",
+  "error_unexpected": "Beklenmeyen bir hata oluştu.",
+  "error_rateLimit": "Günlük kullanım limitine ulaştın. Yarın tekrar dene.",
+  "error_audioTooLong": "Ses kaydı çok uzun. Daha kısa bir kayıt dene.",
+  "error_aiUnavailable": "AI servisi şu an cevap vermiyor.",
+  "error_invalidJson": "Servisten geçersiz cevap alındı.",
+  "error_offline": "Çevrimdışı moddasın.",
+  "error_audioInvalid": "Ses tanıma servisinden geçersiz cevap alındı.",
+  "error_evalInvalid": "Değerlendirme servisi geçersiz yanıt döndü.",
+  "error_serverInvalid": "Beklenmeyen sunucu yanıtı.",
+
+  "settings_title": "Ayarlar",
+  "settings_theme": "Tema",
+  "settings_themeDark": "Koyu",
+  "settings_themeLight": "Açık",
+  "settings_themeSystem": "Sistem",
+  "settings_language": "Arayüz Dili",
+  "settings_languageTurkish": "Türkçe",
+  "settings_languageEnglish": "İngilizce",
+  "settings_ttsSpeed": "Konuşma Hızı",
+  "settings_ttsSpeedSlow": "Yavaş",
+  "settings_ttsSpeedNormal": "Normal",
+  "settings_ttsSpeedFast": "Hızlı",
+  "settings_notifications": "Bildirimler",
+  "settings_reviewHour": "Günlük Hatırlatma Saati",
+  "settings_textScale": "Yazı Büyüklüğü",
+  "settings_aiCharacter": "AI Karakteri",
+  "settings_account": "Hesap",
+  "settings_about": "Hakkında",
+  "settings_version": "Sürüm",
+
+  "profile_level": "Seviye",
+  "profile_xp": "XP",
+  "profile_streak": "Streak",
+  "profile_streak_days": "{count, plural, =0{Henüz streak yok} =1{1 gün} other{{count} gün}}",
+  "@profile_streak_days": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "profile_cefr": "CEFR Seviyesi",
+
+  "words_addNew": "Yeni Kelime",
+  "words_review_due": "{count, plural, =0{Bugün tekrar yok} =1{1 kelime tekrar bekliyor} other{{count} kelime tekrar bekliyor}}",
+  "@words_review_due": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "words_review_remember": "Hatırladım",
+  "words_review_hard": "Zorlandım",
+  "words_review_forgot": "Unuttum",
+  "words_duplicate": "\"{word}\" zaten listende.",
+  "@words_duplicate": {
+    "placeholders": {
+      "word": { "type": "String" }
+    }
+  },
+
+  "conversation_listening": "Dinleniyor…",
+  "conversation_thinking": "Düşünüyor…",
+  "conversation_speaking": "Konuşuyor…",
+  "conversation_idle": "Mikrofon hazır",
+  "conversation_handsfree": "Eller serbest mod",
+  "conversation_pushToTalk": "Konuşmak için basılı tut",
+  "conversation_micPermissionDenied": "Mikrofon izni gerekli. Ayarlardan açabilirsin.",
+
+  "notification_reviewReminder_title": "Hatırlatma Zamanı!",
+  "notification_reviewReminder_body": "\"{word}\" kelimesinin tekrar zamanı geldi!",
+  "@notification_reviewReminder_body": {
+    "placeholders": {
+      "word": { "type": "String" }
+    }
+  },
+  "notification_dailyDigest_title": "Günlük tekrar",
+  "notification_dailyDigest_body": "{count, plural, =0{Bugün tekrarlanacak kelimen yok} =1{Bugün 1 kelime tekrar bekliyor} other{Bugün {count} kelime tekrar bekliyor}}",
+  "@notification_dailyDigest_body": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "boot_envMissing_title": "Yapılandırma eksik",
+  "boot_envMissing_description": "{key} tanımlı değil veya boş — .env dosyanızı kontrol edin.",
+  "@boot_envMissing_description": {
+    "placeholders": {
+      "key": { "type": "String" }
+    }
+  },
+  "boot_dotenvFailed_title": ".env yüklenemedi",
+  "boot_dotenvFailed_description": ".env dosyası proje kökünde bulunmuyor veya okunamadı."
+}

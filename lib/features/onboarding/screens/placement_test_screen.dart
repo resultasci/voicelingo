@@ -1,0 +1,234 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../providers/profile_provider.dart';
+import '../../../services/settings_service.dart';
+import '../../../theme/app_theme.dart';
+
+class _Question {
+  final String prompt;
+  final List<String> options;
+  final int correct;
+  const _Question(this.prompt, this.options, this.correct);
+}
+
+const _placementQuestions = <_Question>[
+  _Question('"Apple" Türkçe ne demek?', ['Elma', 'Armut', 'Çilek', 'Üzüm'], 0),
+  _Question('"I ___ a student."', ['am', 'is', 'are', 'be'], 0),
+  _Question(
+      '"Hello" — anlamı?', ['Merhaba', 'Hoşçakal', 'Lütfen', 'Teşekkür'], 0),
+  _Question('She ___ to school every day.', ['go', 'goes', 'going', 'gone'], 1),
+  _Question('"Big" zıt anlamlısı?', ['Tall', 'Small', 'Wide', 'Heavy'], 1),
+  _Question('Yesterday I ___ a movie.',
+      ['watch', 'watched', 'watching', 'watches'], 1),
+  _Question('If I ___ rich, I would travel.', ['am', 'was', 'were', 'be'], 2),
+  _Question('"I have been waiting ___ two hours."',
+      ['since', 'for', 'during', 'in'], 1),
+  _Question(
+      'Choose the correct passive: "Someone stole my bike."',
+      [
+        'My bike was stolen.',
+        'My bike is stole.',
+        'My bike has stole.',
+        'My bike stole.'
+      ],
+      0),
+  _Question('"He suggested ___ a movie."',
+      ['to watch', 'watching', 'watch', 'watched'], 1),
+];
+
+String cefrFromScore(int correct) {
+  if (correct >= 10) return 'B2';
+  if (correct >= 7) return 'B1';
+  if (correct >= 4) return 'A2';
+  return 'A1';
+}
+
+class PlacementTestScreen extends ConsumerStatefulWidget {
+  const PlacementTestScreen({super.key});
+
+  @override
+  ConsumerState<PlacementTestScreen> createState() =>
+      _PlacementTestScreenState();
+}
+
+class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
+  int _index = 0;
+  int _correct = 0;
+  bool _saving = false;
+  String? _result;
+
+  void _answer(int picked) {
+    if (picked == _placementQuestions[_index].correct) _correct++;
+    if (_index < _placementQuestions.length - 1) {
+      setState(() => _index++);
+    } else {
+      _finish();
+    }
+  }
+
+  Future<void> _finish() async {
+    setState(() {
+      _saving = true;
+      _result = cefrFromScore(_correct);
+    });
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      try {
+        await Supabase.instance.client
+            .from('profiles')
+            .update({'cefr_level': _result}).eq('id', user.id);
+      } catch (_) {
+        // Best-effort: settings cache below still gates HomeScreen.
+      }
+    }
+    await SettingsService().setPlacementDone(true);
+    ref.invalidate(profileProvider);
+    if (!mounted) return;
+    setState(() => _saving = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: CosmicBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: _result != null
+                ? _ResultView(
+                    cefr: _result!,
+                    correct: _correct,
+                    saving: _saving,
+                    onContinue: () => context.go('/'),
+                  )
+                : _QuestionView(
+                    index: _index,
+                    total: _placementQuestions.length,
+                    question: _placementQuestions[_index],
+                    onAnswer: _answer,
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuestionView extends StatelessWidget {
+  final int index;
+  final int total;
+  final _Question question;
+  final ValueChanged<int> onAnswer;
+  const _QuestionView({
+    required this.index,
+    required this.total,
+    required this.question,
+    required this.onAnswer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (index + 1) / total;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 4,
+                  backgroundColor: AppColors.surfaceHighest,
+                  valueColor:
+                      const AlwaysStoppedAnimation(AppColors.primaryContainer),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text('${index + 1}/$total',
+                style: AppText.code(11, color: AppColors.inkDim)),
+          ],
+        ),
+        const SizedBox(height: 32),
+        const SectionLabel('Seviye Belirleme',
+            color: AppColors.primaryContainer),
+        const SizedBox(height: 14),
+        Text(
+          question.prompt,
+          style: AppText.title(22,
+              color: AppColors.primary, weight: FontWeight.w600),
+        ),
+        const SizedBox(height: 24),
+        ...List.generate(question.options.length, (i) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: GhostButton(
+              label: question.options[i],
+              onTap: () => onAnswer(i),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+class _ResultView extends StatelessWidget {
+  final String cefr;
+  final int correct;
+  final bool saving;
+  final VoidCallback onContinue;
+  const _ResultView({
+    required this.cefr,
+    required this.correct,
+    required this.saving,
+    required this.onContinue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GlassPanel(
+        padding: const EdgeInsets.all(28),
+        glowColor: AppColors.primaryContainer,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SectionLabel('Sonuç', color: AppColors.primaryContainer),
+            const SizedBox(height: 18),
+            Text(
+              cefr,
+              style: AppText.hero(64,
+                      color: AppColors.primary, weight: FontWeight.w800)
+                  .copyWith(
+                shadows: neonGlow(AppColors.primary, blur: 18, opacity: 0.5),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text('$correct / 10 doğru',
+                style: AppText.body(13, color: AppColors.inkMuted)),
+            const SizedBox(height: 24),
+            if (saving) ...[
+              const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: AppColors.primaryContainer)),
+            ] else
+              NeonButton(
+                label: 'Devam et',
+                icon: Icons.arrow_forward,
+                onTap: onContinue,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
