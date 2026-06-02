@@ -8,7 +8,7 @@ import '../models/dictionary_entry.dart';
 ///
 /// Bir kelime soruldu:
 ///   1. dictionary_entries cache'inden oku — varsa direkt döndür.
-///   2. Yoksa Groq'un /enrich endpoint'inden zenginleştirme al (IPA + example).
+///   2. Yoksa Gemini'nin /enrich endpoint'inden (ai-proxy) zenginleştirme al (IPA + example).
 ///   3. Cache'e yaz, döndür.
 ///
 /// `/enrich-full` (synonyms/antonyms/etymology) endpoint'i henüz yok — Faz 6'da

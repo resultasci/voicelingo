@@ -1,10 +1,10 @@
 # VoiceLingo
 
-Türk kullanıcılar için tasarlanmış AI destekli sesli İngilizce öğrenme uygulaması. Flutter + Supabase + Groq (Llama 3.3 70B + Whisper) üzerine kurulu.
+Türk kullanıcılar için tasarlanmış AI destekli sesli İngilizce öğrenme uygulaması. Flutter + Supabase + Google Gemini (`gemini-2.5-flash`, multimodal) üzerine kurulu.
 
 ## Özellikler
 
-- **Sesli sohbet**: Whisper STT + Llama 3.3 70B AI koç + flutter_tts
+- **Sesli sohbet**: Gemini multimodal STT + AI koç (tek round-trip: transcript + reply + evaluation) + flutter_tts
 - **AI karakter sistemi**: Lily / Mr. James / Sarah / Kai — farklı aksan, kişilik, ders stili
 - **Eller serbest mod**: VAD (Voice Activity Detection) ile otomatik durdurma
 - **Course path (A1-C2)**: Yapılandırılmış ders ağacı, prerequisite unlock, SM-2 review
@@ -16,11 +16,11 @@ Türk kullanıcılar için tasarlanmış AI destekli sesli İngilizce öğrenme 
 
 ## Tech Stack
 
-- **Flutter** 3.5+ (Dart 3.5)
+- **Flutter** 3.24+ (Dart 3.5)
 - **State**: Riverpod 2.x
 - **Routing**: go_router 14
 - **Backend**: Supabase (Auth + Postgres + Edge Functions)
-- **AI**: Groq API (server-side, Supabase Edge Function proxy)
+- **AI**: Google Gemini API — `gemini-2.5-flash`, multimodal (text + audio); server-side `ai-proxy` Edge Function üzerinden (API key sadece Supabase secret olarak tutulur)
 - **Local**: SharedPreferences + Hive + flutter_secure_storage
 - **Observability**: Sentry
 
@@ -52,7 +52,7 @@ SUPABASE_ANON_KEY=<anon-key>
 supabase db push --db-url <session-pooler-url>
 
 # Edge Function secret
-supabase secrets set GROQ_API_KEY=<groq-api-key>
+supabase secrets set GEMINI_API_KEY=<gemini-api-key>
 supabase functions deploy ai-proxy
 supabase functions deploy account-admin
 ```
@@ -93,13 +93,13 @@ lib/
 ├── models/                 # Domain modeller
 ├── providers/              # Global Riverpod providers (auth, theme, locale, words)
 ├── router/                 # GoRouter config
-├── services/               # Auth, Groq, Account, Notification, Settings
+├── services/               # Auth, Account, Notification, Settings (AI servisi core/ai altında)
 └── theme/                  # COSMOS design system
 
 supabase/
-├── functions/ai-proxy/     # Groq proxy + rate limit
+├── functions/ai-proxy/     # Gemini proxy + rate limit
 ├── functions/account-admin/
-└── migrations/             # 18 migration
+└── migrations/             # 29 migration
 ```
 
 ## Komutlar

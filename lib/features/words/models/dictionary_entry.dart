@@ -1,6 +1,6 @@
 /// Sözlük girdisi — AI enrichment cache'i. `dictionary_entries` tablosundan.
 ///
-/// Whisper IPA + Groq enrichment'tan dolan ortak veri kümesi. Yeni
+/// Gemini IPA + enrichment'tan dolan ortak veri kümesi. Yeni
 /// kelime sorulduğunda önce buradan okunur, yoksa AI'dan çekilip cache'lenir.
 class DictionaryEntry {
   final String word;

@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 
 /// Tek bir Dio instance'ı için fabrika + ortak interceptor'lar.
 ///
-/// `GroqService` halen kendi private Dio'sunu kuruyor; bu sınıf gelecekte
+/// `GeminiService` halen kendi private Dio'sunu kuruyor; bu sınıf gelecekte
 /// (Faz 7+) yeni AI/REST endpoint'leri eklendikçe paylaşılan client haline
 /// gelecek. Faz 1'de altyapı; mevcut servisler değiştirilmiyor.
 class DioClientFactory {

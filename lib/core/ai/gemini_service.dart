@@ -339,7 +339,7 @@ class GeminiService {
 }
 
 /// BCP-47 language code for the user's target_language profile field.
-/// Kept here (was in groq_service) since callers still need it for STT hints.
+/// Callers need it for Gemini STT language hints.
 String? bcp47ForTargetLanguage(String? raw) {
   if (raw == null) return null;
   final v = raw.trim().toLowerCase();
