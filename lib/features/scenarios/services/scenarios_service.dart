@@ -95,7 +95,27 @@ class ScenariosService {
           'Content-Type': 'application/json',
         }),
       );
+      // The Dio client treats any status < 500 as "valid" (validateStatus), so
+      // 4xx error bodies arrive here instead of throwing. Inspect the status +
+      // `error` payload explicitly, otherwise a rate-limit/auth response would
+      // be parsed into a blank "Untitled scenario".
+      final status = res.statusCode ?? 0;
       final body = res.data;
+      final serverError = (body is Map && body['error'] is String)
+          ? body['error'] as String
+          : null;
+      if (status == 429) {
+        throw RateLimitException(serverError ??
+            'Günlük senaryo üretim limitine ulaştın. Yarın tekrar dene.');
+      }
+      if (status == 401) {
+        throw AuthException(
+            serverError ?? 'Oturum süren doldu, tekrar giriş yap.');
+      }
+      if (status < 200 || status >= 300 || serverError != null) {
+        throw NetworkException(
+            serverError ?? 'AI servisi geçersiz cevap döndü (HTTP $status).');
+      }
       if (body is! Map<String, dynamic>) {
         throw const NetworkException('AI servisi geçersiz cevap döndü.');
       }
@@ -117,16 +137,22 @@ class ScenariosService {
         createdAt: DateTime.now(),
       );
     } on DioException catch (e) {
-      final status = e.response?.statusCode ?? 0;
-      if (status == 429) {
-        throw const RateLimitException(
-            'Günlük senaryo üretim limitine ulaştın. Yarın tekrar dene.');
+      // Reaches here for transport errors and 5xx (validateStatus blocks <500).
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw const NetworkException('Bağlantı zaman aşımına uğradı.');
       }
-      if (status == 401) {
-        throw const AuthException('Oturum süren doldu, tekrar giriş yap.');
+      if (e.type == DioExceptionType.connectionError) {
+        throw const NetworkException(
+            'Bağlantı sorunu. İnternetini kontrol et.');
       }
+      final data = e.response?.data;
+      final serverError = (data is Map && data['error'] is String)
+          ? data['error'] as String
+          : null;
       throw NetworkException(
-          'AI servisine ulaşılamadı: ${e.message ?? "bilinmeyen hata"}');
+          serverError ?? 'Senaryo üretim servisi şu an cevap vermiyor.');
     }
   }
 

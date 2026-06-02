@@ -109,19 +109,12 @@ async function handleDelete(
   adminClient: ReturnType<typeof createClient>,
   userId: string,
 ): Promise<Response> {
-  // Best-effort payload wipe first (cascades would handle it anyway, but this
-  // makes the operation resilient to partial failures and easier to audit).
-  const { error: rpcErr } = await adminClient.rpc("delete_user_payload", {}, {
-    head: false,
-  });
-  // delete_user_payload() expects auth.uid(); when called via service-role
-  // adminClient there is no JWT, so we instead delete by user_id directly:
-  if (rpcErr) {
-    // Fall through to admin delete; CASCADE will clean up.
-    console.warn("delete_user_payload (service-role path) skipped:", rpcErr.message);
-  }
+  // NOTE: We do not call the delete_user_payload() RPC here. It relies on
+  // auth.uid(), which is null when invoked through the service-role client, so
+  // it would always fail. We delete each table directly by user_id instead;
+  // the final auth.users delete also CASCADEs as a backstop.
 
-  // Direct row deletes via service_role (RLS bypassed). Safe even if RPC ran.
+  // Direct row deletes via service_role (RLS bypassed).
   const tables: { name: string; column: string }[] = [
     { name: "messages", column: "" }, // handled via session join below
     { name: "practice_sessions", column: "user_id" },

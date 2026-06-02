@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+// AppException hierarchy defines our own AuthException; hide Supabase's to avoid
+// the ambiguous-import clash (PostgrestException etc. still come from Supabase).
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../core/errors/app_exception.dart';
 import '../core/logger/app_logger.dart';
 import '../core/network/connectivity_service.dart';
@@ -175,7 +177,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     if (userId == null) {
       AppLogger.warning('Kullanıcı oturumu bulunamadı, kelime eklenemiyor.',
           tag: 'WordsProvider');
-      throw Exception('Oturum bulunamadı.');
+      throw const AuthException('Oturum bulunamadı.');
     }
 
     final trimmedWord = word.trim();

@@ -48,11 +48,13 @@ class Word {
   factory Word.fromMap(Map<String, dynamic> map) => Word(
         id: map['id'] as String,
         userId: map['user_id'] as String,
-        word: map['word'] as String,
+        word: map['word'] as String? ?? '',
         translation: map['translation'] as String? ?? '',
         easeFactor: (map['ease_factor'] as num?)?.toDouble() ?? 2.5,
-        intervalDays: map['interval_days'] as int? ?? 1,
-        repetitions: map['repetitions'] as int? ?? 0,
+        // num?.toInt() rather than `as int?`: Hive cache round-trips can widen
+        // ints to doubles, and a hard cast would throw on the way back in.
+        intervalDays: (map['interval_days'] as num?)?.toInt() ?? 1,
+        repetitions: (map['repetitions'] as num?)?.toInt() ?? 0,
         nextReview: map['next_review'] != null
             ? DateTime.parse(map['next_review'] as String)
             : DateTime.now(),

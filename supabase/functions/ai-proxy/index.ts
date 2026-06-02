@@ -176,17 +176,24 @@ interface GeminiRequest {
   };
 }
 
+const GEMINI_TIMEOUT_MS = 20000;
+const GEMINI_MAX_ATTEMPTS = 3;
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
 async function geminiCall(
   body: GeminiRequest,
-): Promise<{ ok: true; text: string } | { ok: false; status: number; err: string }> {
-  let attempts = 0;
-  const maxAttempts = 3;
+): Promise<
+  { ok: true; text: string } | { ok: false; status: number; err: string }
+> {
+  let lastErr = "Max attempts reached";
+  let lastStatus = 500;
 
-  while (attempts < maxAttempts) {
+  for (let attempt = 1; attempt <= GEMINI_MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
-      
       const res = await fetch(
         `${GEMINI_BASE}/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
         {
@@ -196,18 +203,18 @@ async function geminiCall(
           signal: controller.signal,
         },
       );
-      
-      clearTimeout(timeoutId);
 
       if (!res.ok) {
-        if (res.status === 429 || res.status >= 500) {
-          attempts++;
-          if (attempts < maxAttempts) {
-            await new Promise(r => setTimeout(r, 1000 * attempts)); // Exponential backoff
-            continue;
-          }
+        // Drain the body so the connection is freed even when we retry.
+        const txt = await res.text().catch(() => "");
+        // Retry only transient upstream failures; 4xx (except 429) are terminal.
+        if ((res.status === 429 || res.status >= 500) &&
+          attempt < GEMINI_MAX_ATTEMPTS) {
+          lastErr = txt;
+          lastStatus = res.status;
+          await sleep(1000 * attempt); // linear backoff: 1s, 2s
+          continue;
         }
-        const txt = await res.text();
         return { ok: false, status: res.status, err: txt };
       }
 
@@ -216,17 +223,24 @@ async function geminiCall(
         .map((p: { text?: string }) => p.text ?? "")
         .join("")
         .trim();
-        
+
       return { ok: true, text };
-    } catch (e: any) {
-      attempts++;
-      if (attempts >= maxAttempts) {
-        return { ok: false, status: 504, err: e.message || "Timeout or Network error" };
+    } catch (e) {
+      // AbortError (timeout) vs. network failure — both retryable.
+      const aborted = e instanceof DOMException && e.name === "AbortError";
+      lastStatus = aborted ? 504 : 502;
+      lastErr = aborted
+        ? "Upstream timeout"
+        : (e instanceof Error ? e.message : "Network error");
+      if (attempt < GEMINI_MAX_ATTEMPTS) {
+        await sleep(1000 * attempt);
+        continue;
       }
-      await new Promise(r => setTimeout(r, 1000 * attempts));
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
-  return { ok: false, status: 500, err: "Max attempts reached" };
+  return { ok: false, status: lastStatus, err: lastErr };
 }
 
 /// Convert an OpenAI-style messages array (used by legacy callers) into
@@ -333,11 +347,17 @@ async function handleTurn(req: Request): Promise<Response> {
     "- `grammar_errors` is [] when none.\n" +
     "- Return ONLY the JSON object, no markdown fences, no commentary.";
 
+  // When the caller supplies a persona/system override we still need the
+  // JSON-schema contract appended, otherwise the model returns free-form prose
+  // and the client's ConversationTurn.fromJson parse silently yields blanks.
+  // Splitting on the "Respond with ONLY" marker preserves the schema half.
+  const schemaPart = defaultSystem.includes("Respond with ONLY")
+    ? "Respond with ONLY" + defaultSystem.split("Respond with ONLY")[1]
+    : defaultSystem;
   const systemPrompt =
     typeof systemOverride === "string" && systemOverride.length > 0 &&
       systemOverride.length < 4000
-      ? systemOverride + "\n\n" + defaultSystem.split("Respond with ONLY")[1]
-        .padStart(0)
+      ? systemOverride + "\n\n" + schemaPart
       : defaultSystem;
 
   const audioBase64 = await fileToBase64(file);
