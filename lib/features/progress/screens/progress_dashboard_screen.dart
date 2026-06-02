@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/error_handler.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../services/activity_service.dart';
@@ -13,21 +14,23 @@ class ProgressDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final locale = ref.watch(localeProvider).languageCode;
     final dailyXpAsync = ref.watch(dailyXpProvider(90));
     final masteryAsync = ref.watch(masterySummaryProvider);
     final topErrorsAsync = ref.watch(topErrorsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
-          locale == 'en' ? 'Progress' : 'İlerleme',
+          l.settings_progress,
           style: AppText.title(18,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
         ),
       ),
       body: CosmicBackground(
@@ -35,8 +38,7 @@ class ProgressDashboardScreen extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
             children: [
-              _SectionTitle(
-                  title: locale == 'en' ? 'Last 90 days' : 'Son 90 gün'),
+              _SectionTitle(title: l.progress_last90),
               const SizedBox(height: 10),
               _Card(
                 child: Column(
@@ -49,13 +51,13 @@ class ProgressDashboardScreen extends ConsumerWidget {
                       ),
                       error: (e, _) => Text(
                         getErrorMessage(context, e),
-                        style: AppText.body(12, color: AppColors.inkDim),
+                        style: AppText.body(12, color: c.inkDim),
                       ),
                       data: (xp) => ActivityHeatmap(
                         dailyXp: xp,
                         days: 90,
                         onTap: (day, xpVal) =>
-                            _showDayDetail(context, day, xpVal, locale),
+                            _showDayDetail(context, day, xpVal),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -64,7 +66,7 @@ class ProgressDashboardScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              _SectionTitle(title: locale == 'en' ? 'Mastery' : 'Ustalaşma'),
+              _SectionTitle(title: l.progress_mastery),
               const SizedBox(height: 10),
               masteryAsync.when(
                 loading: () => const Padding(
@@ -73,34 +75,34 @@ class ProgressDashboardScreen extends ConsumerWidget {
                 ),
                 error: (e, _) => Text(
                   getErrorMessage(context, e),
-                  style: AppText.body(12, color: AppColors.inkDim),
+                  style: AppText.body(12, color: c.inkDim),
                 ),
                 data: (s) => s == null
                     ? Text(
-                        locale == 'en' ? 'No data yet.' : 'Henüz veri yok.',
-                        style: AppText.body(12, color: AppColors.inkDim),
+                        l.progress_noData,
+                        style: AppText.body(12, color: c.inkDim),
                       )
                     : Column(
                         children: [
                           _MasteryRow(
-                            label: locale == 'en' ? 'Words' : 'Kelimeler',
-                            color: AppColors.primaryContainer,
+                            label: l.progress_words,
+                            color: c.primaryContainer,
                             done: s.wordsMastered,
                             total: s.wordsTotal,
                             ratio: s.wordsRatio,
                           ),
                           const SizedBox(height: 10),
                           _MasteryRow(
-                            label: locale == 'en' ? 'Grammar' : 'Gramer',
-                            color: AppColors.secondaryContainer,
+                            label: l.settings_grammar,
+                            color: c.secondaryContainer,
                             done: s.grammarCompleted,
                             total: s.grammarTotal,
                             ratio: s.grammarRatio,
                           ),
                           const SizedBox(height: 10),
                           _MasteryRow(
-                            label: locale == 'en' ? 'Lessons' : 'Dersler',
-                            color: AppColors.tertiary,
+                            label: l.progress_lessons,
+                            color: c.tertiary,
                             done: s.lessonsCompleted,
                             total: s.lessonsTotal,
                             ratio: s.lessonsRatio,
@@ -109,10 +111,7 @@ class ProgressDashboardScreen extends ConsumerWidget {
                       ),
               ),
               const SizedBox(height: 20),
-              _SectionTitle(
-                  title: locale == 'en'
-                      ? 'Top mistakes (30 days)'
-                      : 'En sık hatalar (30 gün)'),
+              _SectionTitle(title: l.progress_topMistakes),
               const SizedBox(height: 10),
               topErrorsAsync.when(
                 loading: () => const Padding(
@@ -124,10 +123,8 @@ class ProgressDashboardScreen extends ConsumerWidget {
                   if (errors.isEmpty) {
                     return _Card(
                       child: Text(
-                        locale == 'en'
-                            ? 'No mistakes recorded yet — keep practicing!'
-                            : 'Henüz hata kaydı yok — pratik yapmaya devam!',
-                        style: AppText.body(13, color: AppColors.inkDim),
+                        l.progress_noMistakes,
+                        style: AppText.body(13, color: c.inkDim),
                       ),
                     );
                   }
@@ -143,21 +140,20 @@ class ProgressDashboardScreen extends ConsumerWidget {
                                 Expanded(
                                   child: Text(
                                     e.type,
-                                    style:
-                                        AppText.body(13, color: AppColors.ink),
+                                    style: AppText.body(13, color: c.ink),
                                   ),
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: AppColors.error.withOpacity(0.15),
+                                    color: c.error.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
                                     '${e.occurrences}x',
                                     style: AppText.label(10,
-                                        color: AppColors.error,
+                                        color: c.error,
                                         weight: FontWeight.w800),
                                   ),
                                 ),
@@ -176,17 +172,16 @@ class ProgressDashboardScreen extends ConsumerWidget {
     );
   }
 
-  void _showDayDetail(
-      BuildContext context, DateTime day, int xp, String locale) {
+  void _showDayDetail(BuildContext context, DateTime day, int xp) {
     final fmt =
         '${day.day.toString().padLeft(2, '0')}.${day.month.toString().padLeft(2, '0')}.${day.year}';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: AppColors.bgCard,
+        backgroundColor: context.c.bgCard,
         duration: const Duration(seconds: 2),
         content: Text(
           '$fmt — $xp XP',
-          style: AppText.ink(13, color: AppColors.primaryContainer),
+          style: AppText.ink(13, color: context.c.primaryContainer),
         ),
       ),
     );
@@ -201,7 +196,7 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title.toUpperCase(),
       style: AppText.label(11,
-          color: AppColors.primaryContainer, weight: FontWeight.w800),
+          color: context.c.primaryContainer, weight: FontWeight.w800),
     );
   }
 }
@@ -211,12 +206,13 @@ class _Card extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.bgCard.withOpacity(0.6),
+        color: c.bgCard.withOpacity(0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.inkDim.withOpacity(0.15)),
+        border: Border.all(color: c.inkDim.withOpacity(0.15)),
       ),
       child: child,
     );
@@ -239,6 +235,7 @@ class _MasteryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,7 +246,7 @@ class _MasteryRow extends StatelessWidget {
                 child: Text(
                   label,
                   style: AppText.title(14,
-                      color: AppColors.ink, weight: FontWeight.w700),
+                      color: c.ink, weight: FontWeight.w700),
                 ),
               ),
               Text(
@@ -262,7 +259,7 @@ class _MasteryRow extends StatelessWidget {
           LinearProgressIndicator(
             value: ratio,
             minHeight: 6,
-            backgroundColor: AppColors.inkDim.withOpacity(0.15),
+            backgroundColor: c.inkDim.withOpacity(0.15),
             valueColor: AlwaysStoppedAnimation(color),
           ),
         ],

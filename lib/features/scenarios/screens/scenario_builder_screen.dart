@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/error_handler.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../theme/app_theme.dart';
@@ -80,17 +81,19 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final locale = ref.watch(localeProvider).languageCode;
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
-          locale == 'en' ? 'Create scenario' : 'Senaryo yarat',
+          l.scen_createTitle,
           style: AppText.title(17,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
         ),
       ),
       body: CosmicBackground(
@@ -99,9 +102,9 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
             children: [
               Text(
-                locale == 'en' ? 'Describe a scene' : 'Bir sahne tarif et',
+                l.scen_describeScene,
                 style: AppText.label(11,
-                    color: AppColors.primaryContainer, weight: FontWeight.w700),
+                    color: c.primaryContainer, weight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -109,36 +112,32 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
                 maxLines: 3,
                 maxLength: 280,
                 decoration: InputDecoration(
-                  hintText: locale == 'en'
-                      ? 'e.g. "Job interview for a senior Flutter role"'
-                      : 'ör: "Berberde saç kesimi"',
-                  hintStyle: AppText.body(13, color: AppColors.inkDim),
+                  hintText: l.scen_descHint,
+                  hintStyle: AppText.body(13, color: c.inkDim),
                   filled: true,
-                  fillColor: AppColors.bgCard.withOpacity(0.55),
+                  fillColor: c.bgCard.withOpacity(0.55),
                   border: _border(false),
                   enabledBorder: _border(false),
                   focusedBorder: _border(true),
                 ),
-                style: AppText.title(15,
-                    color: AppColors.ink, weight: FontWeight.w600),
+                style: AppText.title(15, color: c.ink, weight: FontWeight.w600),
               ),
               const SizedBox(height: 18),
               Text(
-                locale == 'en' ? 'Category' : 'Kategori',
+                l.scen_category,
                 style: AppText.label(11,
-                    color: AppColors.primaryContainer, weight: FontWeight.w700),
+                    color: c.primaryContainer, weight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               _CategoryRow(
                 selected: _category,
-                onSelect: (c) => setState(() => _category = c),
-                locale: locale,
+                onSelect: (cat) => setState(() => _category = cat),
               ),
               const SizedBox(height: 18),
               Text(
-                locale == 'en' ? 'Difficulty' : 'Zorluk',
+                l.scen_difficulty,
                 style: AppText.label(11,
-                    color: AppColors.primaryContainer, weight: FontWeight.w700),
+                    color: c.primaryContainer, weight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               _DifficultyRow(
@@ -152,8 +151,8 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
                 height: 52,
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryContainer,
-                    foregroundColor: AppColors.onPrimary,
+                    backgroundColor: c.primaryContainer,
+                    foregroundColor: c.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -170,9 +169,9 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
                         )
                       : const Icon(Icons.auto_awesome, size: 18),
                   label: Text(
-                    locale == 'en' ? 'Generate' : 'Oluştur',
+                    l.scen_generate,
                     style: AppText.label(13,
-                        color: AppColors.onPrimary, weight: FontWeight.w700),
+                        color: c.onPrimary, weight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -181,13 +180,13 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.1),
-                    border: Border.all(color: AppColors.error.withOpacity(0.4)),
+                    color: c.error.withOpacity(0.1),
+                    border: Border.all(color: c.error.withOpacity(0.4)),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     _error!,
-                    style: AppText.body(12, color: AppColors.error),
+                    style: AppText.body(12, color: c.error),
                   ),
                 ),
               ],
@@ -202,16 +201,15 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
                         onPressed: _generating ? null : _generate,
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(
-                              color:
-                                  AppColors.primaryContainer.withOpacity(0.5)),
+                              color: c.primaryContainer.withOpacity(0.5)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14)),
                         ),
                         child: Text(
-                          locale == 'en' ? 'Regenerate' : 'Yeniden üret',
+                          l.scen_regenerate,
                           style: AppText.label(13,
-                              color: AppColors.primaryContainer,
+                              color: c.primaryContainer,
                               weight: FontWeight.w700),
                         ),
                       ),
@@ -220,18 +218,17 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
                     Expanded(
                       child: FilledButton(
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primaryContainer,
-                          foregroundColor: AppColors.onPrimary,
+                          backgroundColor: c.primaryContainer,
+                          foregroundColor: c.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14)),
                         ),
                         onPressed: _generating ? null : _save,
                         child: Text(
-                          locale == 'en' ? 'Save & start' : 'Kaydet & başla',
+                          l.scen_saveStart,
                           style: AppText.label(13,
-                              color: AppColors.onPrimary,
-                              weight: FontWeight.w700),
+                              color: c.onPrimary, weight: FontWeight.w700),
                         ),
                       ),
                     ),
@@ -249,8 +246,8 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
           color: focused
-              ? AppColors.primaryContainer
-              : AppColors.inkDim.withOpacity(0.2),
+              ? context.c.primaryContainer
+              : context.c.inkDim.withOpacity(0.2),
           width: focused ? 2 : 1,
         ),
       );
@@ -261,41 +258,21 @@ class _CategoryRow extends StatelessWidget {
   const _CategoryRow({
     required this.selected,
     required this.onSelect,
-    required this.locale,
   });
   final String selected;
   final ValueChanged<String> onSelect;
-  final String locale;
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final items = [
-      (
-        'daily_life',
-        Icons.local_cafe_outlined,
-        locale == 'en' ? 'Daily' : 'Gündelik'
-      ),
-      ('work', Icons.work_outline, locale == 'en' ? 'Work' : 'İş'),
-      (
-        'travel',
-        Icons.flight_takeoff_outlined,
-        locale == 'en' ? 'Travel' : 'Seyahat'
-      ),
-      (
-        'health',
-        Icons.medical_services_outlined,
-        locale == 'en' ? 'Health' : 'Sağlık'
-      ),
-      (
-        'education',
-        Icons.school_outlined,
-        locale == 'en' ? 'Education' : 'Eğitim'
-      ),
-      (
-        'other',
-        Icons.theater_comedy_outlined,
-        locale == 'en' ? 'Other' : 'Diğer'
-      ),
+      ('daily_life', Icons.local_cafe_outlined, l.scen_catDaily),
+      ('work', Icons.work_outline, l.scen_catWork),
+      ('travel', Icons.flight_takeoff_outlined, l.scen_catTravel),
+      ('health', Icons.medical_services_outlined, l.scen_catHealth),
+      ('education', Icons.school_outlined, l.scen_catEducation),
+      ('other', Icons.theater_comedy_outlined, l.scen_catOther),
     ];
     return Wrap(
       spacing: 8,
@@ -311,13 +288,13 @@ class _CategoryRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primaryContainer.withOpacity(0.2)
-                  : AppColors.bgCard.withOpacity(0.5),
+                  ? c.primaryContainer.withOpacity(0.2)
+                  : c.bgCard.withOpacity(0.5),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
                 color: isSelected
-                    ? AppColors.primaryContainer
-                    : AppColors.inkDim.withOpacity(0.2),
+                    ? c.primaryContainer
+                    : c.inkDim.withOpacity(0.2),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -326,16 +303,12 @@ class _CategoryRow extends StatelessWidget {
               children: [
                 Icon(icon,
                     size: 16,
-                    color: isSelected
-                        ? AppColors.primaryContainer
-                        : AppColors.inkDim),
+                    color: isSelected ? c.primaryContainer : c.inkDim),
                 const SizedBox(width: 6),
                 Text(
                   label,
                   style: AppText.label(11,
-                      color: isSelected
-                          ? AppColors.primaryContainer
-                          : AppColors.inkDim,
+                      color: isSelected ? c.primaryContainer : c.inkDim,
                       weight: FontWeight.w700),
                 ),
               ],
@@ -359,6 +332,7 @@ class _DifficultyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Row(
       children: ScenarioDifficulty.values.map((d) {
         final isSelected = d == selected;
@@ -373,13 +347,13 @@ class _DifficultyRow extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.primaryContainer.withOpacity(0.2)
-                      : AppColors.bgCard.withOpacity(0.5),
+                      ? c.primaryContainer.withOpacity(0.2)
+                      : c.bgCard.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.primaryContainer
-                        : AppColors.inkDim.withOpacity(0.2),
+                        ? c.primaryContainer
+                        : c.inkDim.withOpacity(0.2),
                     width: isSelected ? 2 : 1,
                   ),
                 ),
@@ -387,9 +361,7 @@ class _DifficultyRow extends StatelessWidget {
                 child: Text(
                   d.label(locale),
                   style: AppText.label(12,
-                      color: isSelected
-                          ? AppColors.primaryContainer
-                          : AppColors.ink,
+                      color: isSelected ? c.primaryContainer : c.ink,
                       weight: FontWeight.w700),
                 ),
               ),
@@ -408,44 +380,38 @@ class _Preview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.bgCard.withOpacity(0.7),
+        color: c.bgCard.withOpacity(0.7),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.primaryContainer.withOpacity(0.4)),
+        border: Border.all(color: c.primaryContainer.withOpacity(0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             draft.title(locale),
-            style: AppText.title(18,
-                color: AppColors.ink, weight: FontWeight.w800),
+            style: AppText.title(18, color: c.ink, weight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
           Text(
             draft.setting,
-            style: AppText.body(13, color: AppColors.inkMuted)
-                .copyWith(height: 1.4),
+            style: AppText.body(13, color: c.inkMuted).copyWith(height: 1.4),
           ),
           const SizedBox(height: 12),
-          _Line(
-              label: locale == 'en' ? 'AI plays' : 'AI rolü',
-              value: draft.aiRole),
-          _Line(
-              label: locale == 'en' ? 'You play' : 'Senin rolün',
-              value: draft.userRole),
+          _Line(label: l.scen_aiPlays, value: draft.aiRole),
+          _Line(label: l.scen_youPlay, value: draft.userRole),
           if (draft.starterLine != null && draft.starterLine!.isNotEmpty)
-            _Line(
-                label: locale == 'en' ? 'Starts with' : 'Başlangıç',
-                value: '"${draft.starterLine!}"'),
+            _Line(label: l.scen_startsWith, value: '"${draft.starterLine!}"'),
           if (draft.objectives.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              locale == 'en' ? 'Goals' : 'Hedefler',
+              l.scen_goals,
               style: AppText.label(10,
-                  color: AppColors.primaryContainer, weight: FontWeight.w700),
+                  color: c.primaryContainer, weight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Wrap(
@@ -456,16 +422,15 @@ class _Preview extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.tertiary.withOpacity(0.15),
+                          color: c.tertiary.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: AppColors.tertiary.withOpacity(0.4)),
+                          border:
+                              Border.all(color: c.tertiary.withOpacity(0.4)),
                         ),
                         child: Text(
                           o,
                           style: AppText.label(10,
-                              color: AppColors.tertiary,
-                              weight: FontWeight.w700),
+                              color: c.tertiary, weight: FontWeight.w700),
                         ),
                       ))
                   .toList(),
@@ -484,6 +449,7 @@ class _Line extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: RichText(
@@ -492,11 +458,11 @@ class _Line extends StatelessWidget {
             TextSpan(
               text: '$label: ',
               style: AppText.label(11,
-                  color: AppColors.primaryContainer, weight: FontWeight.w700),
+                  color: c.primaryContainer, weight: FontWeight.w700),
             ),
             TextSpan(
               text: value,
-              style: AppText.body(12, color: AppColors.ink),
+              style: AppText.body(12, color: c.ink),
             ),
           ],
         ),

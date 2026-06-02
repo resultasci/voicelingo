@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../models/grammar_topic.dart';
@@ -45,30 +46,32 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final locale = ref.watch(localeProvider).languageCode;
     final t = widget.topic;
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
           t.title(locale),
           style: AppText.title(16,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         bottom: TabBar(
           controller: _tabCtrl,
-          indicatorColor: AppColors.primaryContainer,
-          labelColor: AppColors.primaryContainer,
-          unselectedLabelColor: AppColors.inkDim,
+          indicatorColor: c.primaryContainer,
+          labelColor: c.primaryContainer,
+          unselectedLabelColor: c.inkDim,
           labelStyle: AppText.label(12, weight: FontWeight.w700),
           tabs: [
-            Tab(text: locale == 'en' ? 'Lesson' : 'Konu'),
-            Tab(text: locale == 'en' ? 'Examples' : 'Örnekler'),
+            Tab(text: l.topic_tabLesson),
+            Tab(text: l.wordDetail_examples),
             const Tab(text: 'Quiz'),
           ],
         ),
@@ -95,8 +98,9 @@ class _LessonTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final desc = topic.description(locale) ??
-        (locale == 'en' ? 'No description yet.' : 'Açıklama yok.');
+    final l = AppL10n.of(context);
+    final c = context.c;
+    final desc = topic.description(locale) ?? l.topic_noDescription;
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
@@ -104,28 +108,25 @@ class _LessonTab extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primaryContainer.withOpacity(0.18),
+              color: c.primaryContainer.withOpacity(0.18),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                  color: AppColors.primaryContainer.withOpacity(0.5)),
+              border: Border.all(color: c.primaryContainer.withOpacity(0.5)),
             ),
             child: Text(
               topic.level,
               style: AppText.label(11,
-                  color: AppColors.primaryContainer, weight: FontWeight.w800),
+                  color: c.primaryContainer, weight: FontWeight.w800),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             topic.title(locale),
-            style: AppText.title(22,
-                color: AppColors.ink, weight: FontWeight.w800),
+            style: AppText.title(22, color: c.ink, weight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
           Text(
             desc,
-            style: AppText.body(14, color: AppColors.inkMuted)
-                .copyWith(height: 1.5),
+            style: AppText.body(14, color: c.inkMuted).copyWith(height: 1.5),
           ),
         ],
       ),
@@ -146,11 +147,13 @@ class _ExamplesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     if (topic.examples.isEmpty) {
       return Center(
         child: Text(
-          locale == 'en' ? 'No examples yet.' : 'Henüz örnek yok.',
-          style: AppText.body(13, color: AppColors.inkDim),
+          l.topic_noExamples,
+          style: AppText.body(13, color: c.inkDim),
         ),
       );
     }
@@ -165,9 +168,9 @@ class _ExamplesTab extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.bgCard.withOpacity(0.6),
+                color: c.bgCard.withOpacity(0.6),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.inkDim.withOpacity(0.15)),
+                border: Border.all(color: c.inkDim.withOpacity(0.15)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,12 +181,12 @@ class _ExamplesTab extends StatelessWidget {
                         child: Text(
                           ex.en,
                           style: AppText.title(15,
-                              color: AppColors.ink, weight: FontWeight.w600),
+                              color: c.ink, weight: FontWeight.w600),
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.volume_up_outlined,
-                            color: AppColors.primaryContainer),
+                        icon: Icon(Icons.volume_up_outlined,
+                            color: c.primaryContainer),
                         onPressed: () => onSpeak(ex.en),
                       ),
                     ],
@@ -192,7 +195,7 @@ class _ExamplesTab extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       ex.tr,
-                      style: AppText.body(13, color: AppColors.inkDim),
+                      style: AppText.body(13, color: c.inkDim),
                     ),
                   ],
                 ],
@@ -297,19 +300,20 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final t = widget.topic;
-    final locale = widget.locale;
 
     if (t.quiz.isEmpty) {
       return Center(
         child: Text(
-          locale == 'en' ? 'No quiz yet.' : 'Henüz quiz yok.',
-          style: AppText.body(13, color: AppColors.inkDim),
+          l.topic_noQuiz,
+          style: AppText.body(13, color: c.inkDim),
         ),
       );
     }
 
-    if (_submitted) return _resultView(locale);
+    if (_submitted) return _resultView();
 
     final q = t.quiz[_index];
     return SafeArea(
@@ -319,21 +323,20 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${locale == 'en' ? 'Question' : 'Soru'} ${_index + 1}/${t.quiz.length}',
+              '${l.quiz_question} ${_index + 1}/${t.quiz.length}',
               style: AppText.label(11,
-                  color: AppColors.primaryContainer, weight: FontWeight.w700),
+                  color: c.primaryContainer, weight: FontWeight.w700),
             ),
             const SizedBox(height: 10),
             Text(
               q.promptEn,
-              style: AppText.title(18,
-                  color: AppColors.ink, weight: FontWeight.w700),
+              style: AppText.title(18, color: c.ink, weight: FontWeight.w700),
             ),
             if (q.promptTr != null && q.promptTr!.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
                 q.promptTr!,
-                style: AppText.body(12, color: AppColors.inkDim),
+                style: AppText.body(12, color: c.inkDim),
               ),
             ],
             const SizedBox(height: 24),
@@ -346,8 +349,8 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
               height: 50,
               child: FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
-                  foregroundColor: AppColors.onPrimary,
+                  backgroundColor: c.primaryContainer,
+                  foregroundColor: c.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -362,11 +365,10 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
                       )
                     : Text(
                         _index == t.quiz.length - 1
-                            ? (locale == 'en' ? 'Finish' : 'Bitir')
-                            : (locale == 'en' ? 'Next' : 'İleri'),
+                            ? l.common_finish
+                            : l.common_next,
                         style: AppText.label(13,
-                            color: AppColors.onPrimary,
-                            weight: FontWeight.w700),
+                            color: c.onPrimary, weight: FontWeight.w700),
                       ),
               ),
             ),
@@ -383,6 +385,7 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
   }
 
   Widget _mcOptions(QuizQuestion q) {
+    final c = context.c;
     return ListView(
       children: [
         for (final opt in q.options)
@@ -397,20 +400,20 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: _answers[_index] == opt
-                      ? AppColors.primaryContainer.withOpacity(0.2)
-                      : AppColors.bgCard.withOpacity(0.55),
+                      ? c.primaryContainer.withOpacity(0.2)
+                      : c.bgCard.withOpacity(0.55),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: _answers[_index] == opt
-                        ? AppColors.primaryContainer
-                        : AppColors.inkDim.withOpacity(0.18),
+                        ? c.primaryContainer
+                        : c.inkDim.withOpacity(0.18),
                     width: _answers[_index] == opt ? 2 : 1,
                   ),
                 ),
                 child: Text(
                   opt,
                   style: AppText.title(15,
-                      color: AppColors.ink, weight: FontWeight.w600),
+                      color: c.ink, weight: FontWeight.w600),
                 ),
               ),
             ),
@@ -420,36 +423,39 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
   }
 
   Widget _fillInput() {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Align(
       alignment: Alignment.topLeft,
       child: TextField(
         controller: _fillCtrl,
         onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
-          hintText: widget.locale == 'en' ? 'Type your answer' : 'Cevabını yaz',
-          hintStyle: AppText.body(14, color: AppColors.inkDim),
+          hintText: l.quiz_typeAnswer,
+          hintStyle: AppText.body(14, color: c.inkDim),
           filled: true,
-          fillColor: AppColors.bgCard.withOpacity(0.55),
+          fillColor: c.bgCard.withOpacity(0.55),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: AppColors.inkDim.withOpacity(0.2)),
+            borderSide: BorderSide(color: c.inkDim.withOpacity(0.2)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: AppColors.inkDim.withOpacity(0.2)),
+            borderSide: BorderSide(color: c.inkDim.withOpacity(0.2)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide:
-                const BorderSide(color: AppColors.primaryContainer, width: 2),
+            borderSide: BorderSide(color: c.primaryContainer, width: 2),
           ),
         ),
-        style: AppText.title(15, color: AppColors.ink, weight: FontWeight.w600),
+        style: AppText.title(15, color: c.ink, weight: FontWeight.w600),
       ),
     );
   }
 
-  Widget _resultView(String locale) {
+  Widget _resultView() {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final score = _resultScore ?? 0;
     final passed = score >= 70;
     return SafeArea(
@@ -461,21 +467,18 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
             Icon(
               passed ? Icons.workspace_premium : Icons.refresh,
               size: 88,
-              color: passed ? AppColors.tertiary : AppColors.secondaryContainer,
+              color: passed ? c.tertiary : c.secondaryContainer,
             ),
             const SizedBox(height: 18),
             Text(
-              '$score%',
+              l.dashboard_percentValue(score),
               style: AppText.hero(48,
-                  color: AppColors.primaryContainer, weight: FontWeight.w800),
+                  color: c.primaryContainer, weight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
-              passed
-                  ? (locale == 'en' ? 'Great job!' : 'Harikasın!')
-                  : (locale == 'en' ? 'Try again' : 'Tekrar dene'),
-              style: AppText.title(18,
-                  color: AppColors.ink, weight: FontWeight.w700),
+              passed ? l.topic_greatJob : l.common_retry,
+              style: AppText.title(18, color: c.ink, weight: FontWeight.w700),
             ),
             const SizedBox(height: 24),
             Row(
@@ -485,16 +488,15 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
                     onPressed: _retry,
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
-                          color: AppColors.primaryContainer.withOpacity(0.5)),
+                          color: c.primaryContainer.withOpacity(0.5)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
                     child: Text(
-                      locale == 'en' ? 'Retry' : 'Tekrar',
+                      l.quiz_retry,
                       style: AppText.label(13,
-                          color: AppColors.primaryContainer,
-                          weight: FontWeight.w700),
+                          color: c.primaryContainer, weight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -502,17 +504,17 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
                 Expanded(
                   child: FilledButton(
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryContainer,
-                      foregroundColor: AppColors.onPrimary,
+                      backgroundColor: c.primaryContainer,
+                      foregroundColor: c.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
-                      locale == 'en' ? 'Done' : 'Bitir',
+                      l.common_finish,
                       style: AppText.label(13,
-                          color: AppColors.onPrimary, weight: FontWeight.w700),
+                          color: c.onPrimary, weight: FontWeight.w700),
                     ),
                   ),
                 ),

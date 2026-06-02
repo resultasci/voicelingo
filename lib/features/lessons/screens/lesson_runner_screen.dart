@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/scenario.dart';
@@ -24,17 +25,18 @@ class LessonRunnerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.c;
     final locale = ref.watch(localeProvider).languageCode;
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
           lesson.title(locale),
           style: AppText.title(16,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -48,6 +50,8 @@ class LessonRunnerScreen extends ConsumerWidget {
   }
 
   Widget _body(BuildContext context, WidgetRef ref, String locale) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     switch (lesson.type) {
       case LessonType.vocab:
         return _VocabRunner(lesson: lesson, locale: locale);
@@ -58,11 +62,9 @@ class LessonRunnerScreen extends ConsumerWidget {
           lesson: lesson,
           locale: locale,
           icon: Icons.spellcheck_outlined,
-          color: AppColors.secondaryContainer,
-          message: locale == 'en'
-              ? 'This lesson opens the matching grammar topic. Complete the quiz there to mark it done here.'
-              : 'Bu ders, ilgili gramer konusunu açar. Oradaki quiz\'i bitirince bu ders de tamamlanır.',
-          actionLabel: locale == 'en' ? 'Open Grammar' : 'Grameri Aç',
+          color: c.secondaryContainer,
+          message: l.lesson_grammarBridge,
+          actionLabel: l.lesson_openGrammar,
           onAction: () => _openGrammar(context, ref),
         );
       case LessonType.conversation:
@@ -70,11 +72,9 @@ class LessonRunnerScreen extends ConsumerWidget {
           lesson: lesson,
           locale: locale,
           icon: Icons.mic_none_outlined,
-          color: AppColors.tertiary,
-          message: locale == 'en'
-              ? 'Practice the conversation scenario. Min turns will count toward lesson completion.'
-              : 'İlgili senaryoyu konuş. Minimum tur sayısı bu ders için sayılır.',
-          actionLabel: locale == 'en' ? 'Start Conversation' : 'Sohbete Başla',
+          color: c.tertiary,
+          message: l.lesson_convBridge,
+          actionLabel: l.lesson_startConv,
           onAction: () => _openConversation(context, ref),
         );
       case LessonType.listening:
@@ -82,11 +82,9 @@ class LessonRunnerScreen extends ConsumerWidget {
           lesson: lesson,
           locale: locale,
           icon: Icons.headphones_outlined,
-          color: AppColors.success,
-          message: locale == 'en'
-              ? 'Listening exercises coming soon. Marking complete for now.'
-              : 'Dinleme egzersizleri yakında. Şimdilik tamamlanmış sayılıyor.',
-          actionLabel: locale == 'en' ? 'Mark complete' : 'Tamamlandı işaretle',
+          color: c.success,
+          message: l.lesson_listenBridge,
+          actionLabel: l.lesson_markComplete,
           onAction: () => _markCompleteAndPop(context, ref, score: 80),
         );
     }
@@ -217,14 +215,14 @@ class _VocabRunnerState extends ConsumerState<_VocabRunner> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final words = _words;
     if (words.isEmpty) {
       return Center(
         child: Text(
-          widget.locale == 'en'
-              ? 'No vocabulary in this lesson.'
-              : 'Bu derste kelime yok.',
-          style: AppText.body(13, color: AppColors.inkDim),
+          l.lesson_noVocab,
+          style: AppText.body(13, color: c.inkDim),
         ),
       );
     }
@@ -239,7 +237,7 @@ class _VocabRunnerState extends ConsumerState<_VocabRunner> {
           Text(
             '${_index + 1} / ${words.length}',
             style: AppText.label(11,
-                color: AppColors.primaryContainer, weight: FontWeight.w700),
+                color: c.primaryContainer, weight: FontWeight.w700),
           ),
           const SizedBox(height: 16),
           Expanded(
@@ -252,13 +250,13 @@ class _VocabRunnerState extends ConsumerState<_VocabRunner> {
                   key: ValueKey('$_index-$_flipped'),
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: AppColors.bgCard.withOpacity(0.7),
+                    color: c.bgCard.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: AppColors.primaryContainer.withOpacity(0.5)),
+                    border:
+                        Border.all(color: c.primaryContainer.withOpacity(0.5)),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryContainer.withOpacity(0.18),
+                        color: c.primaryContainer.withOpacity(0.18),
                         blurRadius: 18,
                       ),
                     ],
@@ -271,22 +269,20 @@ class _VocabRunnerState extends ConsumerState<_VocabRunner> {
                       Text(
                         _flipped ? tr : en,
                         style: AppText.hero(32,
-                            color: AppColors.ink, weight: FontWeight.w800),
+                            color: c.ink, weight: FontWeight.w800),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 14),
                       if (!_flipped)
                         IconButton(
                           onPressed: () => _speak(en),
-                          icon: const Icon(Icons.volume_up,
-                              color: AppColors.primaryContainer, size: 32),
+                          icon: Icon(Icons.volume_up,
+                              color: c.primaryContainer, size: 32),
                         ),
                       const SizedBox(height: 8),
                       Text(
-                        widget.locale == 'en'
-                            ? 'Tap to flip'
-                            : 'Çevirmek için dokun',
-                        style: AppText.label(10, color: AppColors.inkDim),
+                        l.lesson_tapToFlip,
+                        style: AppText.label(10, color: c.inkDim),
                       ),
                     ],
                   ),
@@ -301,13 +297,12 @@ class _VocabRunnerState extends ConsumerState<_VocabRunner> {
                 child: OutlinedButton.icon(
                   onPressed: _saving ? null : () => _record(false),
                   icon: const Icon(Icons.refresh, size: 18),
-                  label: Text(
-                      widget.locale == 'en' ? 'Practice again' : 'Tekrar',
+                  label: Text(l.lesson_practiceAgain,
                       style: AppText.label(12, weight: FontWeight.w700)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.secondaryContainer,
+                    foregroundColor: c.secondaryContainer,
                     side: BorderSide(
-                        color: AppColors.secondaryContainer.withOpacity(0.5)),
+                        color: c.secondaryContainer.withOpacity(0.5)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
@@ -325,12 +320,12 @@ class _VocabRunnerState extends ConsumerState<_VocabRunner> {
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2))
                       : const Icon(Icons.check, size: 18),
-                  label: Text(widget.locale == 'en' ? 'I know it' : 'Biliyorum',
+                  label: Text(l.lesson_iKnowIt,
                       style: AppText.label(12,
-                          color: AppColors.onPrimary, weight: FontWeight.w700)),
+                          color: c.onPrimary, weight: FontWeight.w700)),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryContainer,
-                    foregroundColor: AppColors.onPrimary,
+                    backgroundColor: c.primaryContainer,
+                    foregroundColor: c.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
@@ -415,12 +410,14 @@ class _QuizRunnerState extends ConsumerState<_QuizRunner> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final qs = _questions;
     if (qs.isEmpty) {
       return Center(
         child: Text(
-          widget.locale == 'en' ? 'No quiz questions.' : 'Quiz sorusu yok.',
-          style: AppText.body(13, color: AppColors.inkDim),
+          l.lesson_noQuizQuestions,
+          style: AppText.body(13, color: c.inkDim),
         ),
       );
     }
@@ -436,15 +433,14 @@ class _QuizRunnerState extends ConsumerState<_QuizRunner> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${widget.locale == "en" ? "Question" : "Soru"} ${_index + 1}/${qs.length}',
+            '${l.quiz_question} ${_index + 1}/${qs.length}',
             style: AppText.label(11,
-                color: AppColors.primaryContainer, weight: FontWeight.w700),
+                color: c.primaryContainer, weight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
           Text(
             q['prompt_en']?.toString() ?? '',
-            style: AppText.title(18,
-                color: AppColors.ink, weight: FontWeight.w700),
+            style: AppText.title(18, color: c.ink, weight: FontWeight.w700),
           ),
           const SizedBox(height: 18),
           Expanded(
@@ -455,8 +451,8 @@ class _QuizRunnerState extends ConsumerState<_QuizRunner> {
             height: 50,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryContainer,
-                foregroundColor: AppColors.onPrimary,
+                backgroundColor: c.primaryContainer,
+                foregroundColor: c.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -471,10 +467,10 @@ class _QuizRunnerState extends ConsumerState<_QuizRunner> {
                     )
                   : Text(
                       _index == qs.length - 1
-                          ? (widget.locale == 'en' ? 'Finish' : 'Bitir')
-                          : (widget.locale == 'en' ? 'Next' : 'İleri'),
+                          ? l.common_finish
+                          : l.common_next,
                       style: AppText.label(13,
-                          color: AppColors.onPrimary, weight: FontWeight.w700),
+                          color: c.onPrimary, weight: FontWeight.w700),
                     ),
             ),
           ),
@@ -484,6 +480,7 @@ class _QuizRunnerState extends ConsumerState<_QuizRunner> {
   }
 
   Widget _mcOptions(Map<String, dynamic> q) {
+    final c = context.c;
     final raw = q['options'];
     final options =
         raw is List ? raw.whereType<String>().toList() : const <String>[];
@@ -501,20 +498,20 @@ class _QuizRunnerState extends ConsumerState<_QuizRunner> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: _answers[_index] == opt
-                      ? AppColors.primaryContainer.withOpacity(0.2)
-                      : AppColors.bgCard.withOpacity(0.55),
+                      ? c.primaryContainer.withOpacity(0.2)
+                      : c.bgCard.withOpacity(0.55),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: _answers[_index] == opt
-                        ? AppColors.primaryContainer
-                        : AppColors.inkDim.withOpacity(0.18),
+                        ? c.primaryContainer
+                        : c.inkDim.withOpacity(0.18),
                     width: _answers[_index] == opt ? 2 : 1,
                   ),
                 ),
                 child: Text(
                   opt,
                   style: AppText.title(15,
-                      color: AppColors.ink, weight: FontWeight.w600),
+                      color: c.ink, weight: FontWeight.w600),
                 ),
               ),
             ),
@@ -524,31 +521,32 @@ class _QuizRunnerState extends ConsumerState<_QuizRunner> {
   }
 
   Widget _fillInput() {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Align(
       alignment: Alignment.topLeft,
       child: TextField(
         controller: _ctrl,
         onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
-          hintText: widget.locale == 'en' ? 'Type your answer' : 'Cevabını yaz',
-          hintStyle: AppText.body(14, color: AppColors.inkDim),
+          hintText: l.quiz_typeAnswer,
+          hintStyle: AppText.body(14, color: c.inkDim),
           filled: true,
-          fillColor: AppColors.bgCard.withOpacity(0.55),
+          fillColor: c.bgCard.withOpacity(0.55),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: AppColors.inkDim.withOpacity(0.2)),
+            borderSide: BorderSide(color: c.inkDim.withOpacity(0.2)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: AppColors.inkDim.withOpacity(0.2)),
+            borderSide: BorderSide(color: c.inkDim.withOpacity(0.2)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide:
-                const BorderSide(color: AppColors.primaryContainer, width: 2),
+            borderSide: BorderSide(color: c.primaryContainer, width: 2),
           ),
         ),
-        style: AppText.title(15, color: AppColors.ink, weight: FontWeight.w600),
+        style: AppText.title(15, color: c.ink, weight: FontWeight.w600),
       ),
     );
   }
@@ -577,6 +575,7 @@ class _LandingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -586,15 +585,13 @@ class _LandingCard extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             lesson.title(locale),
-            style: AppText.title(20,
-                color: AppColors.ink, weight: FontWeight.w800),
+            style: AppText.title(20, color: c.ink, weight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
             message,
-            style: AppText.body(13, color: AppColors.inkMuted)
-                .copyWith(height: 1.4),
+            style: AppText.body(13, color: c.inkMuted).copyWith(height: 1.4),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -632,21 +629,23 @@ class _CompletionDialog {
     LessonCompletionResult res, {
     int? score,
   }) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.bgCard,
+        backgroundColor: c.bgCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           res.ok
               ? (res.status == 'mastered'
-                  ? 'Mükemmel!'
+                  ? l.lesson_perfect
                   : res.status == 'completed'
-                      ? 'Harika!'
-                      : 'Devam et')
-              : 'Hata',
+                      ? l.lesson_great
+                      : l.lesson_keepGoing)
+              : l.lesson_errorTitle,
           style: AppText.title(20,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -656,9 +655,9 @@ class _CompletionDialog {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  'Skor: $score',
+                  l.lesson_scoreLabel(score),
                   style: AppText.title(16,
-                      color: AppColors.ink, weight: FontWeight.w700),
+                      color: c.ink, weight: FontWeight.w700),
                 ),
               ),
             if ((res.stars ?? 0) > 0)
@@ -666,7 +665,7 @@ class _CompletionDialog {
                 children: List.generate(3, (i) {
                   return Icon(
                     i < (res.stars ?? 0) ? Icons.star : Icons.star_border,
-                    color: AppColors.tertiary,
+                    color: c.tertiary,
                     size: 24,
                   );
                 }),
@@ -675,16 +674,16 @@ class _CompletionDialog {
               const SizedBox(height: 6),
               Text('+${res.xpAwarded} XP',
                   style: AppText.label(13,
-                      color: AppColors.tertiary, weight: FontWeight.w800)),
+                      color: c.tertiary, weight: FontWeight.w800)),
             ],
             if (!res.ok && res.error != null)
-              Text(res.error!, style: AppText.body(12, color: AppColors.error)),
+              Text(res.error!, style: AppText.body(12, color: c.error)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tamam'),
+            child: Text(l.common_ok),
           ),
         ],
       ),

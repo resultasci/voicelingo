@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/ai/characters.dart';
 import '../../../core/audio/audio_permission_service.dart';
 import '../../../features/conversation/services/characters_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../services/notification_service.dart';
 import '../../../theme/app_theme.dart';
@@ -81,7 +82,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           duration: const Duration(seconds: 10),
           backgroundColor: Colors.red.shade900,
           content: Text(
-            'Onboarding hatası: $e',
+            AppL10n.of(context).onb_error('$e'),
             style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
         ),
@@ -102,19 +103,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _requestNotif() async {
     await NotificationService().requestPermissions();
     if (!mounted) return;
-    // Mevcut requestPermissions() void dönüyor; izin gerçekten verildi mi
-    // sonradan platform-specific kontrolle anlaşılır. Şimdilik istek atıldı
-    // = "kullanıcı diyalogla karşılaştı" sayıyoruz; gating yumuşak.
     setState(() => _notifGranted = true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final locale = ref.watch(localeProvider).languageCode;
     final isLast = _page == _totalPages - 1;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: CosmicBackground(
         child: SafeArea(
           child: Column(
@@ -125,21 +125,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   controller: _pageCtrl,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    _WelcomePage(locale: locale),
+                    const _WelcomePage(),
                     _PermissionsPage(
-                      locale: locale,
                       micGranted: _micGranted,
                       notifGranted: _notifGranted,
                       onRequestMic: _requestMic,
                       onRequestNotif: _requestNotif,
                     ),
                     _GoalPage(
-                      locale: locale,
                       selected: _dailyMinuteGoal,
                       onSelect: (v) => setState(() => _dailyMinuteGoal = v),
                     ),
                     _MotivationPage(
-                      locale: locale,
                       selected: _motivation,
                       onSelect: (v) => setState(() => _motivation = v),
                     ),
@@ -159,8 +156,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     if (_page > 0)
                       IconButton(
                         onPressed: _back,
-                        icon: const Icon(Icons.arrow_back,
-                            color: AppColors.inkDim),
+                        icon: Icon(Icons.arrow_back, color: c.inkDim),
                       ),
                     const Spacer(),
                     SizedBox(
@@ -168,8 +164,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       height: 50,
                       child: FilledButton(
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primaryContainer,
-                          foregroundColor: AppColors.onPrimary,
+                          backgroundColor: c.primaryContainer,
+                          foregroundColor: c.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -183,13 +179,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                     color: Colors.white, strokeWidth: 2),
                               )
                             : Text(
-                                isLast
-                                    ? (locale == 'en'
-                                        ? 'Start learning'
-                                        : 'Başlayalım')
-                                    : (locale == 'en' ? 'Continue' : 'Devam'),
+                                isLast ? l.onb_start : l.onb_continue,
                                 style: AppText.label(13,
-                                    color: AppColors.onPrimary,
+                                    color: c.onPrimary,
                                     weight: FontWeight.w700),
                               ),
                       ),
@@ -213,6 +205,7 @@ class _ProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
       child: Row(
@@ -226,12 +219,12 @@ class _ProgressBar extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(2),
                 color: active
-                    ? AppColors.primaryContainer
-                    : AppColors.inkDim.withOpacity(0.15),
+                    ? c.primaryContainer
+                    : c.inkDim.withOpacity(0.15),
                 boxShadow: active
                     ? [
                         BoxShadow(
-                          color: AppColors.primaryContainer.withOpacity(0.5),
+                          color: c.primaryContainer.withOpacity(0.5),
                           blurRadius: 8,
                         ),
                       ]
@@ -247,11 +240,12 @@ class _ProgressBar extends StatelessWidget {
 
 // =============================================================================
 class _WelcomePage extends StatelessWidget {
-  const _WelcomePage({required this.locale});
-  final String locale;
+  const _WelcomePage();
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
@@ -262,37 +256,30 @@ class _WelcomePage extends StatelessWidget {
             height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: const RadialGradient(colors: [
-                AppColors.primaryContainer,
-                AppColors.secondaryContainer,
+              gradient: RadialGradient(colors: [
+                c.primaryContainer,
+                c.secondaryContainer,
               ]),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryContainer.withOpacity(0.5),
+                  color: c.primaryContainer.withOpacity(0.5),
                   blurRadius: 30,
                   spreadRadius: 4,
                 ),
               ],
             ),
-            child:
-                const Icon(Icons.auto_awesome, color: Colors.white, size: 56),
+            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 56),
           ),
           const SizedBox(height: 32),
           Text(
-            locale == 'en'
-                ? 'Welcome to VoiceLingo'
-                : 'VoiceLingo\'ya hoş geldin',
-            style: AppText.title(26,
-                color: AppColors.ink, weight: FontWeight.w800),
+            l.onb_welcomeTitle,
+            style: AppText.title(26, color: c.ink, weight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
-            locale == 'en'
-                ? 'Speak. Improve. Repeat.\nYour AI coach guides every conversation.'
-                : 'Konuş. Gelişeceksin. Tekrarla.\nAI koçun her konuşmada yanında.',
-            style:
-                AppText.body(15, color: AppColors.inkDim).copyWith(height: 1.4),
+            l.onb_welcomeBody,
+            style: AppText.body(15, color: c.inkDim).copyWith(height: 1.4),
             textAlign: TextAlign.center,
           ),
         ],
@@ -304,13 +291,11 @@ class _WelcomePage extends StatelessWidget {
 // =============================================================================
 class _PermissionsPage extends StatelessWidget {
   const _PermissionsPage({
-    required this.locale,
     required this.micGranted,
     required this.notifGranted,
     required this.onRequestMic,
     required this.onRequestNotif,
   });
-  final String locale;
   final bool micGranted;
   final bool notifGranted;
   final VoidCallback onRequestMic;
@@ -318,46 +303,39 @@ class _PermissionsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            locale == 'en' ? 'Two quick permissions' : 'İki hızlı izin',
-            style: AppText.title(22,
-                color: AppColors.ink, weight: FontWeight.w700),
+            l.onb_permTitle,
+            style: AppText.title(22, color: c.ink, weight: FontWeight.w700),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
-            locale == 'en'
-                ? 'We need these to coach you properly.'
-                : 'Düzgün koçluk yapabilmemiz için gerekli.',
-            style: AppText.body(13, color: AppColors.inkDim),
+            l.onb_permSubtitle,
+            style: AppText.body(13, color: c.inkDim),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
           _PermissionCard(
             icon: Icons.mic,
-            title: locale == 'en' ? 'Microphone' : 'Mikrofon',
-            description: locale == 'en'
-                ? 'Hear your speech, give feedback on pronunciation.'
-                : 'Konuşmanı duy, telaffuza geri bildirim ver.',
+            title: l.onb_micTitle,
+            description: l.onb_micDesc,
             granted: micGranted,
             onTap: onRequestMic,
-            locale: locale,
           ),
           const SizedBox(height: 16),
           _PermissionCard(
             icon: Icons.notifications_active_outlined,
-            title: locale == 'en' ? 'Notifications' : 'Bildirimler',
-            description: locale == 'en'
-                ? 'Gentle reminders to keep your streak alive.'
-                : 'Streak\'ini canlı tutmak için nazik hatırlatmalar.',
+            title: l.settings_notifications,
+            description: l.onb_notifDesc,
             granted: notifGranted,
             onTap: onRequestNotif,
-            locale: locale,
           ),
         ],
       ),
@@ -372,22 +350,22 @@ class _PermissionCard extends StatelessWidget {
     required this.description,
     required this.granted,
     required this.onTap,
-    required this.locale,
   });
   final IconData icon;
   final String title;
   final String description;
   final bool granted;
   final VoidCallback onTap;
-  final String locale;
 
   @override
   Widget build(BuildContext context) {
-    final accent = granted ? AppColors.success : AppColors.primaryContainer;
+    final l = AppL10n.of(context);
+    final c = context.c;
+    final accent = granted ? c.success : c.primaryContainer;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.bgCard.withOpacity(0.6),
+        color: c.bgCard.withOpacity(0.6),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: accent.withOpacity(0.35)),
       ),
@@ -410,22 +388,22 @@ class _PermissionCard extends StatelessWidget {
               children: [
                 Text(title,
                     style: AppText.title(15,
-                        color: AppColors.ink, weight: FontWeight.w700)),
+                        color: c.ink, weight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(description,
-                    style: AppText.body(12, color: AppColors.inkDim)
+                    style: AppText.body(12, color: c.inkDim)
                         .copyWith(height: 1.3)),
               ],
             ),
           ),
           const SizedBox(width: 8),
           if (granted)
-            const Icon(Icons.check_circle, color: AppColors.success)
+            Icon(Icons.check_circle, color: c.success)
           else
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: accent,
-                foregroundColor: AppColors.onPrimary,
+                foregroundColor: c.onPrimary,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 shape: RoundedRectangleBorder(
@@ -434,9 +412,9 @@ class _PermissionCard extends StatelessWidget {
               ),
               onPressed: onTap,
               child: Text(
-                locale == 'en' ? 'Allow' : 'İzin ver',
+                l.onb_allow,
                 style: AppText.label(11,
-                    color: AppColors.onPrimary, weight: FontWeight.w700),
+                    color: c.onPrimary, weight: FontWeight.w700),
               ),
             ),
         ],
@@ -448,11 +426,9 @@ class _PermissionCard extends StatelessWidget {
 // =============================================================================
 class _GoalPage extends StatelessWidget {
   const _GoalPage({
-    required this.locale,
     required this.selected,
     required this.onSelect,
   });
-  final String locale;
   final int selected;
   final ValueChanged<int> onSelect;
 
@@ -460,22 +436,21 @@ class _GoalPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            locale == 'en' ? 'Your daily goal' : 'Günlük hedefin',
-            style: AppText.title(22,
-                color: AppColors.ink, weight: FontWeight.w700),
+            l.onb_goalTitle,
+            style: AppText.title(22, color: c.ink, weight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(
-            locale == 'en'
-                ? 'How many minutes per day?'
-                : 'Günde kaç dakika çalışmak istersin?',
-            style: AppText.body(13, color: AppColors.inkDim),
+            l.onb_goalSubtitle,
+            style: AppText.body(13, color: c.inkDim),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -485,7 +460,7 @@ class _GoalPage extends StatelessWidget {
             alignment: WrapAlignment.center,
             children: _options
                 .map((m) => _OptionTile(
-                      label: '$m ${locale == 'en' ? 'min' : 'dk'}',
+                      label: '$m ${l.onb_minSuffix}',
                       selected: m == selected,
                       onTap: () => onSelect(m),
                     ))
@@ -500,21 +475,21 @@ class _GoalPage extends StatelessWidget {
 // =============================================================================
 class _MotivationPage extends StatelessWidget {
   const _MotivationPage({
-    required this.locale,
     required this.selected,
     required this.onSelect,
   });
-  final String locale;
   final String selected;
   final ValueChanged<String> onSelect;
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final items = [
-      ('work', Icons.work_outline, locale == 'en' ? 'Work' : 'İş'),
-      ('exam', Icons.school_outlined, locale == 'en' ? 'Exam' : 'Sınav'),
-      ('travel', Icons.flight_outlined, locale == 'en' ? 'Travel' : 'Seyahat'),
-      ('hobby', Icons.spa_outlined, locale == 'en' ? 'Hobby' : 'Hobi'),
+      ('work', Icons.work_outline, l.scen_catWork),
+      ('exam', Icons.school_outlined, l.onb_motivExam),
+      ('travel', Icons.flight_outlined, l.scen_catTravel),
+      ('hobby', Icons.spa_outlined, l.onb_motivHobby),
     ];
 
     return Padding(
@@ -523,17 +498,14 @@ class _MotivationPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            locale == 'en' ? 'Why are you learning?' : 'Neden öğreniyorsun?',
-            style: AppText.title(22,
-                color: AppColors.ink, weight: FontWeight.w700),
+            l.onb_motivTitle,
+            style: AppText.title(22, color: c.ink, weight: FontWeight.w700),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
-            locale == 'en'
-                ? 'This helps us pick the right scenarios for you.'
-                : 'Sana uygun senaryoları seçmemize yardım eder.',
-            style: AppText.body(13, color: AppColors.inkDim),
+            l.onb_motivSubtitle,
+            style: AppText.body(13, color: c.inkDim),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
@@ -569,6 +541,7 @@ class _OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -579,20 +552,20 @@ class _OptionTile extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primaryContainer.withOpacity(0.2)
-              : AppColors.bgCard.withOpacity(0.5),
+              ? c.primaryContainer.withOpacity(0.2)
+              : c.bgCard.withOpacity(0.5),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected
-                ? AppColors.primaryContainer
-                : AppColors.inkDim.withOpacity(0.2),
+                ? c.primaryContainer
+                : c.inkDim.withOpacity(0.2),
             width: selected ? 2 : 1,
           ),
         ),
         child: Text(
           label,
           style: AppText.title(15,
-              color: selected ? AppColors.primaryContainer : AppColors.ink,
+              color: selected ? c.primaryContainer : c.ink,
               weight: FontWeight.w700),
         ),
       ),
@@ -613,23 +586,22 @@ class _CharacterPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            locale == 'en' ? 'Choose your coach' : 'Koçunu seç',
-            style: AppText.title(22,
-                color: AppColors.ink, weight: FontWeight.w700),
+            l.charPicker_title,
+            style: AppText.title(22, color: c.ink, weight: FontWeight.w700),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
-            locale == 'en'
-                ? 'Each coach has a different voice and style. You can change this anytime in Settings.'
-                : 'Her koçun farklı sesi ve tarzı var. Ayarlardan istediğin zaman değiştirebilirsin.',
-            style: AppText.body(13, color: AppColors.inkDim),
+            l.onb_charSubtitle,
+            style: AppText.body(13, color: c.inkDim),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 22),
@@ -638,22 +610,21 @@ class _CharacterPage extends StatelessWidget {
               padding: EdgeInsets.zero,
               itemCount: AICharacters.all.length,
               itemBuilder: (_, i) {
-                final c = AICharacters.all[i];
-                final selected = c.id == selectedId;
+                final character = AICharacters.all[i];
+                final selected = character.id == selectedId;
                 final borderColor = selected
-                    ? AppColors.primaryContainer
-                    : AppColors.inkDim.withOpacity(0.2);
+                    ? c.primaryContainer
+                    : c.inkDim.withOpacity(0.2);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: InkWell(
-                    onTap: () => onSelect(c.id),
+                    onTap: () => onSelect(character.id),
                     borderRadius: BorderRadius.circular(18),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color:
-                            AppColors.bgCard.withOpacity(selected ? 0.85 : 0.5),
+                        color: c.bgCard.withOpacity(selected ? 0.85 : 0.5),
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                             color: borderColor, width: selected ? 2 : 1),
@@ -663,15 +634,15 @@ class _CharacterPage extends StatelessWidget {
                           Container(
                             width: 52,
                             height: 52,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: RadialGradient(colors: [
-                                AppColors.primaryContainer,
-                                AppColors.secondaryContainer,
+                                c.primaryContainer,
+                                c.secondaryContainer,
                               ]),
                             ),
                             alignment: Alignment.center,
-                            child: Text(c.avatarEmoji,
+                            child: Text(character.avatarEmoji,
                                 style: const TextStyle(fontSize: 26)),
                           ),
                           const SizedBox(width: 12),
@@ -681,23 +652,23 @@ class _CharacterPage extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    Text(c.displayName,
+                                    Text(character.displayName,
                                         style: AppText.title(15,
-                                            color: AppColors.ink,
+                                            color: c.ink,
                                             weight: FontWeight.w800)),
                                     const SizedBox(width: 6),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primaryContainer
+                                        color: c.primaryContainer
                                             .withOpacity(0.15),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        c.accent,
+                                        character.accent,
                                         style: AppText.label(9,
-                                            color: AppColors.primaryContainer,
+                                            color: c.primaryContainer,
                                             weight: FontWeight.w700),
                                       ),
                                     ),
@@ -705,18 +676,16 @@ class _CharacterPage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  c.bio(locale),
+                                  character.bio(locale),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style:
-                                      AppText.body(11, color: AppColors.inkDim),
+                                  style: AppText.body(11, color: c.inkDim),
                                 ),
                               ],
                             ),
                           ),
                           if (selected)
-                            const Icon(Icons.check_circle,
-                                color: AppColors.primaryContainer),
+                            Icon(Icons.check_circle, color: c.primaryContainer),
                         ],
                       ),
                     ),
@@ -746,7 +715,8 @@ class _IconOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.primaryContainer : AppColors.inkDim;
+    final c = context.c;
+    final color = selected ? c.primaryContainer : c.inkDim;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -756,13 +726,13 @@ class _IconOptionTile extends StatelessWidget {
         height: 110,
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primaryContainer.withOpacity(0.16)
-              : AppColors.bgCard.withOpacity(0.5),
+              ? c.primaryContainer.withOpacity(0.16)
+              : c.bgCard.withOpacity(0.5),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected
-                ? AppColors.primaryContainer
-                : AppColors.inkDim.withOpacity(0.2),
+                ? c.primaryContainer
+                : c.inkDim.withOpacity(0.2),
             width: selected ? 2 : 1,
           ),
         ),

@@ -5,6 +5,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/logger/app_logger.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/word.dart';
 import '../../../providers/words_provider.dart';
 import '../../../theme/app_theme.dart';
@@ -29,10 +30,11 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   final FlutterTts _tts = FlutterTts();
 
   final _searchCtrl = TextEditingController();
-  String _filter = 'Tümü';
+  // Stable filter identity keys (decoupled from localized labels).
+  String _filter = 'all';
   String _query = '';
 
-  static const _filters = ['Tümü', 'Tekrar Bekleyen', 'Öğrenilen', 'Yeni'];
+  static const _filters = ['all', 'due', 'learned', 'new'];
 
   @override
   void initState() {
@@ -106,8 +108,8 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Tekrar kaydedilemedi: $e',
-                  style: AppText.ink(13, color: AppColors.error)),
+              content: Text(AppL10n.of(context).words_reviewSaveError,
+                  style: AppText.ink(13, color: context.c.error)),
             ),
           );
         }
@@ -123,6 +125,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   }
 
   void _showAdd() {
+    final l = AppL10n.of(context);
     final wCtrl = TextEditingController();
     final tCtrl = TextEditingController();
 
@@ -130,111 +133,114 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 16,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        child: GlassPanel(
-          padding: const EdgeInsets.all(24),
-          glowColor: AppColors.primaryContainer,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 3,
-                  margin: const EdgeInsets.only(bottom: 18),
-                  decoration: BoxDecoration(
-                    color: AppColors.rule,
-                    borderRadius: BorderRadius.circular(2),
+      builder: (ctx) {
+        final c = ctx.c;
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: GlassPanel(
+            padding: const EdgeInsets.all(24),
+            glowColor: c.primaryContainer,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 3,
+                    margin: const EdgeInsets.only(bottom: 18),
+                    decoration: BoxDecoration(
+                      color: c.rule,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SectionLabel('Yeni Kelime',
-                  color: AppColors.primaryContainer),
-              const SizedBox(height: 14),
-              Text(
-                'Kütüphaneye ekle',
-                style: AppText.title(22,
-                        color: AppColors.primary, weight: FontWeight.w600)
-                    .copyWith(
-                  shadows: neonGlow(AppColors.primary, blur: 8, opacity: 0.4),
+                SectionLabel(l.words_addNew, color: c.primaryContainer),
+                const SizedBox(height: 14),
+                Text(
+                  l.words_addToLibrary,
+                  style: AppText.title(22,
+                          color: c.primary, weight: FontWeight.w600)
+                      .copyWith(
+                    shadows: neonGlow(c.primary, blur: 8, opacity: 0.4),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 22),
-              Text('İNGİLİZCE',
-                  style: AppText.label(10,
-                      color: AppColors.inkMuted, weight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              NeonField(controller: wCtrl, autofocus: true, hint: 'word'),
-              const SizedBox(height: 16),
-              Text('TÜRKÇE',
-                  style: AppText.label(10,
-                      color: AppColors.inkMuted, weight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              NeonField(controller: tCtrl, hint: 'kelime'),
-              const SizedBox(height: 22),
-              NeonButton(
-                label: 'Ekle',
-                icon: Icons.add,
-                onTap: () async {
-                  final w = wCtrl.text.trim();
-                  final t = tCtrl.text.trim();
-                  if (w.isEmpty || t.isEmpty) return;
-                  Navigator.pop(ctx);
-                  try {
-                    AppLogger.info(
-                        'Kullanıcı arayüzden yeni kelime eklemeyi denedi: $w',
-                        tag: 'WordsScreen');
-                    await ref.read(wordsProvider.notifier).addWord(w, t);
-                  } on DuplicateWordException {
-                    AppLogger.warning(
-                        'Arayüzde kelime eklendi ama zaten vardı, uyarı gösteriliyor: $w',
-                        tag: 'WordsScreen');
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Bu kelime zaten kütüphanende var.',
-                          style: AppText.ink(13, color: AppColors.warn),
+                const SizedBox(height: 22),
+                Text(l.words_labelEnglish,
+                    style: AppText.label(10,
+                        color: c.inkMuted, weight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                NeonField(
+                    controller: wCtrl, autofocus: true, hint: l.words_hintWord),
+                const SizedBox(height: 16),
+                Text(l.words_labelTurkish,
+                    style: AppText.label(10,
+                        color: c.inkMuted, weight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                NeonField(controller: tCtrl, hint: l.words_hintTranslation),
+                const SizedBox(height: 22),
+                NeonButton(
+                  label: l.common_add,
+                  icon: Icons.add,
+                  onTap: () async {
+                    final w = wCtrl.text.trim();
+                    final t = tCtrl.text.trim();
+                    if (w.isEmpty || t.isEmpty) return;
+                    Navigator.pop(ctx);
+                    try {
+                      AppLogger.info(
+                          'Kullanıcı arayüzden yeni kelime eklemeyi denedi: $w',
+                          tag: 'WordsScreen');
+                      await ref.read(wordsProvider.notifier).addWord(w, t);
+                    } on DuplicateWordException {
+                      AppLogger.warning(
+                          'Arayüzde kelime eklendi ama zaten vardı, uyarı gösteriliyor: $w',
+                          tag: 'WordsScreen');
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppL10n.of(context).words_alreadyInLibrary,
+                            style: AppText.ink(13, color: context.c.warn),
+                          ),
                         ),
-                      ),
-                    );
-                  } catch (e, st) {
-                    AppLogger.error(
-                        'Arayüzden kelime eklenirken hata fırlatıldı', e, st);
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Kelime eklenemedi',
-                            style: AppText.ink(13, color: AppColors.error)),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
+                      );
+                    } catch (e, st) {
+                      AppLogger.error(
+                          'Arayüzden kelime eklenirken hata fırlatıldı', e, st);
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(AppL10n.of(context).words_addFailed,
+                              style: AppText.ink(13, color: context.c.error)),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   List<Word> _applyFilter(List<Word> all) {
     Iterable<Word> r = all;
     switch (_filter) {
-      case 'Tekrar Bekleyen':
+      case 'due':
         r = r.where((w) => w.isDue);
         break;
-      case 'Öğrenilen':
+      case 'learned':
         r = r.where((w) => w.repetitions >= 4 && !w.isDue);
         break;
-      case 'Yeni':
+      case 'new':
         r = r.where((w) => w.repetitions == 0);
         break;
     }
@@ -248,6 +254,8 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     if (_isDone) {
       return _CompletionView(
         correct: _correct,
@@ -267,17 +275,16 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 22,
                   height: 22,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.primaryContainer),
+                      strokeWidth: 2, color: c.primaryContainer),
                 ),
                 const SizedBox(height: 16),
-                Text('Kaydediliyor…',
+                Text(l.common_saving,
                     style: AppText.label(11,
-                        color: AppColors.primaryContainer,
-                        weight: FontWeight.w700)),
+                        color: c.primaryContainer, weight: FontWeight.w700)),
               ],
             ),
           ),
@@ -293,12 +300,12 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
             });
           }
         });
-        return const Center(
+        return Center(
           child: SizedBox(
             width: 18,
             height: 18,
             child: CircularProgressIndicator(
-                strokeWidth: 2, color: AppColors.primaryContainer),
+                strokeWidth: 2, color: c.primaryContainer),
           ),
         );
       }
@@ -349,12 +356,12 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
           ],
         );
       },
-      loading: () => const Center(
+      loading: () => Center(
         child: SizedBox(
           width: 22,
           height: 22,
           child: CircularProgressIndicator(
-              strokeWidth: 2, color: AppColors.primaryContainer),
+              strokeWidth: 2, color: c.primaryContainer),
         ),
       ),
       error: (e, _) => Center(
@@ -365,10 +372,10 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
             children: [
               Text(getErrorMessage(context, e),
                   textAlign: TextAlign.center,
-                  style: AppText.body(13, color: AppColors.error)),
+                  style: AppText.body(13, color: c.error)),
               const SizedBox(height: 16),
               GhostButton(
-                label: 'Tekrar dene',
+                label: l.common_retry,
                 icon: Icons.refresh,
                 onTap: () => ref.invalidate(wordsProvider),
               ),
@@ -388,6 +395,8 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -395,17 +404,16 @@ class _Header extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Kelime Kütüphanesi',
-                style: AppText.hero(28,
-                        color: AppColors.primary, weight: FontWeight.w700)
+                l.words_libraryTitle,
+                style: AppText.hero(28, color: c.primary, weight: FontWeight.w700)
                     .copyWith(
-                  shadows: neonGlow(AppColors.primary, blur: 12, opacity: 0.25),
+                  shadows: neonGlow(c.primary, blur: 12, opacity: 0.25),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Material(
-              color: AppColors.primaryContainer,
+              color: c.primaryContainer,
               borderRadius: BorderRadius.circular(12),
               child: InkWell(
                 onTap: onAdd,
@@ -418,14 +426,13 @@ class _Header extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryContainer.withOpacity(0.45),
+                        color: c.primaryContainer.withOpacity(0.45),
                         blurRadius: 18,
                         spreadRadius: -2,
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.add,
-                      color: AppColors.onPrimary, size: 22),
+                  child: Icon(Icons.add, color: c.onPrimary, size: 22),
                 ),
               ),
             ),
@@ -433,8 +440,8 @@ class _Header extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Bilişsel sözlüğün $count kelimeye genişledi.',
-          style: AppText.body(14, color: AppColors.inkMuted),
+          l.words_librarySubtitle(count),
+          style: AppText.body(14, color: c.inkMuted),
         ),
       ],
     );
@@ -450,7 +457,7 @@ class _SearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return NeonField(
       controller: controller,
-      hint: 'Kelime veya çeviri ara…',
+      hint: AppL10n.of(context).words_searchHint,
       leadingIcon: Icons.search,
     );
   }
@@ -467,8 +474,23 @@ class _FilterChips extends StatelessWidget {
     required this.onSelect,
   });
 
+  String _label(AppL10n l, String key) {
+    switch (key) {
+      case 'due':
+        return l.words_filterDue;
+      case 'learned':
+        return l.words_filterLearned;
+      case 'new':
+        return l.words_filterNew;
+      default:
+        return l.words_filterAll;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return SizedBox(
       height: 36,
       child: ListView.separated(
@@ -485,18 +507,18 @@ class _FilterChips extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
               decoration: BoxDecoration(
                 color: isSel
-                    ? AppColors.primaryContainer.withOpacity(0.10)
-                    : AppColors.bgCard.withOpacity(0.5),
+                    ? c.primaryContainer.withOpacity(0.10)
+                    : c.bgCard.withOpacity(0.5),
                 border: Border.all(
                   color: isSel
-                      ? AppColors.primaryContainer
-                      : AppColors.rule.withOpacity(0.6),
+                      ? c.primaryContainer
+                      : c.rule.withOpacity(0.6),
                 ),
                 borderRadius: BorderRadius.circular(99),
                 boxShadow: isSel
                     ? [
                         BoxShadow(
-                          color: AppColors.primaryContainer.withOpacity(0.2),
+                          color: c.primaryContainer.withOpacity(0.2),
                           blurRadius: 12,
                         ),
                       ]
@@ -504,11 +526,9 @@ class _FilterChips extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  f.toUpperCase(),
+                  _label(l, f).toUpperCase(),
                   style: AppText.label(10,
-                      color: isSel
-                          ? AppColors.primaryContainer
-                          : AppColors.inkMuted,
+                      color: isSel ? c.primaryContainer : c.inkMuted,
                       weight: FontWeight.w700),
                 ),
               ),
@@ -564,33 +584,32 @@ class _ReviewBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return GlassPanel(
       onTap: onTap,
-      borderColor: AppColors.primaryContainer.withOpacity(0.4),
-      glowColor: AppColors.primaryContainer,
+      borderColor: c.primaryContainer.withOpacity(0.4),
+      glowColor: c.primaryContainer,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       child: Row(
         children: [
-          const Icon(Icons.flash_on,
-              color: AppColors.primaryContainer, size: 22),
+          Icon(Icons.flash_on, color: c.primaryContainer, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('BUGÜN TEKRAR',
+                Text(l.words_reviewToday,
                     style: AppText.label(9,
-                        color: AppColors.primaryContainer,
-                        weight: FontWeight.w700)),
+                        color: c.primaryContainer, weight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('$count kelime hazır',
+                Text(l.words_wordsReady(count),
                     style: AppText.title(16,
-                        color: AppColors.primary, weight: FontWeight.w600)),
+                        color: c.primary, weight: FontWeight.w600)),
               ],
             ),
           ),
-          const Icon(Icons.arrow_forward,
-              color: AppColors.primaryContainer, size: 18),
+          Icon(Icons.arrow_forward, color: c.primaryContainer, size: 18),
         ],
       ),
     );
@@ -607,43 +626,44 @@ class _WordCard extends StatelessWidget {
     required this.onSpeak,
   });
 
-  ({String label, Color color, IconData? icon}) get _status {
+  ({String label, Color color, IconData? icon}) _status(
+      AppL10n l, AppPalette c) {
     if (word.repetitions == 0) {
       return (
-        label: 'Yeni',
-        color: AppColors.primaryFixedDim,
+        label: l.words_statusNew,
+        color: c.primaryFixedDim,
         icon: Icons.auto_awesome
       );
     }
     if (word.isDue) {
       return (
-        label: 'Tekrar',
-        color: AppColors.secondaryContainer,
+        label: l.words_statusDue,
+        color: c.secondaryContainer,
         icon: null,
       );
     }
     if (word.repetitions >= 4) {
       return (
-        label: 'Öğrenildi',
-        color: AppColors.primaryFixed,
+        label: l.words_statusLearned,
+        color: c.primaryFixed,
         icon: Icons.check_circle_outline,
       );
     }
     return (
-      label: 'Süreçte',
-      color: AppColors.tertiaryFixedDim,
+      label: l.words_statusInProgress,
+      color: c.tertiaryFixedDim,
       icon: Icons.refresh,
     );
   }
 
-  String get _intervalText {
-    if (word.repetitions == 0) return 'YENİ';
+  String _intervalText(AppL10n l) {
+    if (word.repetitions == 0) return l.words_intervalNew;
     final d = word.intervalDays;
-    if (d == 1) return '1G';
-    if (d < 7) return '${d}G';
-    if (d < 30) return '${(d / 7).round()}H';
-    if (d < 365) return '${(d / 30).round()}A';
-    return '${(d / 365).round()}Y';
+    if (d == 1) return '1${l.words_unitDay}';
+    if (d < 7) return '$d${l.words_unitDay}';
+    if (d < 30) return '${(d / 7).round()}${l.words_unitWeek}';
+    if (d < 365) return '${(d / 30).round()}${l.words_unitMonth}';
+    return '${(d / 365).round()}${l.words_unitYear}';
   }
 
   double get _progress {
@@ -653,7 +673,9 @@ class _WordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = _status;
+    final l = AppL10n.of(context);
+    final c = context.c;
+    final s = _status(l, c);
     return Dismissible(
       key: Key(word.id),
       direction: DismissDirection.endToStart,
@@ -661,13 +683,12 @@ class _WordCard extends StatelessWidget {
         padding: const EdgeInsets.only(right: 24),
         alignment: Alignment.centerRight,
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.15),
+          color: c.error.withOpacity(0.15),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Semantics(
-          label: 'Kelimeyi sil',
-          child: const Icon(Icons.delete_outline,
-              color: AppColors.error, size: 22),
+          label: l.words_deleteWord,
+          child: Icon(Icons.delete_outline, color: c.error, size: 22),
         ),
       ),
       onDismissed: (_) => onDelete(),
@@ -710,21 +731,21 @@ class _WordCard extends StatelessWidget {
                                     child: Text(
                                       word.word,
                                       style: AppText.title(22,
-                                          color: AppColors.primary,
+                                          color: c.primary,
                                           weight: FontWeight.w600),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                   Semantics(
-                                    label: 'Telaffuz et',
+                                    label: l.words_pronounce,
                                     button: true,
                                     child: InkWell(
                                       onTap: onSpeak,
                                       borderRadius: BorderRadius.circular(99),
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(2),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(2),
                                         child: Icon(Icons.volume_up,
-                                            color: AppColors.primaryContainer,
+                                            color: c.primaryContainer,
                                             size: 18),
                                       ),
                                     ),
@@ -735,15 +756,14 @@ class _WordCard extends StatelessWidget {
                                 const SizedBox(height: 2),
                                 Text(
                                   word.ipa!,
-                                  style:
-                                      AppText.code(11, color: AppColors.inkDim),
+                                  style: AppText.code(11, color: c.inkDim),
                                 ),
                               ],
                               const SizedBox(height: 4),
                               Text(
-                                _intervalText,
+                                _intervalText(l),
                                 style: AppText.label(10,
-                                    color: AppColors.primaryContainer,
+                                    color: c.primaryContainer,
                                     weight: FontWeight.w600),
                               ),
                             ],
@@ -759,14 +779,14 @@ class _WordCard extends StatelessWidget {
                     const SizedBox(height: 14),
                     Text(
                       word.translation,
-                      style: AppText.ink(15, color: AppColors.ink),
+                      style: AppText.ink(15, color: c.ink),
                     ),
                     if (word.exampleSentence != null &&
                         word.exampleSentence!.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Text(
                         word.exampleSentence!,
-                        style: AppText.body(12, color: AppColors.inkMuted)
+                        style: AppText.body(12, color: c.inkMuted)
                             .copyWith(fontStyle: FontStyle.italic),
                       ),
                     ],
@@ -776,7 +796,7 @@ class _WordCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: _progress,
                         minHeight: 4,
-                        backgroundColor: AppColors.surfaceHighest,
+                        backgroundColor: c.surfaceHighest,
                         valueColor: AlwaysStoppedAnimation(s.color),
                       ),
                     ),
@@ -798,6 +818,8 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.only(top: 48),
       child: GlassPanel(
@@ -809,26 +831,26 @@ class _EmptyState extends StatelessWidget {
               height: 64,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryContainer.withOpacity(0.10),
-                border: Border.all(
-                    color: AppColors.primaryContainer.withOpacity(0.3)),
+                color: c.primaryContainer.withOpacity(0.10),
+                border:
+                    Border.all(color: c.primaryContainer.withOpacity(0.3)),
               ),
-              child: const Icon(Icons.menu_book,
-                  color: AppColors.primaryContainer, size: 30),
+              child:
+                  Icon(Icons.menu_book, color: c.primaryContainer, size: 30),
             ),
             const SizedBox(height: 18),
-            Text('Kütüphanen boş',
+            Text(l.words_emptyTitle,
                 style: AppText.title(22,
-                    color: AppColors.primary, weight: FontWeight.w600)),
+                    color: c.primary, weight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(
-              'Eklediğin her kelime SM-2 algoritması ile bilimsel aralıklarla karşına çıkar.',
+              l.words_emptyBody,
               textAlign: TextAlign.center,
-              style: AppText.body(13, color: AppColors.inkMuted),
+              style: AppText.body(13, color: c.inkMuted),
             ),
             const SizedBox(height: 22),
             NeonButton(
-              label: 'İlk kelimeni ekle',
+              label: l.words_addFirst,
               icon: Icons.add,
               onTap: onAdd,
             ),
@@ -845,16 +867,18 @@ class _NoResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.only(top: 32),
       child: Center(
         child: Column(
           children: [
-            const Icon(Icons.search_off, color: AppColors.inkDim, size: 32),
+            Icon(Icons.search_off, color: c.inkDim, size: 32),
             const SizedBox(height: 12),
             Text(
-              query.isEmpty ? 'Bu filtre boş' : '"$query" için sonuç yok',
-              style: AppText.body(13, color: AppColors.inkDim),
+              query.isEmpty ? l.words_filterEmpty : l.words_noResultsFor(query),
+              style: AppText.body(13, color: c.inkDim),
             ),
           ],
         ),
@@ -876,18 +900,20 @@ class _CompletionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final pct = total > 0 ? (correct / total * 100).round() : 0;
     final Color accent;
     final String grade;
     if (pct >= 80) {
-      accent = AppColors.primaryFixed;
-      grade = 'Harika!';
+      accent = c.primaryFixed;
+      grade = l.words_gradeGreat;
     } else if (pct >= 50) {
-      accent = AppColors.secondary;
-      grade = 'İyi iş!';
+      accent = c.secondary;
+      grade = l.words_gradeGood;
     } else {
-      accent = AppColors.tertiaryFixedDim;
-      grade = 'Devam et!';
+      accent = c.tertiaryFixedDim;
+      grade = l.words_gradeKeepGoing;
     }
 
     return Center(
@@ -899,7 +925,7 @@ class _CompletionView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SectionLabel('Tekrar Tamamlandı', color: accent),
+              SectionLabel(l.words_reviewComplete, color: accent),
               const SizedBox(height: 20),
               Text(
                 grade,
@@ -911,19 +937,25 @@ class _CompletionView extends StatelessWidget {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  _StatPill(label: 'DOĞRU', value: '$correct', color: accent),
+                  _StatPill(
+                      label: l.words_statCorrect,
+                      value: '$correct',
+                      color: accent),
                   const SizedBox(width: 10),
                   _StatPill(
-                      label: 'TOPLAM',
+                      label: l.words_statTotal,
                       value: '$total',
-                      color: AppColors.tertiaryFixedDim),
+                      color: c.tertiaryFixedDim),
                   const SizedBox(width: 10),
-                  _StatPill(label: 'BAŞARI', value: '%$pct', color: accent),
+                  _StatPill(
+                      label: l.words_statSuccess,
+                      value: l.dashboard_percentValue(pct),
+                      color: accent),
                 ],
               ),
               const SizedBox(height: 24),
               NeonButton(
-                label: 'Kütüphaneye Dön',
+                label: l.words_backToLibrary,
                 icon: Icons.arrow_back,
                 onTap: onClose,
               ),
@@ -991,6 +1023,8 @@ class _ReviewView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final progress = (index + 1) / total;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -1000,8 +1034,7 @@ class _ReviewView extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: onClose,
-                icon: const Icon(Icons.close,
-                    color: AppColors.inkMuted, size: 22),
+                icon: Icon(Icons.close, color: c.inkMuted, size: 22),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -1010,15 +1043,14 @@ class _ReviewView extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 4,
-                    backgroundColor: AppColors.surfaceHighest,
-                    valueColor: const AlwaysStoppedAnimation(
-                        AppColors.primaryContainer),
+                    backgroundColor: c.surfaceHighest,
+                    valueColor: AlwaysStoppedAnimation(c.primaryContainer),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Text('${index + 1} / $total',
-                  style: AppText.code(11, color: AppColors.inkMuted)),
+                  style: AppText.code(11, color: c.inkMuted)),
             ],
           ),
           Expanded(
@@ -1028,47 +1060,46 @@ class _ReviewView extends StatelessWidget {
               child: Center(
                 child: GlassPanel(
                   padding: const EdgeInsets.all(36),
-                  glowColor: AppColors.primaryContainer,
+                  glowColor: c.primaryContainer,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionLabel('Çevir',
-                          color: AppColors.primaryContainer),
+                      SectionLabel(l.words_translate,
+                          color: c.primaryContainer),
                       const SizedBox(height: 22),
                       Text(
                         word.word,
                         style: AppText.hero(40,
-                                color: AppColors.primary,
-                                weight: FontWeight.w700)
+                                color: c.primary, weight: FontWeight.w700)
                             .copyWith(
-                          shadows: neonGlow(AppColors.primary,
-                              blur: 14, opacity: 0.4),
+                          shadows:
+                              neonGlow(c.primary, blur: 14, opacity: 0.4),
                         ),
                       ),
                       const SizedBox(height: 26),
                       Container(
-                          height: 1, color: Colors.white.withOpacity(0.08)),
+                          height: 1,
+                          color: (c.isDark ? Colors.white : Colors.black)
+                              .withOpacity(0.08)),
                       const SizedBox(height: 22),
                       if (revealed)
                         Text(
                           word.translation,
                           style: AppText.title(
                             24,
-                            color: AppColors.primaryContainer,
+                            color: c.primaryContainer,
                             weight: FontWeight.w600,
                           ),
                         )
                       else
                         Row(
                           children: [
-                            Text('DOKUNARAK GÖSTER',
+                            Text(l.words_tapToReveal,
                                 style: AppText.label(10,
-                                    color: AppColors.inkDim,
-                                    weight: FontWeight.w700)),
+                                    color: c.inkDim, weight: FontWeight.w700)),
                             const SizedBox(width: 8),
-                            const Icon(Icons.touch_app,
-                                color: AppColors.inkDim, size: 14),
+                            Icon(Icons.touch_app, color: c.inkDim, size: 14),
                           ],
                         ),
                     ],
@@ -1078,29 +1109,29 @@ class _ReviewView extends StatelessWidget {
             ),
           ),
           if (revealed) ...[
-            Text('NE KADAR BİLDİN?',
+            Text(l.words_howWell,
                 style: AppText.label(10,
-                    color: AppColors.inkDim, weight: FontWeight.w600)),
+                    color: c.inkDim, weight: FontWeight.w600)),
             const SizedBox(height: 14),
             Row(
               children: [
                 _RateBtn(
-                  label: 'Bilmedim',
-                  color: AppColors.error,
+                  label: l.words_rateForgot,
+                  color: c.error,
                   disabled: isRating,
                   onTap: () => onRate(0),
                 ),
                 const SizedBox(width: 10),
                 _RateBtn(
-                  label: 'Zordu',
-                  color: AppColors.secondary,
+                  label: l.words_rateHard,
+                  color: c.secondary,
                   disabled: isRating,
                   onTap: () => onRate(3),
                 ),
                 const SizedBox(width: 10),
                 _RateBtn(
-                  label: 'Kolaydı',
-                  color: AppColors.primaryFixed,
+                  label: l.words_rateEasy,
+                  color: c.primaryFixed,
                   disabled: isRating,
                   onTap: () => onRate(5),
                 ),

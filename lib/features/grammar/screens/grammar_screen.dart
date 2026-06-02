@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/errors/error_handler.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../models/grammar_topic.dart';
@@ -14,27 +15,29 @@ class GrammarScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final topicsAsync = ref.watch(grammarTopicsProvider);
     final progressAsync = ref.watch(grammarProgressProvider);
     final locale = ref.watch(localeProvider).languageCode;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
-          locale == 'en' ? 'Grammar' : 'Gramer',
+          l.settings_grammar,
           style: AppText.title(18,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
         ),
       ),
       body: CosmicBackground(
         child: SafeArea(
           child: RefreshIndicator(
-            color: AppColors.primaryContainer,
-            backgroundColor: AppColors.bgCard,
+            color: c.primaryContainer,
+            backgroundColor: c.bgCard,
             onRefresh: () async {
               ref.invalidate(grammarTopicsProvider);
               ref.invalidate(grammarProgressProvider);
@@ -50,7 +53,7 @@ class GrammarScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(24),
                     child: Text(
                       getErrorMessage(context, e),
-                      style: AppText.body(14, color: AppColors.inkDim),
+                      style: AppText.body(14, color: c.inkDim),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -71,10 +74,8 @@ class GrammarScreen extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          locale == 'en'
-                              ? 'No grammar topics yet. Make sure you applied the migration.'
-                              : 'Henüz gramer konusu yok. Veritabanı yenilemesi (migration) uygulandı mı kontrol et.',
-                          style: AppText.body(14, color: AppColors.inkDim),
+                          l.grammar_emptyTopics,
+                          style: AppText.body(14, color: c.inkDim),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -95,27 +96,24 @@ class GrammarScreen extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryContainer
-                                    .withOpacity(0.18),
+                                color: c.primaryContainer.withOpacity(0.18),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: AppColors.primaryContainer
-                                      .withOpacity(0.5),
+                                  color: c.primaryContainer.withOpacity(0.5),
                                 ),
                               ),
                               child: Text(
                                 lvl,
                                 style: AppText.label(11,
-                                    color: AppColors.primaryContainer,
+                                    color: c.primaryContainer,
                                     weight: FontWeight.w800),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              locale == 'en' ? 'Level' : 'Seviye',
+                              l.grammar_level,
                               style: AppText.label(11,
-                                  color: AppColors.inkDim,
-                                  weight: FontWeight.w600),
+                                  color: c.inkDim, weight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -154,8 +152,10 @@ class _TopicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final status = progress?.status ?? GrammarStatus.notStarted;
-    final (icon, color) = _statusVisual(status);
+    final (icon, color) = _statusVisual(status, c);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: InkWell(
@@ -164,9 +164,9 @@ class _TopicTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.bgCard.withOpacity(0.6),
+            color: c.bgCard.withOpacity(0.6),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.inkDim.withOpacity(0.18)),
+            border: Border.all(color: c.inkDim.withOpacity(0.18)),
           ),
           child: Row(
             children: [
@@ -188,19 +188,19 @@ class _TopicTile extends StatelessWidget {
                     Text(
                       topic.title(locale),
                       style: AppText.title(14,
-                          color: AppColors.ink, weight: FontWeight.w700),
+                          color: c.ink, weight: FontWeight.w700),
                     ),
                     if (progress?.quizScore != null) ...[
                       const SizedBox(height: 2),
                       Text(
-                        '${locale == 'en' ? 'Best score' : 'En iyi skor'}: ${progress!.quizScore}',
-                        style: AppText.label(10, color: AppColors.inkDim),
+                        '${l.grammar_bestScore}: ${progress!.quizScore}',
+                        style: AppText.label(10, color: c.inkDim),
                       ),
                     ],
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.inkDim),
+              Icon(Icons.chevron_right, color: c.inkDim),
             ],
           ),
         ),
@@ -208,16 +208,16 @@ class _TopicTile extends StatelessWidget {
     );
   }
 
-  (IconData, Color) _statusVisual(GrammarStatus s) {
+  (IconData, Color) _statusVisual(GrammarStatus s, AppPalette c) {
     switch (s) {
       case GrammarStatus.mastered:
-        return (Icons.workspace_premium, AppColors.tertiary);
+        return (Icons.workspace_premium, c.tertiary);
       case GrammarStatus.completed:
-        return (Icons.check_circle, AppColors.success);
+        return (Icons.check_circle, c.success);
       case GrammarStatus.inProgress:
-        return (Icons.timelapse, AppColors.secondaryContainer);
+        return (Icons.timelapse, c.secondaryContainer);
       case GrammarStatus.notStarted:
-        return (Icons.menu_book_outlined, AppColors.primaryContainer);
+        return (Icons.menu_book_outlined, c.primaryContainer);
     }
   }
 }

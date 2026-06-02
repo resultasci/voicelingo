@@ -55,6 +55,240 @@ class AppColors {
   static const danger = error;
 }
 
+/// Theme-aware semantic palette. Mirrors the [AppColors] token names but is
+/// resolved per-[ThemeMode] via [ThemeExtension], so the same widget code renders
+/// correctly in both dark (Obsidian Void) and light (Solar Flare) themes.
+///
+/// Access from any widget with `context.c.<token>` (see [PaletteX]). The dark
+/// instance reuses the [AppColors] constants so the dark look is unchanged; the
+/// light instance is a hand-tuned palette with readable contrast on light surfaces.
+@immutable
+class AppPalette extends ThemeExtension<AppPalette> {
+  // Surfaces
+  final Color bg;
+  final Color bgSoft;
+  final Color bgCard;
+  final Color bgElevated;
+  final Color surfaceHigh;
+  final Color surfaceHighest;
+  // Ink
+  final Color ink;
+  final Color inkMuted;
+  final Color inkDim;
+  final Color rule;
+  // Primary (neon cyan)
+  final Color primary;
+  final Color primaryContainer;
+  final Color primaryFixed;
+  final Color primaryFixedDim;
+  final Color onPrimary;
+  // Secondary (warm orange)
+  final Color secondary;
+  final Color secondaryContainer;
+  // Tertiary (violet)
+  final Color tertiary;
+  final Color tertiaryContainer;
+  final Color tertiaryFixedDim;
+  // Status
+  final Color error;
+  final Color errorContainer;
+  final Color success;
+  final Color warn;
+  // Whether this palette is the dark variant — lets widgets soften glows/blooms
+  // in light mode without hardcoding a brightness check.
+  final bool isDark;
+
+  const AppPalette({
+    required this.bg,
+    required this.bgSoft,
+    required this.bgCard,
+    required this.bgElevated,
+    required this.surfaceHigh,
+    required this.surfaceHighest,
+    required this.ink,
+    required this.inkMuted,
+    required this.inkDim,
+    required this.rule,
+    required this.primary,
+    required this.primaryContainer,
+    required this.primaryFixed,
+    required this.primaryFixedDim,
+    required this.onPrimary,
+    required this.secondary,
+    required this.secondaryContainer,
+    required this.tertiary,
+    required this.tertiaryContainer,
+    required this.tertiaryFixedDim,
+    required this.error,
+    required this.errorContainer,
+    required this.success,
+    required this.warn,
+    required this.isDark,
+  });
+
+  // Legacy aliases (kept so migrated call sites can still resolve old names).
+  Color get accent => primaryContainer;
+  Color get accentSoft => primaryFixed;
+  Color get sage => primaryFixedDim;
+  Color get azure => tertiaryFixedDim;
+  Color get gold => secondary;
+  Color get danger => error;
+
+  /// Obsidian Void — original dark palette (unchanged values via [AppColors]).
+  static const dark = AppPalette(
+    bg: AppColors.bg,
+    bgSoft: AppColors.bgSoft,
+    bgCard: AppColors.bgCard,
+    bgElevated: AppColors.bgElevated,
+    surfaceHigh: AppColors.surfaceHigh,
+    surfaceHighest: AppColors.surfaceHighest,
+    ink: AppColors.ink,
+    inkMuted: AppColors.inkMuted,
+    inkDim: AppColors.inkDim,
+    rule: AppColors.rule,
+    primary: AppColors.primary,
+    primaryContainer: AppColors.primaryContainer,
+    primaryFixed: AppColors.primaryFixed,
+    primaryFixedDim: AppColors.primaryFixedDim,
+    onPrimary: AppColors.onPrimary,
+    secondary: AppColors.secondary,
+    secondaryContainer: AppColors.secondaryContainer,
+    tertiary: AppColors.tertiary,
+    tertiaryContainer: AppColors.tertiaryContainer,
+    tertiaryFixedDim: AppColors.tertiaryFixedDim,
+    error: AppColors.error,
+    errorContainer: AppColors.errorContainer,
+    success: AppColors.success,
+    warn: AppColors.warn,
+    isDark: true,
+  );
+
+  /// Solar Flare — hand-tuned light palette. Keeps the cyan/violet/orange
+  /// identity but darkens accents and inverts surfaces for contrast on light bg.
+  static const light = AppPalette(
+    bg: Color(0xFFF4F6F8),
+    bgSoft: Color(0xFFEDF0F3),
+    bgCard: Color(0xFFFFFFFF),
+    bgElevated: Color(0xFFFFFFFF),
+    surfaceHigh: Color(0xFFE7EBEF),
+    surfaceHighest: Color(0xFFDCE2E7),
+    ink: Color(0xFF11181C),
+    inkMuted: Color(0xFF3E4A50),
+    inkDim: Color(0xFF6B767C),
+    rule: Color(0xFFC2CCD2),
+    primary: Color(0xFF004E57),
+    primaryContainer: Color(0xFF008CA6),
+    primaryFixed: Color(0xFF1FA9C2),
+    primaryFixedDim: Color(0xFF00798F),
+    onPrimary: Color(0xFFFFFFFF),
+    secondary: Color(0xFFC1410B),
+    secondaryContainer: Color(0xFFE25400),
+    tertiary: Color(0xFF4A2A86),
+    tertiaryContainer: Color(0xFF6B26D9),
+    tertiaryFixedDim: Color(0xFF7E5FC4),
+    error: Color(0xFFBA1A1A),
+    errorContainer: Color(0xFF93000A),
+    success: Color(0xFF0E7A5F),
+    warn: Color(0xFFB26A00),
+    isDark: false,
+  );
+
+  @override
+  AppPalette copyWith({
+    Color? bg,
+    Color? bgSoft,
+    Color? bgCard,
+    Color? bgElevated,
+    Color? surfaceHigh,
+    Color? surfaceHighest,
+    Color? ink,
+    Color? inkMuted,
+    Color? inkDim,
+    Color? rule,
+    Color? primary,
+    Color? primaryContainer,
+    Color? primaryFixed,
+    Color? primaryFixedDim,
+    Color? onPrimary,
+    Color? secondary,
+    Color? secondaryContainer,
+    Color? tertiary,
+    Color? tertiaryContainer,
+    Color? tertiaryFixedDim,
+    Color? error,
+    Color? errorContainer,
+    Color? success,
+    Color? warn,
+    bool? isDark,
+  }) {
+    return AppPalette(
+      bg: bg ?? this.bg,
+      bgSoft: bgSoft ?? this.bgSoft,
+      bgCard: bgCard ?? this.bgCard,
+      bgElevated: bgElevated ?? this.bgElevated,
+      surfaceHigh: surfaceHigh ?? this.surfaceHigh,
+      surfaceHighest: surfaceHighest ?? this.surfaceHighest,
+      ink: ink ?? this.ink,
+      inkMuted: inkMuted ?? this.inkMuted,
+      inkDim: inkDim ?? this.inkDim,
+      rule: rule ?? this.rule,
+      primary: primary ?? this.primary,
+      primaryContainer: primaryContainer ?? this.primaryContainer,
+      primaryFixed: primaryFixed ?? this.primaryFixed,
+      primaryFixedDim: primaryFixedDim ?? this.primaryFixedDim,
+      onPrimary: onPrimary ?? this.onPrimary,
+      secondary: secondary ?? this.secondary,
+      secondaryContainer: secondaryContainer ?? this.secondaryContainer,
+      tertiary: tertiary ?? this.tertiary,
+      tertiaryContainer: tertiaryContainer ?? this.tertiaryContainer,
+      tertiaryFixedDim: tertiaryFixedDim ?? this.tertiaryFixedDim,
+      error: error ?? this.error,
+      errorContainer: errorContainer ?? this.errorContainer,
+      success: success ?? this.success,
+      warn: warn ?? this.warn,
+      isDark: isDark ?? this.isDark,
+    );
+  }
+
+  @override
+  AppPalette lerp(ThemeExtension<AppPalette>? other, double t) {
+    if (other is! AppPalette) return this;
+    return AppPalette(
+      bg: Color.lerp(bg, other.bg, t)!,
+      bgSoft: Color.lerp(bgSoft, other.bgSoft, t)!,
+      bgCard: Color.lerp(bgCard, other.bgCard, t)!,
+      bgElevated: Color.lerp(bgElevated, other.bgElevated, t)!,
+      surfaceHigh: Color.lerp(surfaceHigh, other.surfaceHigh, t)!,
+      surfaceHighest: Color.lerp(surfaceHighest, other.surfaceHighest, t)!,
+      ink: Color.lerp(ink, other.ink, t)!,
+      inkMuted: Color.lerp(inkMuted, other.inkMuted, t)!,
+      inkDim: Color.lerp(inkDim, other.inkDim, t)!,
+      rule: Color.lerp(rule, other.rule, t)!,
+      primary: Color.lerp(primary, other.primary, t)!,
+      primaryContainer: Color.lerp(primaryContainer, other.primaryContainer, t)!,
+      primaryFixed: Color.lerp(primaryFixed, other.primaryFixed, t)!,
+      primaryFixedDim: Color.lerp(primaryFixedDim, other.primaryFixedDim, t)!,
+      onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
+      secondary: Color.lerp(secondary, other.secondary, t)!,
+      secondaryContainer:
+          Color.lerp(secondaryContainer, other.secondaryContainer, t)!,
+      tertiary: Color.lerp(tertiary, other.tertiary, t)!,
+      tertiaryContainer: Color.lerp(tertiaryContainer, other.tertiaryContainer, t)!,
+      tertiaryFixedDim: Color.lerp(tertiaryFixedDim, other.tertiaryFixedDim, t)!,
+      error: Color.lerp(error, other.error, t)!,
+      errorContainer: Color.lerp(errorContainer, other.errorContainer, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      warn: Color.lerp(warn, other.warn, t)!,
+      isDark: t < 0.5 ? isDark : other.isDark,
+    );
+  }
+}
+
+/// Short accessor: `context.c.bg` resolves the active [AppPalette].
+extension PaletteX on BuildContext {
+  AppPalette get c => Theme.of(this).extension<AppPalette>()!;
+}
+
 /// Typography — Space Grotesk for display/labels, Manrope for body.
 class AppText {
   static TextStyle display(double size,
@@ -146,6 +380,7 @@ ThemeData buildAppTheme() {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
+    extensions: const [AppPalette.dark],
     scaffoldBackgroundColor: AppColors.bg,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryContainer,
@@ -180,24 +415,24 @@ ThemeData buildLightAppTheme() {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: const Color(0xFFF0F0F0),
+    extensions: const [AppPalette.light],
+    scaffoldBackgroundColor: AppPalette.light.bg,
     colorScheme: const ColorScheme.light(
-      primary: Color(
-          0xFF00B4D8), // Darker version of primaryContainer for light theme
+      primary: Color(0xFF008CA6), // light primaryContainer
       onPrimary: Colors.white,
-      secondary: AppColors.secondaryContainer,
+      secondary: Color(0xFFE25400),
       surface: Colors.white,
-      error: AppColors.errorContainer,
+      error: Color(0xFFBA1A1A),
     ),
     fontFamily: _fontBody,
     textTheme: ThemeData.light().textTheme.apply(fontFamily: _fontBody),
     appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFFF0F0F0),
+      backgroundColor: AppPalette.light.bg,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       centerTitle: false,
-      titleTextStyle: AppText.label(11, color: const Color(0xFF00B4D8)),
-      iconTheme: const IconThemeData(color: Color(0xFF00B4D8)),
+      titleTextStyle: AppText.label(11, color: AppPalette.light.primaryContainer),
+      iconTheme: const IconThemeData(color: Color(0xFF008CA6)),
     ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: Colors.white,
@@ -223,36 +458,37 @@ class CosmicBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.c;
+    final dark = palette.isDark;
+    // Bloom tints: cyan top-left, violet bottom-right — softer in light mode.
+    final cyanBloom = dark ? const Color(0x1400F2FF) : const Color(0x0F008CA6);
+    final violetBloom = dark ? const Color(0x147318FF) : const Color(0x0D6B26D9);
+    final fade = palette.bg.withOpacity(0);
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.bg,
+      decoration: BoxDecoration(
+        color: palette.bg,
         gradient: RadialGradient(
-          center: Alignment(-0.7, -0.2),
+          center: const Alignment(-0.7, -0.2),
           radius: 1.4,
-          colors: [
-            Color(0x1400F2FF),
-            Color(0x000A0A0A),
-          ],
+          colors: [cyanBloom, fade],
         ),
       ),
       child: Stack(
         children: [
           // RepaintBoundary: static star field, never invalidates due to upstream
-          // rebuilds. Without this, parent rebuilds re-rasterize ~30-70 circles.
-          const Positioned.fill(
-            child: RepaintBoundary(child: _StarField()),
-          ),
+          // rebuilds. Only rendered on dark surfaces (white stars vanish on light).
+          if (dark)
+            const Positioned.fill(
+              child: RepaintBoundary(child: _StarField()),
+            ),
           Positioned.fill(
             child: IgnorePointer(
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: RadialGradient(
-                    center: Alignment(0.8, 0.6),
+                    center: const Alignment(0.8, 0.6),
                     radius: 1.0,
-                    colors: [
-                      Color(0x147318FF),
-                      Color(0x000A0A0A),
-                    ],
+                    colors: [violetBloom, fade],
                   ),
                 ),
               ),
@@ -335,7 +571,11 @@ class GlassPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = borderColor ?? Colors.white.withOpacity(0.10);
+    final palette = context.c;
+    final border = borderColor ??
+        (palette.isDark
+            ? Colors.white.withOpacity(0.10)
+            : Colors.black.withOpacity(0.08));
     final sigma = DevicePerf.glassBlurSigma;
 
     // Low tier: skip BackdropFilter entirely, fall back to opaque-ish gradient.
@@ -344,8 +584,8 @@ class GlassPanel extends StatelessWidget {
     Widget content = Container(
       decoration: BoxDecoration(
         color: sigma == 0
-            ? AppColors.bgElevated.withOpacity(0.92)
-            : AppColors.bgElevated.withOpacity(0.6),
+            ? palette.bgElevated.withOpacity(0.92)
+            : palette.bgElevated.withOpacity(0.6),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: border),
         boxShadow: [
@@ -395,37 +635,38 @@ class GlassPanel extends StatelessWidget {
 class NeonChip extends StatelessWidget {
   final String text;
   final IconData? icon;
-  final Color color;
+  final Color? color;
   final EdgeInsets padding;
   const NeonChip({
     super.key,
     required this.text,
     this.icon,
-    this.color = AppColors.primaryContainer,
+    this.color,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
   });
 
   @override
   Widget build(BuildContext context) {
+    final accent = color ?? context.c.primaryContainer;
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: accent.withOpacity(0.10),
         borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: color.withOpacity(0.35)),
+        border: Border.all(color: accent.withOpacity(0.35)),
         boxShadow: [
-          BoxShadow(color: color.withOpacity(0.15), blurRadius: 8),
+          BoxShadow(color: accent.withOpacity(0.15), blurRadius: 8),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 12, color: color),
+            Icon(icon, size: 12, color: accent),
             const SizedBox(width: 6),
           ],
           Text(text.toUpperCase(),
-              style: AppText.label(10, color: color, weight: FontWeight.w700)),
+              style: AppText.label(10, color: accent, weight: FontWeight.w700)),
         ],
       ),
     );
@@ -438,7 +679,7 @@ class NeonButton extends StatelessWidget {
   final IconData? icon;
   final VoidCallback? onTap;
   final bool loading;
-  final Color color;
+  final Color? color;
   final double height;
 
   const NeonButton({
@@ -447,25 +688,27 @@ class NeonButton extends StatelessWidget {
     this.icon,
     this.onTap,
     this.loading = false,
-    this.color = AppColors.primaryContainer,
+    this.color,
     this.height = 52,
   });
 
   @override
   Widget build(BuildContext context) {
+    final accent = color ?? context.c.primaryContainer;
+    final onAccent = context.c.onPrimary;
     return Material(
-      color: color,
+      color: accent,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: loading ? null : onTap,
         borderRadius: BorderRadius.circular(14),
         child: Ink(
           decoration: BoxDecoration(
-            color: color,
+            color: accent,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.4),
+                color: accent.withOpacity(0.4),
                 blurRadius: 22,
                 spreadRadius: -2,
               ),
@@ -474,23 +717,23 @@ class NeonButton extends StatelessWidget {
           height: height,
           child: Center(
             child: loading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.onPrimary),
+                        strokeWidth: 2, color: onAccent),
                   )
                 : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (icon != null) ...[
-                        Icon(icon, size: 18, color: AppColors.onPrimary),
+                        Icon(icon, size: 18, color: onAccent),
                         const SizedBox(width: 8),
                       ],
                       Text(
                         label.toUpperCase(),
                         style: AppText.label(12,
-                            color: AppColors.onPrimary,
+                            color: onAccent,
                             weight: FontWeight.w700),
                       ),
                     ],
@@ -507,19 +750,20 @@ class GhostButton extends StatelessWidget {
   final String label;
   final IconData? icon;
   final VoidCallback? onTap;
-  final Color color;
+  final Color? color;
   final double height;
   const GhostButton({
     super.key,
     required this.label,
     this.icon,
     this.onTap,
-    this.color = AppColors.primaryContainer,
+    this.color,
     this.height = 48,
   });
 
   @override
   Widget build(BuildContext context) {
+    final accent = color ?? context.c.primaryContainer;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(99),
@@ -530,19 +774,19 @@ class GhostButton extends StatelessWidget {
           height: height,
           padding: const EdgeInsets.symmetric(horizontal: 24),
           decoration: BoxDecoration(
-            border: Border.all(color: color.withOpacity(0.6)),
+            border: Border.all(color: accent.withOpacity(0.6)),
             borderRadius: BorderRadius.circular(99),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 16, color: color),
+                Icon(icon, size: 16, color: accent),
                 const SizedBox(width: 8),
               ],
               Text(label.toUpperCase(),
                   style:
-                      AppText.label(11, color: color, weight: FontWeight.w700)),
+                      AppText.label(11, color: accent, weight: FontWeight.w700)),
             ],
           ),
         ),
@@ -576,42 +820,46 @@ class NeonField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.c;
+    final hairline = palette.isDark
+        ? Colors.white.withOpacity(0.05)
+        : Colors.black.withOpacity(0.08);
     return TextField(
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
       autofocus: autofocus,
       readOnly: readOnly,
-      cursorColor: AppColors.primaryContainer,
-      style: AppText.ink(15),
+      cursorColor: palette.primaryContainer,
+      style: AppText.ink(15, color: palette.ink),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppText.body(14, color: AppColors.inkDim),
+        hintStyle: AppText.body(14, color: palette.inkDim),
         prefixIcon: leadingIcon != null
             ? Padding(
                 padding: const EdgeInsets.only(left: 14, right: 8),
-                child: Icon(leadingIcon, size: 20, color: AppColors.rule),
+                child: Icon(leadingIcon, size: 20, color: palette.rule),
               )
             : null,
         prefixIconConstraints:
             const BoxConstraints(minWidth: 40, minHeight: 20),
         suffixIcon: suffix,
         filled: true,
-        fillColor: AppColors.surfaceHighest,
+        fillColor: palette.surfaceHighest,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderSide: BorderSide(color: hairline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderSide: BorderSide(color: hairline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              const BorderSide(color: AppColors.primaryContainer, width: 1.5),
+              BorderSide(color: palette.primaryContainer, width: 1.5),
         ),
       ),
     );
@@ -621,16 +869,15 @@ class NeonField extends StatelessWidget {
 /// Tiny uppercase label with optional leading bar — used in section headers.
 class SectionLabel extends StatelessWidget {
   final String text;
-  final Color color;
+  final Color? color;
   final bool withRule;
 
   const SectionLabel(this.text,
-      {super.key,
-      this.color = AppColors.primaryContainer,
-      this.withRule = true});
+      {super.key, this.color, this.withRule = true});
 
   @override
   Widget build(BuildContext context) {
+    final accent = color ?? context.c.primaryContainer;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -638,10 +885,10 @@ class SectionLabel extends StatelessWidget {
           Container(
               width: 24,
               height: 1,
-              color: color,
+              color: accent,
               margin: const EdgeInsets.only(right: 10)),
         Text(text.toUpperCase(),
-            style: AppText.label(10, color: color, weight: FontWeight.w700)),
+            style: AppText.label(10, color: accent, weight: FontWeight.w700)),
       ],
     );
   }

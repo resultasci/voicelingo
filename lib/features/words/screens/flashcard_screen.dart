@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/word.dart';
 import '../../../providers/words_provider.dart';
 import '../../../theme/app_theme.dart';
@@ -31,6 +32,8 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     if (_currentIndex >= widget.dueWords.length) {
       return const _CompletedView();
     }
@@ -39,25 +42,22 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
     final progress = (_currentIndex) / widget.dueWords.length;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const BackButton(color: AppColors.primaryContainer),
+        leading: BackButton(color: c.primaryContainer),
         title: Text(
-          'Kelime Pratiği',
-          style: AppText.title(20,
-                  color: AppColors.primary, weight: FontWeight.w600)
-              .copyWith(
-                  shadows: neonGlow(AppColors.primary, blur: 8, opacity: 0.3)),
+          l.flashcard_title,
+          style: AppText.title(20, color: c.primary, weight: FontWeight.w600)
+              .copyWith(shadows: neonGlow(c.primary, blur: 8, opacity: 0.3)),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(
             value: progress,
-            backgroundColor: AppColors.surfaceHighest,
-            valueColor:
-                const AlwaysStoppedAnimation(AppColors.primaryContainer),
+            backgroundColor: c.surfaceHighest,
+            valueColor: AlwaysStoppedAnimation(c.primaryContainer),
           ),
         ),
       ),
@@ -69,9 +69,10 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'KART ${_currentIndex + 1} / ${widget.dueWords.length}',
+                  l.flashcard_cardOf(
+                      _currentIndex + 1, widget.dueWords.length),
                   style: AppText.label(12,
-                      color: AppColors.inkDim, weight: FontWeight.bold),
+                      color: c.inkDim, weight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -95,12 +96,14 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
   }
 
   Widget _buildCard(Word word, {Key? key}) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Container(
       key: key,
       decoration: BoxDecoration(
-        color: AppColors.surfaceHigh.withOpacity(0.5),
+        color: c.surfaceHigh.withOpacity(0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primaryContainer.withOpacity(0.3)),
+        border: Border.all(color: c.primaryContainer.withOpacity(0.3)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
@@ -116,10 +119,9 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
           children: [
             Text(
               word.word,
-              style: AppText.hero(36,
-                      color: AppColors.primary, weight: FontWeight.bold)
+              style: AppText.hero(36, color: c.primary, weight: FontWeight.bold)
                   .copyWith(
-                      shadows: neonGlow(AppColors.primaryContainer,
+                      shadows: neonGlow(c.primaryContainer,
                           blur: 12, opacity: 0.4)),
               textAlign: TextAlign.center,
             ),
@@ -127,18 +129,18 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
               const SizedBox(height: 12),
               Text(
                 '/${word.ipa}/',
-                style: AppText.body(16, color: AppColors.secondary),
+                style: AppText.body(16, color: c.secondary),
                 textAlign: TextAlign.center,
               ),
             ],
             const Spacer(),
             if (_showAnswer) ...[
-              Divider(color: AppColors.inkDim.withOpacity(0.3)),
+              Divider(color: c.inkDim.withOpacity(0.3)),
               const Spacer(),
               Text(
                 word.translation,
                 style: AppText.title(28,
-                    color: AppColors.tertiaryFixedDim, weight: FontWeight.w600),
+                    color: c.tertiaryFixedDim, weight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
               if (word.exampleSentence != null &&
@@ -146,17 +148,17 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                 const SizedBox(height: 24),
                 Text(
                   word.exampleSentence!,
-                  style: AppText.body(15, color: AppColors.ink),
+                  style: AppText.body(15, color: c.ink),
                   textAlign: TextAlign.center,
                 ),
               ],
             ] else ...[
               Icon(Icons.touch_app,
-                  color: AppColors.inkDim.withOpacity(0.5), size: 48),
+                  color: c.inkDim.withOpacity(0.5), size: 48),
               const SizedBox(height: 16),
               Text(
-                'Çeviriyi görmek için "Cevabı Göster"e dokun',
-                style: AppText.body(14, color: AppColors.inkDim),
+                l.flashcard_revealHint,
+                style: AppText.body(14, color: c.inkDim),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -168,9 +170,11 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
   }
 
   Widget _buildControls() {
+    final l = AppL10n.of(context);
+    final c = context.c;
     if (!_showAnswer) {
       return NeonButton(
-        label: 'CEVABI GÖSTER',
+        label: l.flashcard_showAnswer,
         icon: Icons.visibility,
         onTap: () => setState(() => _showAnswer = true),
       );
@@ -182,8 +186,8 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
           children: [
             Expanded(
               child: _OutcomeButton(
-                label: 'BİLMEDİM',
-                color: AppColors.error,
+                label: l.words_rateForgot.toUpperCase(),
+                color: c.error,
                 icon: Icons.close,
                 onTap: () => _onQualitySelected(0),
               ),
@@ -191,8 +195,8 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _OutcomeButton(
-                label: 'ZORDU',
-                color: AppColors.secondary,
+                label: l.words_rateHard.toUpperCase(),
+                color: c.secondary,
                 icon: Icons.warning_amber_rounded,
                 onTap: () => _onQualitySelected(3),
               ),
@@ -200,8 +204,8 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _OutcomeButton(
-                label: 'KOLAYDI',
-                color: AppColors.primaryContainer,
+                label: l.words_rateEasy.toUpperCase(),
+                color: c.primaryContainer,
                 icon: Icons.check,
                 onTap: () => _onQualitySelected(5),
               ),
@@ -264,8 +268,10 @@ class _CompletedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: CosmicBackground(
         child: SafeArea(
           child: Center(
@@ -273,28 +279,28 @@ class _CompletedView extends StatelessWidget {
               padding: const EdgeInsets.all(32.0),
               child: GlassPanel(
                 padding: const EdgeInsets.all(32),
-                borderColor: AppColors.primaryFixedDim.withOpacity(0.5),
-                glowColor: AppColors.primaryFixedDim,
+                borderColor: c.primaryFixedDim.withOpacity(0.5),
+                glowColor: c.primaryFixedDim,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.check_circle_outline,
-                        color: AppColors.primaryFixedDim, size: 64),
+                    Icon(Icons.check_circle_outline,
+                        color: c.primaryFixedDim, size: 64),
                     const SizedBox(height: 24),
                     Text(
-                      'TEBRİKLER!',
+                      l.flashcard_congrats,
                       style: AppText.hero(28,
-                          color: AppColors.primary, weight: FontWeight.w700),
+                          color: c.primary, weight: FontWeight.w700),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Bugünlük kelime tekrarını bitirdin. Kelimeler yarın senin için tekrar planlanacak.',
-                      style: AppText.body(16, color: AppColors.ink),
+                      l.flashcard_completeBody,
+                      style: AppText.body(16, color: c.ink),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
                     NeonButton(
-                      label: 'ANA SAYFAYA DÖN',
+                      label: l.flashcard_backHome,
                       icon: Icons.home,
                       onTap: () => Navigator.of(context).pop(),
                     ),

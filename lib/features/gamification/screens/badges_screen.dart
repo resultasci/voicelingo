@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/error_handler.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../models/badge.dart';
@@ -14,21 +15,23 @@ class BadgesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final catalogAsync = ref.watch(badgesCatalogProvider);
     final earnedAsync = ref.watch(earnedBadgesProvider);
     final locale = ref.watch(localeProvider).languageCode;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          locale == 'en' ? 'Badges' : 'Rozetler',
+          l.settings_badges,
           style: AppText.title(18,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
         ),
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
       ),
       body: CosmicBackground(
         child: SafeArea(
@@ -43,11 +46,11 @@ class BadgesScreen extends ConsumerWidget {
                     Text(
                       getErrorMessage(context, e),
                       textAlign: TextAlign.center,
-                      style: AppText.body(13, color: AppColors.inkDim),
+                      style: AppText.body(13, color: c.inkDim),
                     ),
                     const SizedBox(height: 16),
                     GhostButton(
-                      label: locale == 'en' ? 'Retry' : 'Tekrar dene',
+                      label: l.common_retry,
                       icon: Icons.refresh,
                       onTap: () => ref.invalidate(badgesCatalogProvider),
                     ),
@@ -97,11 +100,11 @@ class _BadgeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        earned ? AppColors.primaryContainer : AppColors.inkDim.withOpacity(0.4);
+    final c = context.c;
+    final color = earned ? c.primaryContainer : c.inkDim.withOpacity(0.4);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgCard.withOpacity(earned ? 0.8 : 0.4),
+        color: c.bgCard.withOpacity(earned ? 0.8 : 0.4),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: color.withOpacity(0.4)),
         boxShadow: earned
@@ -143,7 +146,7 @@ class _BadgeTile extends StatelessWidget {
           if (!earned) ...[
             const SizedBox(height: 4),
             Icon(Icons.lock_outline,
-                size: 14, color: AppColors.inkDim.withOpacity(0.6)),
+                size: 14, color: c.inkDim.withOpacity(0.6)),
           ],
         ],
       ),

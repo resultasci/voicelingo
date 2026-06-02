@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../network/connectivity_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../theme/app_theme.dart';
 
 /// App'in her yerinde, üst banner. Çevrimdışıyken görünür, online iken gizli.
@@ -9,11 +10,11 @@ import '../../theme/app_theme.dart';
 /// Kullanım: [VoiceLingoApp] builder içinde child'ın üstüne stack'lenir veya
 /// individual screen'lerin appbar altında gösterilir. Şimdilik standalone widget.
 class ConnectivityBanner extends ConsumerWidget {
-  const ConnectivityBanner({super.key, this.locale = 'tr'});
-  final String locale;
+  const ConnectivityBanner({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.c;
     final statusAsync = ref.watch(connectivityStatusProvider);
     final online = statusAsync.value ?? true;
     return AnimatedSwitcher(
@@ -28,19 +29,17 @@ class ConnectivityBanner extends ConsumerWidget {
           : Container(
               key: const ValueKey('offline'),
               width: double.infinity,
-              color: AppColors.warn.withOpacity(0.18),
+              color: c.warn.withOpacity(0.18),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.cloud_off, color: AppColors.warn, size: 16),
+                  Icon(Icons.cloud_off, color: c.warn, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      locale == 'en'
-                          ? 'You are offline. Saved progress will sync later.'
-                          : 'Çevrimdışısın. İlerlemen bağlanınca senkronize olur.',
+                      AppL10n.of(context).conn_offlineBanner,
                       style: AppText.label(11,
-                          color: AppColors.warn, weight: FontWeight.w700),
+                          color: c.warn, weight: FontWeight.w700),
                     ),
                   ),
                 ],

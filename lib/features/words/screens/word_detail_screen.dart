@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/word.dart';
-import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../models/dictionary_entry.dart';
 import '../services/dictionary_service.dart';
@@ -45,19 +45,20 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = ref.watch(localeProvider).languageCode;
+    final l = AppL10n.of(context);
+    final c = context.c;
     final entryAsync = ref.watch(dictionaryEntryProvider(widget.word.word));
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
           widget.word.word,
           style: AppText.title(18,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
         ),
       ),
       body: CosmicBackground(
@@ -75,24 +76,15 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                   padding: EdgeInsets.symmetric(vertical: 32),
                   child: Center(child: CircularProgressIndicator()),
                 ),
-                error: (e, _) => _SectionPlaceholder(
-                  text: locale == 'en'
-                      ? 'Could not load extra details.'
-                      : 'Ek detaylar yüklenemedi.',
-                ),
+                error: (e, _) => _SectionPlaceholder(text: l.wordDetail_loadError),
                 data: (entry) {
                   if (entry == null) {
-                    return _SectionPlaceholder(
-                      text: locale == 'en'
-                          ? 'No extra details cached yet. Try again later.'
-                          : 'Cache\'de ek detay yok. Sonra tekrar dene.',
-                    );
+                    return _SectionPlaceholder(text: l.wordDetail_noCache);
                   }
                   return _EnrichedSections(
                     entry: entry,
                     fallbackIpa: widget.word.ipa,
                     fallbackExample: widget.word.exampleSentence,
-                    locale: locale,
                     onSpeak: _speak,
                   );
                 },
@@ -113,15 +105,17 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.bgCard.withOpacity(0.7),
+        color: c.bgCard.withOpacity(0.7),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.primaryContainer.withOpacity(0.4)),
+        border: Border.all(color: c.primaryContainer.withOpacity(0.4)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryContainer.withOpacity(0.18),
+            color: c.primaryContainer.withOpacity(0.18),
             blurRadius: 16,
           ),
         ],
@@ -134,13 +128,12 @@ class _Header extends StatelessWidget {
               children: [
                 Text(
                   word.word,
-                  style: AppText.hero(28,
-                      color: AppColors.ink, weight: FontWeight.w800),
+                  style: AppText.hero(28, color: c.ink, weight: FontWeight.w800),
                 ),
                 if (word.translation.isNotEmpty)
                   Text(
                     word.translation,
-                    style: AppText.body(15, color: AppColors.inkDim),
+                    style: AppText.body(15, color: c.inkDim),
                   ),
               ],
             ),
@@ -148,15 +141,13 @@ class _Header extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primaryContainer.withOpacity(0.18),
-              border: Border.all(
-                  color: AppColors.primaryContainer.withOpacity(0.5)),
+              color: c.primaryContainer.withOpacity(0.18),
+              border: Border.all(color: c.primaryContainer.withOpacity(0.5)),
             ),
             child: IconButton(
-              icon: const Icon(Icons.volume_up,
-                  color: AppColors.primaryContainer, size: 24),
+              icon: Icon(Icons.volume_up, color: c.primaryContainer, size: 24),
               onPressed: onSpeak,
-              tooltip: 'Speak',
+              tooltip: l.words_pronounce,
             ),
           ),
         ],
@@ -171,17 +162,17 @@ class _EnrichedSections extends StatelessWidget {
     required this.entry,
     required this.fallbackIpa,
     required this.fallbackExample,
-    required this.locale,
     required this.onSpeak,
   });
   final DictionaryEntry entry;
   final String? fallbackIpa;
   final String? fallbackExample;
-  final String locale;
   final ValueChanged<String> onSpeak;
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final ipa = entry.ipa ?? fallbackIpa;
     final examples = entry.examples.isNotEmpty
         ? entry.examples
@@ -199,8 +190,7 @@ class _EnrichedSections extends StatelessWidget {
               Clipboard.setData(ClipboardData(text: ipa));
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content:
-                      Text(locale == 'en' ? 'IPA copied' : 'IPA kopyalandı'),
+                  content: Text(l.wordDetail_ipaCopied),
                   duration: const Duration(seconds: 1),
                 ),
               );
@@ -209,14 +199,14 @@ class _EnrichedSections extends StatelessWidget {
               child: Text(
                 ipa,
                 style: AppText.title(18,
-                    color: AppColors.primaryContainer, weight: FontWeight.w700),
+                    color: c.primaryContainer, weight: FontWeight.w700),
               ),
             ),
           ),
           const SizedBox(height: 18),
         ],
         if (examples.isNotEmpty) ...[
-          _SectionHeader(title: locale == 'en' ? 'Examples' : 'Örnekler'),
+          _SectionHeader(title: l.wordDetail_examples),
           for (final ex in examples)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -228,12 +218,12 @@ class _EnrichedSections extends StatelessWidget {
                       child: Text(
                         ex.en,
                         style: AppText.title(14,
-                            color: AppColors.ink, weight: FontWeight.w600),
+                            color: c.ink, weight: FontWeight.w600),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.volume_up_outlined,
-                          color: AppColors.primaryContainer, size: 20),
+                      icon: Icon(Icons.volume_up_outlined,
+                          color: c.primaryContainer, size: 20),
                       onPressed: () => onSpeak(ex.en),
                     ),
                   ],
@@ -243,30 +233,28 @@ class _EnrichedSections extends StatelessWidget {
           const SizedBox(height: 8),
         ],
         if (entry.synonyms.isNotEmpty) ...[
-          _SectionHeader(title: locale == 'en' ? 'Synonyms' : 'Eş anlamlılar'),
-          _ChipRow(items: entry.synonyms, color: AppColors.success),
+          _SectionHeader(title: l.wordDetail_synonyms),
+          _ChipRow(items: entry.synonyms, color: c.success),
           const SizedBox(height: 18),
         ],
         if (entry.antonyms.isNotEmpty) ...[
-          _SectionHeader(title: locale == 'en' ? 'Antonyms' : 'Zıt anlamlılar'),
-          _ChipRow(items: entry.antonyms, color: AppColors.error),
+          _SectionHeader(title: l.wordDetail_antonyms),
+          _ChipRow(items: entry.antonyms, color: c.error),
           const SizedBox(height: 18),
         ],
         if (entry.collocations.isNotEmpty) ...[
-          _SectionHeader(
-              title: locale == 'en' ? 'Collocations' : 'Birliktelikler'),
-          _ChipRow(
-              items: entry.collocations, color: AppColors.secondaryContainer),
+          _SectionHeader(title: l.wordDetail_collocations),
+          _ChipRow(items: entry.collocations, color: c.secondaryContainer),
           const SizedBox(height: 18),
         ],
         if (entry.etymologyBrief != null &&
             entry.etymologyBrief!.isNotEmpty) ...[
-          _SectionHeader(title: locale == 'en' ? 'Etymology' : 'Etimoloji'),
+          _SectionHeader(title: l.wordDetail_etymology),
           _PillBox(
             child: Text(
               entry.etymologyBrief!,
-              style: AppText.body(13, color: AppColors.inkMuted)
-                  .copyWith(height: 1.5),
+              style:
+                  AppText.body(13, color: c.inkMuted).copyWith(height: 1.5),
             ),
           ),
         ],
@@ -286,7 +274,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: AppText.label(11,
-            color: AppColors.primaryContainer, weight: FontWeight.w700),
+            color: context.c.primaryContainer, weight: FontWeight.w700),
       ),
     );
   }
@@ -298,13 +286,14 @@ class _PillBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.bgCard.withOpacity(0.6),
+        color: c.bgCard.withOpacity(0.6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.inkDim.withOpacity(0.15)),
+        border: Border.all(color: c.inkDim.withOpacity(0.15)),
       ),
       child: child,
     );
@@ -347,16 +336,17 @@ class _SectionPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.bgCard.withOpacity(0.5),
+        color: c.bgCard.withOpacity(0.5),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.inkDim.withOpacity(0.15)),
+        border: Border.all(color: c.inkDim.withOpacity(0.15)),
       ),
       child: Text(
         text,
-        style: AppText.body(13, color: AppColors.inkDim),
+        style: AppText.body(13, color: c.inkDim),
       ),
     );
   }

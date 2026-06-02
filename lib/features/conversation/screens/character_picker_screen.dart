@@ -4,6 +4,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../../core/ai/ai_character.dart';
 import '../../../core/ai/characters.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../services/characters_service.dart';
@@ -84,17 +85,19 @@ class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final locale = ref.watch(localeProvider).languageCode;
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
-          locale == 'en' ? 'Pick your coach' : 'Koçunu seç',
+          l.charPicker_title,
           style: AppText.title(18,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
         ),
       ),
       body: CosmicBackground(
@@ -106,16 +109,17 @@ class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                   itemCount: AICharacters.all.length,
                   itemBuilder: (_, i) {
-                    final c = AICharacters.all[i];
+                    final character = AICharacters.all[i];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 14),
                       child: _CharacterCard(
-                        character: c,
-                        selected: _selectedId == c.id,
-                        playing: _previewingId == c.id,
+                        character: character,
+                        selected: _selectedId == character.id,
+                        playing: _previewingId == character.id,
                         locale: locale,
-                        onTap: () => setState(() => _selectedId = c.id),
-                        onPreview: () => _preview(c),
+                        onTap: () =>
+                            setState(() => _selectedId = character.id),
+                        onPreview: () => _preview(character),
                       ),
                     );
                   },
@@ -128,8 +132,8 @@ class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
                   height: 52,
                   child: FilledButton(
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryContainer,
-                      foregroundColor: AppColors.onPrimary,
+                      backgroundColor: c.primaryContainer,
+                      foregroundColor: c.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -143,12 +147,9 @@ class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
                                 color: Colors.white, strokeWidth: 2),
                           )
                         : Text(
-                            locale == 'en'
-                                ? 'Start with this coach'
-                                : 'Bu koçla başla',
+                            l.charPicker_start,
                             style: AppText.label(13,
-                                color: AppColors.onPrimary,
-                                weight: FontWeight.w700),
+                                color: c.onPrimary, weight: FontWeight.w700),
                           ),
                   ),
                 ),
@@ -180,9 +181,10 @@ class _CharacterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected
-        ? AppColors.primaryContainer
-        : AppColors.inkDim.withOpacity(0.2);
+    final l = AppL10n.of(context);
+    final c = context.c;
+    final borderColor =
+        selected ? c.primaryContainer : c.inkDim.withOpacity(0.2);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
@@ -190,13 +192,13 @@ class _CharacterCard extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.bgCard.withOpacity(selected ? 0.85 : 0.55),
+          color: c.bgCard.withOpacity(selected ? 0.85 : 0.55),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: borderColor, width: selected ? 2 : 1),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: AppColors.primaryContainer.withOpacity(0.3),
+                    color: c.primaryContainer.withOpacity(0.3),
                     blurRadius: 20,
                     spreadRadius: 1,
                   ),
@@ -208,11 +210,11 @@ class _CharacterCard extends StatelessWidget {
             Container(
               width: 68,
               height: 68,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(colors: [
-                  AppColors.primaryContainer,
-                  AppColors.secondaryContainer,
+                  c.primaryContainer,
+                  c.secondaryContainer,
                 ]),
               ),
               alignment: Alignment.center,
@@ -231,20 +233,20 @@ class _CharacterCard extends StatelessWidget {
                       Text(
                         character.displayName,
                         style: AppText.title(17,
-                            color: AppColors.ink, weight: FontWeight.w800),
+                            color: c.ink, weight: FontWeight.w800),
                       ),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withOpacity(0.15),
+                          color: c.primaryContainer.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           character.accent,
                           style: AppText.label(9,
-                              color: AppColors.primaryContainer,
+                              color: c.primaryContainer,
                               weight: FontWeight.w700),
                         ),
                       ),
@@ -253,7 +255,7 @@ class _CharacterCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     character.bio(locale),
-                    style: AppText.body(12, color: AppColors.inkDim),
+                    style: AppText.body(12, color: c.inkDim),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -265,11 +267,10 @@ class _CharacterCard extends StatelessWidget {
               onPressed: onPreview,
               icon: Icon(
                 playing ? Icons.stop_circle : Icons.volume_up_outlined,
-                color:
-                    playing ? AppColors.tertiary : AppColors.primaryContainer,
+                color: playing ? c.tertiary : c.primaryContainer,
                 size: 28,
               ),
-              tooltip: locale == 'en' ? 'Listen to voice' : 'Sesini dinle',
+              tooltip: l.charPicker_listen,
             ),
           ],
         ),

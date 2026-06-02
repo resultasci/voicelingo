@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/errors/error_handler.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../models/course.dart';
@@ -15,20 +16,22 @@ class UnitDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final lessonsAsync = ref.watch(lessonsForUnitProvider(unit.id));
     final progressAsync = ref.watch(lessonProgressMapProvider);
     final locale = ref.watch(localeProvider).languageCode;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
           unit.title(locale),
           style: AppText.title(16,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -45,10 +48,10 @@ class UnitDetailScreen extends ConsumerWidget {
                   children: [
                     Text(getErrorMessage(context, e),
                         textAlign: TextAlign.center,
-                        style: AppText.body(13, color: AppColors.inkDim)),
+                        style: AppText.body(13, color: c.inkDim)),
                     const SizedBox(height: 16),
                     GhostButton(
-                      label: locale == 'en' ? 'Retry' : 'Tekrar dene',
+                      label: l.common_retry,
                       icon: Icons.refresh,
                       onTap: () =>
                           ref.invalidate(lessonsForUnitProvider(unit.id)),
@@ -63,8 +66,8 @@ class UnitDetailScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 itemCount: lessons.length,
                 itemBuilder: (_, i) {
-                  final l = lessons[i];
-                  final p = progress[l.id];
+                  final lesson = lessons[i];
+                  final p = progress[lesson.id];
                   // İlk ders her zaman açık; sonraki ders, önceki tamamlanmadıysa kilitli
                   final prevLesson = i > 0 ? lessons[i - 1] : null;
                   final prevDone = prevLesson == null
@@ -72,13 +75,14 @@ class UnitDetailScreen extends ConsumerWidget {
                       : _isDone(progress[prevLesson.id]);
                   final isLocked = !prevDone;
                   return _LessonTile(
-                    lesson: l,
+                    lesson: lesson,
                     progress: p,
                     locale: locale,
                     isLocked: isLocked,
                     onTap: isLocked
                         ? null
-                        : () => context.push('/lessons/run/${l.id}', extra: l),
+                        : () => context.push('/lessons/run/${lesson.id}',
+                            extra: lesson),
                   );
                 },
               );
@@ -112,7 +116,8 @@ class _LessonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (icon, color) = _typeVisual(lesson.type);
+    final c = context.c;
+    final (icon, color) = _typeVisual(lesson.type, c);
     final stars = progress?.stars ?? 0;
 
     return Padding(
@@ -125,11 +130,11 @@ class _LessonTile extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.bgCard.withOpacity(0.65),
+              color: c.bgCard.withOpacity(0.65),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: stars >= 3
-                    ? AppColors.tertiary.withOpacity(0.5)
+                    ? c.tertiary.withOpacity(0.5)
                     : color.withOpacity(0.3),
                 width: stars >= 3 ? 2 : 1,
               ),
@@ -154,18 +159,17 @@ class _LessonTile extends StatelessWidget {
                       Text(
                         lesson.title(locale),
                         style: AppText.title(14,
-                            color: AppColors.ink, weight: FontWeight.w700),
+                            color: c.ink, weight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          _typeChip(lesson.type, color, locale),
+                          _typeChip(context, lesson.type, color),
                           const SizedBox(width: 6),
                           Text(
                             '+${lesson.xpReward} XP',
                             style: AppText.label(10,
-                                color: AppColors.tertiary,
-                                weight: FontWeight.w700),
+                                color: c.tertiary, weight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -173,21 +177,20 @@ class _LessonTile extends StatelessWidget {
                   ),
                 ),
                 if (isLocked)
-                  const Icon(Icons.lock_outline,
-                      color: AppColors.inkDim, size: 18)
+                  Icon(Icons.lock_outline, color: c.inkDim, size: 18)
                 else if (stars > 0)
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: List.generate(3, (i) {
                       return Icon(
                         i < stars ? Icons.star : Icons.star_border,
-                        color: AppColors.tertiary,
+                        color: c.tertiary,
                         size: 16,
                       );
                     }),
                   )
                 else
-                  const Icon(Icons.chevron_right, color: AppColors.inkDim),
+                  Icon(Icons.chevron_right, color: c.inkDim),
               ],
             ),
           ),
@@ -196,20 +199,21 @@ class _LessonTile extends StatelessWidget {
     );
   }
 
-  Widget _typeChip(LessonType type, Color color, String locale) {
+  Widget _typeChip(BuildContext context, LessonType type, Color color) {
+    final l = AppL10n.of(context);
     String label;
     switch (type) {
       case LessonType.vocab:
-        label = locale == 'en' ? 'Vocab' : 'Kelime';
+        label = l.lesson_typeVocab;
         break;
       case LessonType.grammar:
-        label = locale == 'en' ? 'Grammar' : 'Gramer';
+        label = l.settings_grammar;
         break;
       case LessonType.conversation:
-        label = locale == 'en' ? 'Speaking' : 'Konuşma';
+        label = l.lesson_typeSpeaking;
         break;
       case LessonType.listening:
-        label = locale == 'en' ? 'Listening' : 'Dinleme';
+        label = l.lesson_typeListening;
         break;
       case LessonType.quiz:
         label = 'Quiz';
@@ -228,18 +232,18 @@ class _LessonTile extends StatelessWidget {
     );
   }
 
-  (IconData, Color) _typeVisual(LessonType t) {
+  (IconData, Color) _typeVisual(LessonType t, AppPalette c) {
     switch (t) {
       case LessonType.vocab:
-        return (Icons.menu_book_outlined, AppColors.primaryContainer);
+        return (Icons.menu_book_outlined, c.primaryContainer);
       case LessonType.grammar:
-        return (Icons.spellcheck_outlined, AppColors.secondaryContainer);
+        return (Icons.spellcheck_outlined, c.secondaryContainer);
       case LessonType.conversation:
-        return (Icons.mic_none_outlined, AppColors.tertiary);
+        return (Icons.mic_none_outlined, c.tertiary);
       case LessonType.listening:
-        return (Icons.headphones_outlined, AppColors.success);
+        return (Icons.headphones_outlined, c.success);
       case LessonType.quiz:
-        return (Icons.quiz_outlined, AppColors.warn);
+        return (Icons.quiz_outlined, c.warn);
     }
   }
 }

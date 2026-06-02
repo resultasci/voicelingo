@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/scenario.dart';
 import '../../../theme/app_theme.dart';
 import '../../conversation/screens/conversation_screen.dart';
@@ -10,8 +11,10 @@ class ScenarioPickerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: CosmicBackground(
         child: SafeArea(
           child: Column(
@@ -21,42 +24,41 @@ class ScenarioPickerScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     Semantics(
-                      label: 'Geri',
+                      label: l.common_back,
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back,
-                            color: AppColors.primaryContainer, size: 22),
+                        icon: Icon(Icons.arrow_back,
+                            color: c.primaryContainer, size: 22),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: Text('Senaryolar',
+                      child: Text(l.nav_scenarios,
                           style: AppText.title(20,
-                              color: AppColors.primary,
-                              weight: FontWeight.w600)),
+                              color: c.primary, weight: FontWeight.w600)),
                     ),
                     Semantics(
-                      label: 'AI ile senaryo yarat',
+                      label: l.scen_createWithAi,
                       button: true,
                       child: IconButton(
-                        tooltip: 'AI ile yarat',
-                        icon: const Icon(Icons.auto_awesome,
-                            color: AppColors.primaryContainer, size: 20),
+                        tooltip: l.scen_createWithAi,
+                        icon: Icon(Icons.auto_awesome,
+                            color: c.primaryContainer, size: 20),
                         onPressed: () => context.push('/scenario-builder'),
                       ),
                     ),
                     Semantics(
-                      label: 'Tüm senaryolar',
+                      label: l.scen_allScenarios,
                       button: true,
                       child: IconButton(
-                        tooltip: 'Tüm senaryolar',
-                        icon: const Icon(Icons.grid_view_outlined,
-                            color: AppColors.primaryContainer, size: 20),
+                        tooltip: l.scen_allScenarios,
+                        icon: Icon(Icons.grid_view_outlined,
+                            color: c.primaryContainer, size: 20),
                         onPressed: () => context.push('/scenarios'),
                       ),
                     ),
                     Semantics(
-                      label: 'Serbest sohbet',
+                      label: l.convHist_freeChat,
                       button: true,
                       child: TextButton(
                         onPressed: () {
@@ -66,9 +68,9 @@ class ScenarioPickerScreen extends StatelessWidget {
                           );
                         },
                         child: Text(
-                          'Serbest',
+                          l.scen_free,
                           style: AppText.label(11,
-                              color: AppColors.primaryContainer,
+                              color: c.primaryContainer,
                               weight: FontWeight.w700),
                         ),
                       ),
@@ -102,9 +104,10 @@ class _ScenarioCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return GlassPanel(
       padding: const EdgeInsets.all(16),
-      glowColor: AppColors.primaryContainer,
+      glowColor: c.primaryContainer,
       onTap: () {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
@@ -119,18 +122,15 @@ class _ScenarioCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primaryContainer.withOpacity(0.15),
-              border: Border.all(
-                  color: AppColors.primaryContainer.withOpacity(0.4)),
+              color: c.primaryContainer.withOpacity(0.15),
+              border: Border.all(color: c.primaryContainer.withOpacity(0.4)),
             ),
-            child: Icon(scenario.icon,
-                color: AppColors.primaryContainer, size: 22),
+            child: Icon(scenario.icon, color: c.primaryContainer, size: 22),
           ),
           const SizedBox(height: 14),
           Text(
             scenario.title,
-            style: AppText.title(16,
-                color: AppColors.primary, weight: FontWeight.w700),
+            style: AppText.title(16, color: c.primary, weight: FontWeight.w700),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -138,7 +138,7 @@ class _ScenarioCard extends StatelessWidget {
           Expanded(
             child: Text(
               scenario.description,
-              style: AppText.body(12, color: AppColors.inkMuted),
+              style: AppText.body(12, color: c.inkMuted),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
@@ -147,7 +147,7 @@ class _ScenarioCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Icon(Icons.arrow_forward,
-                  color: AppColors.primaryContainer.withOpacity(0.7), size: 16),
+                  color: c.primaryContainer.withOpacity(0.7), size: 16),
             ],
           ),
         ],

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 import '../services/badges_service.dart';
 
@@ -61,6 +62,8 @@ class _BadgeEarnedModalState extends State<BadgeEarnedModal> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final award = widget.award;
     return Material(
       type: MaterialType.transparency,
@@ -79,10 +82,10 @@ class _BadgeEarnedModalState extends State<BadgeEarnedModal> {
               numberOfParticles: 26,
               gravity: 0.25,
               shouldLoop: false,
-              colors: const [
-                AppColors.primaryContainer,
-                AppColors.secondaryContainer,
-                AppColors.tertiary,
+              colors: [
+                c.primaryContainer,
+                c.secondaryContainer,
+                c.tertiary,
                 Colors.white,
               ],
             ),
@@ -96,15 +99,15 @@ class _BadgeEarnedModalState extends State<BadgeEarnedModal> {
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
                   decoration: BoxDecoration(
-                    color: AppColors.bgCard,
+                    color: c.bgCard,
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: AppColors.primaryContainer.withOpacity(0.4),
+                      color: c.primaryContainer.withOpacity(0.4),
                       width: 1.4,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryContainer.withOpacity(0.35),
+                        color: c.primaryContainer.withOpacity(0.35),
                         blurRadius: 40,
                         spreadRadius: 4,
                       ),
@@ -116,11 +119,9 @@ class _BadgeEarnedModalState extends State<BadgeEarnedModal> {
                       _BadgeIcon(icon: award.icon),
                       const SizedBox(height: 18),
                       Text(
-                        widget.locale == 'en'
-                            ? 'Badge unlocked!'
-                            : 'Rozet kazandın!',
+                        l.badge_unlocked,
                         style: AppText.label(11,
-                            color: AppColors.primaryContainer,
+                            color: c.primaryContainer,
                             weight: FontWeight.w700),
                       ),
                       const SizedBox(height: 8),
@@ -128,9 +129,9 @@ class _BadgeEarnedModalState extends State<BadgeEarnedModal> {
                         award.name(widget.locale),
                         textAlign: TextAlign.center,
                         style: AppText.title(22,
-                                color: AppColors.ink, weight: FontWeight.w800)
+                                color: c.ink, weight: FontWeight.w800)
                             .copyWith(
-                          shadows: neonGlow(AppColors.primaryContainer,
+                          shadows: neonGlow(c.primaryContainer,
                               blur: 12, opacity: 0.5),
                         ),
                       ),
@@ -140,16 +141,15 @@ class _BadgeEarnedModalState extends State<BadgeEarnedModal> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(
-                            color: AppColors.tertiary.withOpacity(0.18),
+                            color: c.tertiary.withOpacity(0.18),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                                color: AppColors.tertiary.withOpacity(0.5)),
+                            border:
+                                Border.all(color: c.tertiary.withOpacity(0.5)),
                           ),
                           child: Text(
                             '+${award.xpReward} XP',
                             style: AppText.label(13,
-                                color: AppColors.tertiary,
-                                weight: FontWeight.w800),
+                                color: c.tertiary, weight: FontWeight.w800),
                           ),
                         ),
                       ],
@@ -158,8 +158,8 @@ class _BadgeEarnedModalState extends State<BadgeEarnedModal> {
                         width: double.infinity,
                         child: FilledButton(
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.primaryContainer,
-                            foregroundColor: AppColors.onPrimary,
+                            backgroundColor: c.primaryContainer,
+                            foregroundColor: c.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -167,10 +167,9 @@ class _BadgeEarnedModalState extends State<BadgeEarnedModal> {
                           ),
                           onPressed: () => Navigator.of(context).pop(),
                           child: Text(
-                            widget.locale == 'en' ? 'Awesome' : 'Harika',
+                            l.badge_awesome,
                             style: AppText.label(13,
-                                color: AppColors.onPrimary,
-                                weight: FontWeight.w700),
+                                color: c.onPrimary, weight: FontWeight.w700),
                           ),
                         ),
                       ),
@@ -192,21 +191,22 @@ class _BadgeIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final iconData = _resolve(icon);
     return Container(
       width: 96,
       height: 96,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const RadialGradient(
+        gradient: RadialGradient(
           colors: [
-            AppColors.primaryContainer,
-            AppColors.secondaryContainer,
+            c.primaryContainer,
+            c.secondaryContainer,
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryContainer.withOpacity(0.6),
+            color: c.primaryContainer.withOpacity(0.6),
             blurRadius: 24,
             spreadRadius: 2,
           ),

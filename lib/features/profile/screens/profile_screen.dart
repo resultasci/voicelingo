@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../providers/words_provider.dart';
@@ -34,13 +35,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final profileAsync = ref.watch(profileProvider);
     final wordsAsync = ref.watch(wordsProvider);
     final email = Supabase.instance.client.auth.currentUser?.email ?? '';
 
     return profileAsync.when(
       data: (profile) {
-        final username = profile?.username ?? 'Kullanıcı';
+        final username = profile?.username ?? l.profile_defaultName;
         final level = profile?.level ?? 1;
         final xp = profile?.xp ?? 0;
         final streak = profile?.streakDays ?? 0;
@@ -84,12 +87,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           ],
         );
       },
-      loading: () => const Center(
+      loading: () => Center(
         child: SizedBox(
           width: 22,
           height: 22,
           child: CircularProgressIndicator(
-              strokeWidth: 2, color: AppColors.primaryContainer),
+              strokeWidth: 2, color: c.primaryContainer),
         ),
       ),
       error: (e, _) => Center(
@@ -98,11 +101,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Profil yüklenemedi.',
-                  style: AppText.body(14, color: AppColors.error)),
+              Text(l.dashboard_profileLoadError,
+                  style: AppText.body(14, color: c.error)),
               const SizedBox(height: 12),
               GhostButton(
-                label: 'Tekrar Dene',
+                label: l.common_retry,
                 icon: Icons.refresh,
                 onTap: () => ref.invalidate(profileProvider),
               ),
@@ -114,6 +117,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -121,7 +126,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: GlassPanel(
           padding: const EdgeInsets.all(24),
-          glowColor: AppColors.error,
+          glowColor: c.error,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -131,34 +136,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   height: 3,
                   margin: const EdgeInsets.only(bottom: 18),
                   decoration: BoxDecoration(
-                    color: AppColors.rule,
+                    color: c.rule,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              const SectionLabel('Çıkış', color: AppColors.error),
+              SectionLabel(l.auth_signOut, color: c.error),
               const SizedBox(height: 14),
-              Text('Çıkmak istediğine emin misin?',
+              Text(l.settings_signOutConfirm,
                   style: AppText.title(20,
-                      color: AppColors.primary, weight: FontWeight.w600)),
+                      color: c.primary, weight: FontWeight.w600)),
               const SizedBox(height: 8),
-              Text('Tekrar giriş yapana kadar pratik kaydedilemez.',
-                  style: AppText.body(13, color: AppColors.inkMuted)),
+              Text(l.profile_signOutWarning,
+                  style: AppText.body(13, color: c.inkMuted)),
               const SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
                     child: GhostButton(
-                      label: 'Vazgeç',
+                      label: l.common_cancel,
                       onTap: () => Navigator.pop(ctx, false),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: NeonButton(
-                      label: 'Çıkış Yap',
+                      label: l.settings_disconnect,
                       icon: Icons.logout,
-                      color: AppColors.error,
+                      color: c.error,
                       onTap: () => Navigator.pop(ctx, true),
                     ),
                   ),
@@ -191,6 +196,8 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
 
     return Column(
@@ -207,7 +214,7 @@ class _Header extends StatelessWidget {
                   angle: ringController.value * 6.28,
                   child: CustomPaint(
                     painter: _DashedRingPainter(
-                        color: AppColors.primaryContainer.withOpacity(0.55)),
+                        color: c.primaryContainer.withOpacity(0.55)),
                     size: const Size(140, 140),
                   ),
                 ),
@@ -217,13 +224,12 @@ class _Header extends StatelessWidget {
                 height: 110,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.surfaceHigh,
+                  color: c.surfaceHigh,
                   border: Border.all(
-                      color: AppColors.primaryContainer.withOpacity(0.4),
-                      width: 2),
+                      color: c.primaryContainer.withOpacity(0.4), width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryContainer.withOpacity(0.3),
+                      color: c.primaryContainer.withOpacity(0.3),
                       blurRadius: 30,
                     ),
                   ],
@@ -232,11 +238,10 @@ class _Header extends StatelessWidget {
                 child: Text(
                   initial,
                   style: AppText.hero(46,
-                          color: AppColors.primaryContainer,
-                          weight: FontWeight.w700)
+                          color: c.primaryContainer, weight: FontWeight.w700)
                       .copyWith(
-                    shadows: neonGlow(AppColors.primaryContainer,
-                        blur: 14, opacity: 0.5),
+                    shadows:
+                        neonGlow(c.primaryContainer, blur: 14, opacity: 0.5),
                   ),
                 ),
               ),
@@ -246,7 +251,7 @@ class _Header extends StatelessWidget {
         const SizedBox(height: 22),
         Text(
           username.toUpperCase(),
-          style: AppText.hero(28, color: AppColors.ink, weight: FontWeight.w700)
+          style: AppText.hero(28, color: c.ink, weight: FontWeight.w700)
               .copyWith(
             letterSpacing: 1.6,
             shadows: neonGlow(Colors.white, blur: 8, opacity: 0.2),
@@ -258,20 +263,18 @@ class _Header extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.workspace_premium,
-                color: AppColors.primaryContainer, size: 16),
+            Icon(Icons.workspace_premium, color: c.primaryContainer, size: 16),
             const SizedBox(width: 6),
             Text(
-              'Seviye $level • Galaktik Dilbilimci',
-              style: AppText.label(11,
-                  color: AppColors.inkDim, weight: FontWeight.w600),
+              l.profile_levelTitle(level),
+              style: AppText.label(11, color: c.inkDim, weight: FontWeight.w600),
             ),
           ],
         ),
         const SizedBox(height: 4),
         Text(
           email,
-          style: AppText.code(11, color: AppColors.inkDim),
+          style: AppText.code(11, color: c.inkDim),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -320,40 +323,41 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Row(
       children: [
         Expanded(
           child: _StatTile(
             icon: Icons.local_fire_department,
-            iconColor: AppColors.secondaryContainer,
+            iconColor: c.secondaryContainer,
             value: streak.toString(),
-            label: 'GÜNLÜK SERİ',
-            stripColor: AppColors.secondaryContainer,
+            label: l.profile_dailyStreak,
+            stripColor: c.secondaryContainer,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _StatTile(
             icon: Icons.translate,
-            iconColor: AppColors.primaryContainer,
+            iconColor: c.primaryContainer,
             value: _fmt(wordCount),
-            label: 'KELİME',
-            stripColor: AppColors.primaryContainer,
+            label: l.nav_words,
+            stripColor: c.primaryContainer,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Tooltip(
-            message:
-                'Akıcılık = doğru tekrar oranı × 50 + seri (≤30g) × 30 + XP (≤2000) × 20',
+            message: l.profile_fluencyTooltip,
             triggerMode: TooltipTriggerMode.tap,
             preferBelow: true,
             child: _StatTile(
               icon: Icons.psychology,
-              iconColor: AppColors.tertiaryFixedDim,
-              value: '%$fluency',
-              label: 'AKICILIK',
-              stripColor: AppColors.tertiaryFixedDim,
+              iconColor: c.tertiaryFixedDim,
+              value: l.dashboard_percentValue(fluency),
+              label: l.profile_fluency,
+              stripColor: c.tertiaryFixedDim,
             ),
           ),
         ),
@@ -383,6 +387,7 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return GlassPanel(
       padding: EdgeInsets.zero,
       glowColor: stripColor,
@@ -410,8 +415,7 @@ class _StatTile extends StatelessWidget {
                 FittedBox(
                   child: Text(
                     value,
-                    style: AppText.hero(28,
-                            color: AppColors.ink, weight: FontWeight.w700)
+                    style: AppText.hero(28, color: c.ink, weight: FontWeight.w700)
                         .copyWith(
                       letterSpacing: -1.0,
                     ),
@@ -420,7 +424,7 @@ class _StatTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(label,
                     style: AppText.label(8,
-                        color: AppColors.inkDim, weight: FontWeight.w700)),
+                        color: c.inkDim, weight: FontWeight.w700)),
               ],
             ),
           ),
@@ -443,34 +447,36 @@ class _BadgeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final badges = <_Badge>[
       _Badge(
         icon: Icons.rocket_launch,
-        title: 'İlk Temas',
-        sub: '100 Kelime',
+        title: l.profile_badge1Title,
+        sub: l.profile_badge1Sub,
         unlocked: wordCount >= 100,
-        color: AppColors.primaryContainer,
+        color: c.primaryContainer,
       ),
       _Badge(
         icon: Icons.public,
-        title: 'Dünya Vatandaşı',
-        sub: 'Seviye 5',
+        title: l.profile_badge2Title,
+        sub: l.profile_badge2Sub,
         unlocked: level >= 5,
-        color: AppColors.secondaryContainer,
+        color: c.secondaryContainer,
       ),
       _Badge(
         icon: Icons.local_fire_department,
-        title: 'Yıldız Avcısı',
-        sub: '7 Gün Seri',
+        title: l.profile_badge3Title,
+        sub: l.profile_badge3Sub,
         unlocked: streak >= 7,
-        color: AppColors.secondary,
+        color: c.secondary,
       ),
       _Badge(
         icon: Icons.workspace_premium,
-        title: 'Usta Çevirmen',
-        sub: 'Seviye 20',
+        title: l.profile_badge4Title,
+        sub: l.profile_badge4Sub,
         unlocked: level >= 20,
-        color: AppColors.tertiaryFixedDim,
+        color: c.tertiaryFixedDim,
       ),
     ];
 
@@ -479,13 +485,11 @@ class _BadgeSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.workspace_premium,
-                color: AppColors.primaryContainer, size: 22),
+            Icon(Icons.workspace_premium, color: c.primaryContainer, size: 22),
             const SizedBox(width: 10),
             Text(
-              'Rozetler & Başarılar',
-              style: AppText.title(18,
-                  color: AppColors.ink, weight: FontWeight.w600),
+              l.profile_badgesTitle,
+              style: AppText.title(18, color: c.ink, weight: FontWeight.w600),
             ),
           ],
         ),
@@ -525,6 +529,8 @@ class _BadgeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Opacity(
       opacity: badge.unlocked ? 1.0 : 0.45,
       child: GlassPanel(
@@ -538,7 +544,7 @@ class _BadgeTile extends StatelessWidget {
               height: 52,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.surfaceHigh,
+                color: c.surfaceHigh,
                 border: Border.all(
                   color: badge.unlocked
                       ? badge.color.withOpacity(0.4)
@@ -555,7 +561,7 @@ class _BadgeTile extends StatelessWidget {
               alignment: Alignment.center,
               child: Icon(
                 badge.unlocked ? badge.icon : Icons.lock_outline,
-                color: badge.unlocked ? badge.color : AppColors.inkDim,
+                color: badge.unlocked ? badge.color : c.inkDim,
                 size: 22,
               ),
             ),
@@ -563,7 +569,7 @@ class _BadgeTile extends StatelessWidget {
             Text(
               badge.title,
               style: AppText.label(11,
-                  color: badge.unlocked ? AppColors.ink : AppColors.inkDim,
+                  color: badge.unlocked ? c.ink : c.inkDim,
                   weight: FontWeight.w700),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -571,8 +577,8 @@ class _BadgeTile extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              badge.unlocked ? badge.sub : 'KİLİTLİ',
-              style: AppText.code(9, color: AppColors.inkDim),
+              badge.unlocked ? badge.sub : l.profile_locked,
+              style: AppText.code(9, color: c.inkDim),
             ),
           ],
         ),
@@ -590,9 +596,9 @@ class _SignOutButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: GhostButton(
-        label: 'Bağlantıyı Kes',
+        label: AppL10n.of(context).profile_disconnect,
         icon: Icons.logout,
-        color: AppColors.error,
+        color: context.c.error,
         onTap: onTap,
       ),
     );

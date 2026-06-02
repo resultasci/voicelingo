@@ -39,15 +39,13 @@ class VoiceLingoApp extends ConsumerWidget {
           child: Stack(
             children: [
               child ?? const SizedBox.shrink(),
-              Positioned(
+              const Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
                 child: SafeArea(
                   bottom: false,
-                  child: ConnectivityBanner(
-                    locale: locale.languageCode,
-                  ),
+                  child: ConnectivityBanner(),
                 ),
               ),
             ],

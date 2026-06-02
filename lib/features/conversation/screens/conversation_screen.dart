@@ -14,6 +14,7 @@ import '../../../core/audio/waveform_painter.dart';
 import '../../../models/scenario.dart';
 import '../../../core/ai/gemini_service.dart';
 import '../../../core/config/feature_flags.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../services/settings_service.dart';
 import '../../../theme/app_theme.dart';
@@ -172,7 +173,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         if (mounted) {
           setState(() {
             _status = _ConvStatus.error;
-            _errorMsg = 'TTS hatası: $msg';
+            _errorMsg = AppL10n.of(context).conv_errTts(msg);
           });
         }
       });
@@ -184,7 +185,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       if (mounted) {
         setState(() {
           _status = _ConvStatus.error;
-          _errorMsg = 'TTS başlatılamadı.';
+          _errorMsg = AppL10n.of(context).conv_errTtsInit;
         });
       }
     }
@@ -211,7 +212,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
     _addMessage(
       isUser: false,
-      text: 'Merhaba! İngilizceni pratik yapmak için hazırım. Konuş!',
+      text: AppL10n.of(context).conv_greeting,
     );
     await _speakMessage(
         'Hello! I am ready to practice English with you. Go ahead and speak!');
@@ -274,7 +275,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     if (!await _audioSvc.hasPermission()) {
       setState(() {
         _status = _ConvStatus.error;
-        _errorMsg = 'Mikrofon izni gerekli.';
+        _errorMsg = AppL10n.of(context).conv_errMicPermission;
       });
       return;
     }
@@ -303,7 +304,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       _tearDownVad();
       setState(() {
         _status = _ConvStatus.error;
-        _errorMsg = 'Mikrofon açılamadı: $e';
+        _errorMsg = AppL10n.of(context).conv_errMicOpen('$e');
       });
     }
   }
@@ -328,13 +329,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       } else {
         setState(() {
           _status = _ConvStatus.error;
-          _errorMsg = 'Ses kaydı başarısız.';
+          _errorMsg = AppL10n.of(context).conv_errRecordFailed;
         });
       }
     } catch (e) {
       setState(() {
         _status = _ConvStatus.error;
-        _errorMsg = 'Ses işleme hatası: $e';
+        _errorMsg = AppL10n.of(context).conv_errAudioProcess('$e');
       });
     }
   }
@@ -362,7 +363,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       if (userText.isEmpty) {
         setState(() {
           _status = _ConvStatus.error;
-          _errorMsg = 'Ses tanınamadı.';
+          _errorMsg = AppL10n.of(context).conv_errNoSpeech;
         });
         return;
       }
@@ -380,7 +381,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       if (mounted) {
         setState(() {
           _status = _ConvStatus.error;
-          _errorMsg = 'Hata: $e';
+          _errorMsg = AppL10n.of(context).conv_errGeneric('$e');
         });
       }
     } finally {
@@ -436,7 +437,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         setState(() => _messages.remove(userMsg));
         setState(() {
           _status = _ConvStatus.error;
-          _errorMsg = 'Ses tanınamadı.';
+          _errorMsg = AppL10n.of(context).conv_errNoSpeech;
         });
         return;
       }
@@ -458,7 +459,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       setState(() {
         _messages.remove(userMsg);
         _status = _ConvStatus.error;
-        _errorMsg = 'Hata: $e';
+        _errorMsg = AppL10n.of(context).conv_errGeneric('$e');
       });
     }
   }
@@ -582,18 +583,19 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       setState(() => _status = _ConvStatus.playing);
     } catch (e) {
       if (!mounted) return;
+      final l = AppL10n.of(context);
       _addMessage(
         isUser: false,
-        text: 'Cevap alınamadı. Tekrar denemek için aşağıdaki butona dokun.',
+        text: l.conv_replyFailed,
         isError: true,
       );
       setState(() => _status = _ConvStatus.ready);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: AppColors.bgCard,
+          backgroundColor: context.c.bgCard,
           content: Text(
-            'AI yanıt vermedi: $e',
-            style: AppText.ink(13, color: AppColors.error),
+            l.conv_aiNoResponse('$e'),
+            style: AppText.ink(13, color: context.c.error),
           ),
         ),
       );
@@ -633,7 +635,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       if (mounted) {
         setState(() {
           _status = _ConvStatus.error;
-          _errorMsg = 'Konuşma hatası: $e';
+          _errorMsg = AppL10n.of(context).conv_errSpeak('$e');
         });
       }
     }
@@ -713,39 +715,39 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   bool get _canToggleMic =>
       _status == _ConvStatus.ready || _status == _ConvStatus.listening;
 
-  Color get _statusColor {
+  Color _statusColor(AppPalette c) {
     switch (_status) {
       case _ConvStatus.listening:
-        return AppColors.secondaryContainer;
+        return c.secondaryContainer;
       case _ConvStatus.ready:
-        return AppColors.primaryFixed;
+        return c.primaryFixed;
       case _ConvStatus.thinking:
-        return AppColors.secondary;
+        return c.secondary;
       case _ConvStatus.playing:
-        return AppColors.tertiaryFixedDim;
+        return c.tertiaryFixedDim;
       case _ConvStatus.error:
-        return AppColors.error;
+        return c.error;
       case _ConvStatus.idle:
       case _ConvStatus.connecting:
-        return AppColors.inkDim;
+        return c.inkDim;
     }
   }
 
-  String get _statusLabel {
+  String _statusLabel(AppL10n l) {
     switch (_status) {
       case _ConvStatus.idle:
       case _ConvStatus.connecting:
-        return 'BAŞLANIYOR';
+        return l.conv_statusStarting;
       case _ConvStatus.ready:
-        return 'HAZIR';
+        return l.conv_statusReady;
       case _ConvStatus.listening:
-        return 'DİNLİYOR';
+        return l.conv_statusListening;
       case _ConvStatus.thinking:
-        return 'DÜŞÜNÜYOR';
+        return l.conv_statusThinking;
       case _ConvStatus.playing:
-        return 'AI KONUŞUYOR';
+        return l.conv_statusSpeaking;
       case _ConvStatus.error:
-        return 'HATA';
+        return l.conv_statusError;
     }
   }
 
@@ -780,12 +782,14 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     if (!widget.showBackButton) return body;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.c.bg,
       body: CosmicBackground(child: SafeArea(child: body)),
     );
   }
 
   Widget _buildHeader() {
+    final l = AppL10n.of(context);
+    final c = context.c;
     const compactBtn = VisualDensity(horizontal: -4, vertical: -4);
     const tightConstraints = BoxConstraints(minWidth: 36, minHeight: 36);
     return Padding(
@@ -794,10 +798,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         children: [
           if (widget.showBackButton) ...[
             Semantics(
-              label: 'Geri',
+              label: l.common_back,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back,
-                    color: AppColors.primaryContainer, size: 22),
+                icon: Icon(Icons.arrow_back,
+                    color: c.primaryContainer, size: 22),
                 padding: const EdgeInsets.all(6),
                 constraints: tightConstraints,
                 visualDensity: compactBtn,
@@ -808,11 +812,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           ],
           Expanded(
             child: Text(
-              widget.scenario?.title ?? 'Pratik Modu',
-              style: AppText.title(18,
-                      color: AppColors.primary, weight: FontWeight.w600)
+              widget.scenario?.title ?? l.conv_practiceMode,
+              style: AppText.title(18, color: c.primary, weight: FontWeight.w600)
                   .copyWith(
-                shadows: neonGlow(AppColors.primary, blur: 8, opacity: 0.3),
+                shadows: neonGlow(c.primary, blur: 8, opacity: 0.3),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -825,35 +828,33 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           const SizedBox(width: 4),
           // Faz 5: Hands-free toggle — AI cevap verince otomatik mikrofon
           Semantics(
-            label: 'Eller serbest mod',
+            label: l.conversation_handsfree,
             button: true,
             child: IconButton(
               icon: Icon(
                 _handsFreeMode ? Icons.hearing : Icons.hearing_disabled,
-                color: _handsFreeMode
-                    ? AppColors.primaryContainer
-                    : AppColors.inkDim,
+                color: _handsFreeMode ? c.primaryContainer : c.inkDim,
                 size: 20,
               ),
               padding: const EdgeInsets.all(6),
               constraints: tightConstraints,
               visualDensity: compactBtn,
               tooltip: _handsFreeMode
-                  ? 'Eller serbest açık — AI bittikten sonra otomatik dinler'
-                  : 'Eller serbest kapalı — mikrofona basman gerekir',
+                  ? l.conv_handsFreeOnTip
+                  : l.conv_handsFreeOffTip,
               onPressed: () => setState(() => _handsFreeMode = !_handsFreeMode),
             ),
           ),
           Semantics(
-            label: 'Senaryolar',
+            label: l.nav_scenarios,
             button: true,
             child: IconButton(
-              icon: const Icon(Icons.theater_comedy_outlined,
-                  color: AppColors.primaryContainer, size: 20),
+              icon: Icon(Icons.theater_comedy_outlined,
+                  color: c.primaryContainer, size: 20),
               padding: const EdgeInsets.all(6),
               constraints: tightConstraints,
               visualDensity: compactBtn,
-              tooltip: 'Senaryo seç',
+              tooltip: l.conv_pickScenario,
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const ScenarioPickerScreen()));
@@ -862,22 +863,21 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           ),
           if (_messages.isNotEmpty)
             Semantics(
-              label: 'Yeni sohbet',
+              label: l.conv_newChat,
               child: IconButton(
-                icon: const Icon(Icons.add_comment_outlined,
-                    color: AppColors.inkDim, size: 20),
+                icon: Icon(Icons.add_comment_outlined,
+                    color: c.inkDim, size: 20),
                 padding: const EdgeInsets.all(6),
                 constraints: tightConstraints,
                 visualDensity: compactBtn,
                 onPressed: _resetConversation,
-                tooltip: 'Yeni Sohbet',
+                tooltip: l.conv_newChat,
               ),
             ),
           Semantics(
-            label: 'Sohbet geçmişi',
+            label: l.conv_chatHistory,
             child: IconButton(
-              icon: const Icon(Icons.history,
-                  color: AppColors.primaryContainer, size: 20),
+              icon: Icon(Icons.history, color: c.primaryContainer, size: 20),
               padding: const EdgeInsets.all(6),
               constraints: tightConstraints,
               visualDensity: compactBtn,
@@ -889,8 +889,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           ),
           const SizedBox(width: 2),
           NeonChip(
-            text: _statusLabel,
-            color: _statusColor,
+            text: _statusLabel(l),
+            color: _statusColor(c),
             icon: _status == _ConvStatus.connecting
                 ? Icons.sync
                 : _status == _ConvStatus.listening
@@ -924,6 +924,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   Widget _buildThinkingBubble() {
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -936,18 +937,16 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             margin: const EdgeInsets.only(top: 4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primaryContainer.withOpacity(0.18),
-              border: Border.all(
-                  color: AppColors.primaryContainer.withOpacity(0.5)),
+              color: c.primaryContainer.withOpacity(0.18),
+              border: Border.all(color: c.primaryContainer.withOpacity(0.5)),
             ),
-            child: const Icon(Icons.smart_toy,
-                color: AppColors.primaryContainer, size: 16),
+            child: Icon(Icons.smart_toy, color: c.primaryContainer, size: 16),
           ),
           const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: AppColors.surfaceHighest.withOpacity(0.5),
+              color: c.surfaceHighest.withOpacity(0.5),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(18),
@@ -983,8 +982,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           child: Container(
             width: 6,
             height: 6,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryContainer,
+            decoration: BoxDecoration(
+              color: context.c.primaryContainer,
               shape: BoxShape.circle,
             ),
           ),
@@ -995,6 +994,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   Widget _buildBubble(_Message msg) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final isUser = msg.isUser;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -1014,12 +1015,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   margin: const EdgeInsets.only(top: 4),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primaryContainer.withOpacity(0.18),
-                    border: Border.all(
-                        color: AppColors.primaryContainer.withOpacity(0.5)),
+                    color: c.primaryContainer.withOpacity(0.18),
+                    border:
+                        Border.all(color: c.primaryContainer.withOpacity(0.5)),
                   ),
-                  child: const Icon(Icons.smart_toy,
-                      color: AppColors.primaryContainer, size: 16),
+                  child: Icon(Icons.smart_toy,
+                      color: c.primaryContainer, size: 16),
                 ),
                 const SizedBox(width: 10),
               ],
@@ -1032,10 +1033,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryContainer.withOpacity(0.10),
+                            color: c.primaryContainer.withOpacity(0.10),
                             border: Border.all(
-                                color: AppColors.primaryContainer
-                                    .withOpacity(0.4)),
+                                color: c.primaryContainer.withOpacity(0.4)),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(18),
                               topRight: Radius.circular(4),
@@ -1046,8 +1046,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                           child: Text(
                             msg.text,
                             style: AppText.ink(14,
-                                color: AppColors.primary,
-                                weight: FontWeight.w500),
+                                color: c.primary, weight: FontWeight.w500),
                           ),
                         )
                       : GlassPanel(
@@ -1055,14 +1054,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                               horizontal: 16, vertical: 12),
                           radius: 18,
                           borderColor: msg.isError
-                              ? AppColors.error.withOpacity(0.5)
+                              ? c.error.withOpacity(0.5)
                               : null,
                           child: Text(
                             msg.text,
                             style: AppText.ink(
                               14,
-                              color:
-                                  msg.isError ? AppColors.error : AppColors.ink,
+                              color: msg.isError ? c.error : c.ink,
                             ),
                           ),
                         ),
@@ -1076,12 +1074,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   margin: const EdgeInsets.only(top: 4),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primaryContainer.withOpacity(0.18),
-                    border: Border.all(
-                        color: AppColors.primaryContainer.withOpacity(0.5)),
+                    color: c.primaryContainer.withOpacity(0.18),
+                    border:
+                        Border.all(color: c.primaryContainer.withOpacity(0.5)),
                   ),
-                  child: const Icon(Icons.person,
-                      color: AppColors.primaryContainer, size: 16),
+                  child:
+                      Icon(Icons.person, color: c.primaryContainer, size: 16),
                 ),
               ],
             ],
@@ -1095,12 +1093,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 42),
               child: Semantics(
-                label: 'Yeniden dene',
+                label: l.conv_tryAgain,
                 button: true,
                 child: GhostButton(
-                  label: 'Yeniden dene',
+                  label: l.conv_tryAgain,
                   icon: Icons.refresh,
-                  color: AppColors.error,
+                  color: c.error,
                   onTap: _retryLastReply,
                 ),
               ),
@@ -1111,11 +1109,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   Widget _buildEmptyState({required bool isBusy}) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final hint = _status == _ConvStatus.connecting
-        ? 'Hazırlanıyor…'
+        ? l.conv_preparing
         : _status == _ConvStatus.thinking
-            ? 'AI yanıt hazırlanıyor…'
-            : 'Mikrofona dokun, yaz ya da bir senaryo seç.';
+            ? l.conv_aiPreparing
+            : l.conv_emptyHint;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
@@ -1129,36 +1129,35 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryContainer.withOpacity(0.12),
-                border: Border.all(
-                    color: AppColors.primaryContainer.withOpacity(0.45)),
+                color: c.primaryContainer.withOpacity(0.12),
+                border:
+                    Border.all(color: c.primaryContainer.withOpacity(0.45)),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryContainer.withOpacity(0.25),
+                    color: c.primaryContainer.withOpacity(0.25),
                     blurRadius: 22,
                   ),
                 ],
               ),
               child: isBusy
-                  ? const Padding(
-                      padding: EdgeInsets.all(22),
+                  ? Padding(
+                      padding: const EdgeInsets.all(22),
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.primaryContainer,
+                        color: c.primaryContainer,
                       ),
                     )
-                  : const Icon(Icons.smart_toy_outlined,
-                      color: AppColors.primaryContainer, size: 34),
+                  : Icon(Icons.smart_toy_outlined,
+                      color: c.primaryContainer, size: 34),
             ),
           ),
           const SizedBox(height: 18),
           Center(
             child: Text(
-              widget.scenario?.title ?? 'AI Pratik Modu',
-              style: AppText.title(22,
-                      color: AppColors.primary, weight: FontWeight.w600)
+              widget.scenario?.title ?? l.conv_aiPracticeMode,
+              style: AppText.title(22, color: c.primary, weight: FontWeight.w600)
                   .copyWith(
-                shadows: neonGlow(AppColors.primary, blur: 8, opacity: 0.3),
+                shadows: neonGlow(c.primary, blur: 8, opacity: 0.3),
               ),
               textAlign: TextAlign.center,
             ),
@@ -1169,14 +1168,14 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 hint,
-                style: AppText.body(13, color: AppColors.inkMuted),
+                style: AppText.body(13, color: c.inkMuted),
                 textAlign: TextAlign.center,
               ),
             ),
           ),
           if (widget.scenario == null && !isBusy) ...[
             const SizedBox(height: 24),
-            const SectionLabel('HAZIR SENARYOLAR'),
+            SectionLabel(l.conv_readyScenarios),
             const SizedBox(height: 12),
             _ScenarioStrip(
               onPick: (s) {
@@ -1213,25 +1212,27 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   Widget _buildError() {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: GlassPanel(
-          borderColor: AppColors.error.withOpacity(0.4),
+          borderColor: c.error.withOpacity(0.4),
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: AppColors.error, size: 32),
+              Icon(Icons.error_outline, color: c.error, size: 32),
               const SizedBox(height: 12),
               Text(
-                _errorMsg ?? 'Bilinmeyen hata.',
-                style: AppText.body(14, color: AppColors.error),
+                _errorMsg ?? l.conv_errUnknown,
+                style: AppText.body(14, color: c.error),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 18),
               GhostButton(
-                label: 'Yeniden Başla',
+                label: l.conv_restart,
                 icon: Icons.refresh,
                 onTap: _resetConversation,
               ),
@@ -1243,6 +1244,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   Widget _buildInputBar() {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final isListening = _status == _ConvStatus.listening;
     return ClipRRect(
       borderRadius: BorderRadius.circular(99),
@@ -1251,46 +1254,45 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         child: Container(
           padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
           decoration: BoxDecoration(
-            color: AppColors.surfaceHighest.withOpacity(0.85),
+            color: c.surfaceHighest.withOpacity(0.85),
             border: Border.all(
               color: isListening
-                  ? AppColors.primaryContainer
-                  : Colors.white.withOpacity(0.12),
+                  ? c.primaryContainer
+                  : (c.isDark ? Colors.white : Colors.black).withOpacity(0.12),
             ),
             borderRadius: BorderRadius.circular(99),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withOpacity(c.isDark ? 0.5 : 0.12),
                 blurRadius: 24,
                 offset: const Offset(0, 4),
               ),
               if (isListening)
                 BoxShadow(
-                  color: AppColors.primaryContainer.withOpacity(0.4),
+                  color: c.primaryContainer.withOpacity(0.4),
                   blurRadius: 20,
                 ),
             ],
           ),
           child: Row(
             children: [
-              const IconButton(
+              IconButton(
                 onPressed: null,
-                icon: Icon(Icons.keyboard_outlined,
-                    color: AppColors.inkDim, size: 22),
+                icon: Icon(Icons.keyboard_outlined, color: c.inkDim, size: 22),
               ),
               Expanded(
                 child: TextField(
                   controller: _textCtrl,
-                  style: AppText.ink(14),
-                  cursorColor: AppColors.primaryContainer,
+                  style: AppText.ink(14, color: c.ink),
+                  cursorColor: c.primaryContainer,
                   textInputAction: TextInputAction.send,
                   onChanged: (_) => setState(() {}),
                   onSubmitted: (_) => _sendText(),
                   decoration: InputDecoration(
                     isDense: true,
                     border: InputBorder.none,
-                    hintText: 'Mesajını yaz veya konuş…',
-                    hintStyle: AppText.body(13, color: AppColors.inkDim),
+                    hintText: l.conv_inputHint,
+                    hintStyle: AppText.body(13, color: c.inkDim),
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
                   ),
@@ -1307,7 +1309,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                       builder: (_, __) => CustomPaint(
                         painter: WaveformPainter(
                           amplitudes: _amplitudes.value,
-                          color: AppColors.primaryContainer,
+                          color: c.primaryContainer,
                         ),
                       ),
                     ),
@@ -1315,19 +1317,18 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                 ),
               if (_textCtrl.text.isNotEmpty)
                 Semantics(
-                  label: 'Mesajı gönder',
+                  label: l.conv_sendMessage,
                   button: true,
                   child: IconButton(
                     onPressed: _sendText,
-                    icon: const Icon(Icons.send,
-                        color: AppColors.primaryContainer, size: 22),
+                    icon: Icon(Icons.send, color: c.primaryContainer, size: 22),
                   ),
                 )
               else
                 Semantics(
                   label: _status == _ConvStatus.listening
-                      ? 'Kaydı durdur'
-                      : 'Kayda başla',
+                      ? l.conv_stopRecording
+                      : l.conv_startRecording,
                   button: true,
                   child: AnimatedBuilder(
                     animation: _pulse,
@@ -1358,11 +1359,12 @@ class _SpeedToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final idx = _options.indexOf(rate).clamp(0, _options.length - 1);
     final label =
         '${_options[idx].toStringAsFixed(2).replaceAll(RegExp(r"0+$"), "").replaceAll(RegExp(r"\.$"), "")}×';
     return Semantics(
-      label: 'Konuşma hızı',
+      label: AppL10n.of(context).settings_ttsSpeed,
       value: label,
       button: true,
       child: InkWell(
@@ -1374,14 +1376,13 @@ class _SpeedToggle extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            border:
-                Border.all(color: AppColors.primaryContainer.withOpacity(0.4)),
+            border: Border.all(color: c.primaryContainer.withOpacity(0.4)),
             borderRadius: BorderRadius.circular(99),
           ),
           child: Text(
             label,
             style: AppText.label(11,
-                color: AppColors.primaryContainer, weight: FontWeight.w700),
+                color: c.primaryContainer, weight: FontWeight.w700),
           ),
         ),
       ),
@@ -1405,15 +1406,18 @@ class _FeedbackPillState extends State<_FeedbackPill> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final eval = widget.evaluation;
     final isHigh = eval.score >= 80;
-    final color = isHigh ? AppColors.primaryFixed : AppColors.tertiaryFixedDim;
+    final color = isHigh ? c.primaryFixed : c.tertiaryFixedDim;
     final label = isHigh
-        ? '✅ Harika!'
-        : '💡 Daha doğal: ${eval.correct.isNotEmpty ? eval.correct : "—"}';
+        ? l.conv_feedbackGreat
+        : l.conv_feedbackMoreNatural(
+            eval.correct.isNotEmpty ? eval.correct : "—");
 
     return Semantics(
-      label: 'Konuşma değerlendirmesi: $label',
+      label: l.conv_evalSemantics(label),
       button: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -1462,26 +1466,24 @@ class _FeedbackPillState extends State<_FeedbackPill> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('PUAN: ${eval.score}/100',
+                      Text(l.conv_score(eval.score),
                           style: AppText.label(10,
                               color: color, weight: FontWeight.w700)),
                       if (eval.explanation.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(eval.explanation,
-                            style: AppText.body(12, color: AppColors.ink)),
+                            style: AppText.body(12, color: c.ink)),
                       ],
                       if (eval.grammarErrors.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        Text('HATALAR',
+                        Text(l.conv_errorsLabel,
                             style: AppText.label(9,
-                                color: AppColors.inkDim,
-                                weight: FontWeight.w700)),
+                                color: c.inkDim, weight: FontWeight.w700)),
                         const SizedBox(height: 4),
                         ...eval.grammarErrors.map((e) => Padding(
                               padding: const EdgeInsets.only(top: 2),
                               child: Text('• $e',
-                                  style: AppText.body(12,
-                                      color: AppColors.inkMuted)),
+                                  style: AppText.body(12, color: c.inkMuted)),
                             )),
                       ],
                     ],
@@ -1532,11 +1534,12 @@ class _ScenarioTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return SizedBox(
       width: 168,
       child: GlassPanel(
         padding: const EdgeInsets.all(14),
-        glowColor: AppColors.primaryContainer,
+        glowColor: c.primaryContainer,
         onTap: onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1546,18 +1549,16 @@ class _ScenarioTile extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryContainer.withOpacity(0.15),
-                border: Border.all(
-                    color: AppColors.primaryContainer.withOpacity(0.4)),
+                color: c.primaryContainer.withOpacity(0.15),
+                border:
+                    Border.all(color: c.primaryContainer.withOpacity(0.4)),
               ),
-              child: Icon(scenario.icon,
-                  color: AppColors.primaryContainer, size: 18),
+              child: Icon(scenario.icon, color: c.primaryContainer, size: 18),
             ),
             const SizedBox(height: 10),
             Text(
               scenario.title,
-              style: AppText.title(14,
-                  color: AppColors.primary, weight: FontWeight.w700),
+              style: AppText.title(14, color: c.primary, weight: FontWeight.w700),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1565,7 +1566,7 @@ class _ScenarioTile extends StatelessWidget {
             Expanded(
               child: Text(
                 scenario.description,
-                style: AppText.body(11, color: AppColors.inkMuted),
+                style: AppText.body(11, color: c.inkMuted),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1583,6 +1584,7 @@ class _AllScenariosTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return SizedBox(
       width: 132,
       child: GlassPanel(
@@ -1597,18 +1599,18 @@ class _AllScenariosTile extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.tertiaryFixedDim.withOpacity(0.15),
-                border: Border.all(
-                    color: AppColors.tertiaryFixedDim.withOpacity(0.4)),
+                color: c.tertiaryFixedDim.withOpacity(0.15),
+                border:
+                    Border.all(color: c.tertiaryFixedDim.withOpacity(0.4)),
               ),
-              child: const Icon(Icons.grid_view_rounded,
-                  color: AppColors.tertiaryFixedDim, size: 18),
+              child: Icon(Icons.grid_view_rounded,
+                  color: c.tertiaryFixedDim, size: 18),
             ),
             const SizedBox(height: 10),
             Text(
-              'Tümünü Gör',
+              AppL10n.of(context).conv_seeAll,
               style: AppText.label(11,
-                  color: AppColors.tertiaryFixedDim, weight: FontWeight.w700),
+                  color: c.tertiaryFixedDim, weight: FontWeight.w700),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1630,6 +1632,7 @@ class _MicButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final isListening = status == _ConvStatus.listening;
     final isThinking = status == _ConvStatus.thinking;
     final size = isListening ? 48.0 + pulse * 4 : 48.0;
@@ -1648,8 +1651,7 @@ class _MicButton extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.primaryContainer
-                        .withOpacity(0.3 + pulse * 0.4),
+                    color: c.primaryContainer.withOpacity(0.3 + pulse * 0.4),
                     width: 1.5,
                   ),
                 ),
@@ -1660,27 +1662,27 @@ class _MicButton extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryContainer,
+                color: c.primaryContainer,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryContainer.withOpacity(0.6),
+                    color: c.primaryContainer.withOpacity(0.6),
                     blurRadius: 18,
                   ),
                 ],
               ),
               child: Center(
                 child: isThinking
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.onPrimary,
+                          color: c.onPrimary,
                         ),
                       )
                     : Icon(
                         isListening ? Icons.stop_rounded : Icons.mic,
-                        color: AppColors.onPrimary,
+                        color: c.onPrimary,
                         size: 22,
                       ),
               ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/errors/error_handler.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../models/course.dart';
@@ -15,26 +16,28 @@ class CourseTreeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final coursesAsync = ref.watch(coursesListProvider);
     final locale = ref.watch(localeProvider).languageCode;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
-          locale == 'en' ? 'Course' : 'Ders Yolu',
+          l.lesson_courseTitle,
           style: AppText.title(18,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
         ),
       ),
       body: CosmicBackground(
         child: SafeArea(
           child: RefreshIndicator(
-            color: AppColors.primaryContainer,
-            backgroundColor: AppColors.bgCard,
+            color: c.primaryContainer,
+            backgroundColor: c.bgCard,
             onRefresh: () async {
               ref.invalidate(coursesListProvider);
               ref.invalidate(lessonProgressMapProvider);
@@ -42,10 +45,10 @@ class CourseTreeScreen extends ConsumerWidget {
             },
             child: coursesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => _errorView(context, e, locale),
+              error: (e, _) => _errorView(context, e),
               data: (courses) {
                 if (courses.isEmpty) {
-                  return _emptyView(locale);
+                  return _emptyView(context);
                 }
                 // MVP: ilk kursu otomatik aç (A1).
                 final course = courses.first;
@@ -58,30 +61,28 @@ class CourseTreeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _errorView(BuildContext context, Object e, String locale) => ListView(
+  Widget _errorView(BuildContext context, Object e) => ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           SizedBox(height: MediaQuery.of(context).size.height * 0.3),
           Padding(
             padding: const EdgeInsets.all(24),
             child: Text(getErrorMessage(context, e),
-                style: AppText.body(14, color: AppColors.inkDim),
+                style: AppText.body(14, color: context.c.inkDim),
                 textAlign: TextAlign.center),
           ),
         ],
       );
 
-  Widget _emptyView(String locale) => ListView(
+  Widget _emptyView(BuildContext context) => ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const SizedBox(height: 200),
           Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              locale == 'en'
-                  ? 'No course yet. Make sure the migration is applied.'
-                  : 'Henüz kurs yok. Veritabanında derslerin kurulu olduğundan emin ol.',
-              style: AppText.body(14, color: AppColors.inkDim),
+              AppL10n.of(context).lesson_emptyCourse,
+              style: AppText.body(14, color: context.c.inkDim),
               textAlign: TextAlign.center,
             ),
           ),
@@ -96,6 +97,8 @@ class _CourseUnits extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final unitsAsync = ref.watch(unitsForCourseProvider(course.id));
     final progressAsync = ref.watch(lessonProgressMapProvider);
 
@@ -106,15 +109,15 @@ class _CourseUnits extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           child: Text(getErrorMessage(context, e),
               textAlign: TextAlign.center,
-              style: AppText.body(13, color: AppColors.inkDim)),
+              style: AppText.body(13, color: c.inkDim)),
         ),
       ),
       data: (units) {
         if (units.isEmpty) {
           return Center(
             child: Text(
-              locale == 'en' ? 'No units yet.' : 'Henüz ünite yok.',
-              style: AppText.body(13, color: AppColors.inkDim),
+              l.lesson_noUnits,
+              style: AppText.body(13, color: c.inkDim),
             ),
           );
         }
@@ -127,10 +130,9 @@ class _CourseUnits extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 14),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.bgCard.withOpacity(0.7),
+                color: c.bgCard.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                    color: AppColors.primaryContainer.withOpacity(0.4)),
+                border: Border.all(color: c.primaryContainer.withOpacity(0.4)),
               ),
               child: Row(
                 children: [
@@ -138,23 +140,22 @@ class _CourseUnits extends ConsumerWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryContainer.withOpacity(0.2),
+                      color: c.primaryContainer.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: AppColors.primaryContainer.withOpacity(0.5)),
+                          color: c.primaryContainer.withOpacity(0.5)),
                     ),
                     child: Text(
                       course.level,
                       style: AppText.label(11,
-                          color: AppColors.primaryContainer,
-                          weight: FontWeight.w800),
+                          color: c.primaryContainer, weight: FontWeight.w800),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    locale == 'en' ? 'English Course' : 'İngilizce Kursu',
+                    l.lesson_englishCourse,
                     style: AppText.title(15,
-                        color: AppColors.ink, weight: FontWeight.w700),
+                        color: c.ink, weight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -167,9 +168,8 @@ class _CourseUnits extends ConsumerWidget {
                 progressMap: progress,
                 locale: locale,
               ),
-
             const SizedBox(height: 24),
-            _CustomScenarioCard(locale: locale),
+            const _CustomScenarioCard(),
           ],
         );
       },
@@ -194,6 +194,8 @@ class _UnitTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final lessonsAsync = ref.watch(lessonsForUnitProvider(unit.id));
 
     return lessonsAsync.when(
@@ -225,9 +227,6 @@ class _UnitTile extends ConsumerWidget {
         final prevUnit = index > 0 ? allUnits[index - 1] : null;
         bool prevDone = true;
         if (prevUnit != null) {
-          // Çağrı zinciri yok; ref.read ile lessons çekmek async olur.
-          // Pragmatik: önceki unit'in lesson'larını da prefetch için
-          // burada watch ediyoruz.
           final prevLessonsAsync =
               ref.watch(lessonsForUnitProvider(prevUnit.id));
           prevLessonsAsync.whenData((prev) {
@@ -252,20 +251,20 @@ class _UnitTile extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.bgCard.withOpacity(0.65),
+                  color: c.bgCard.withOpacity(0.65),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: allCompleted
-                        ? AppColors.tertiary.withOpacity(0.5)
+                        ? c.tertiary.withOpacity(0.5)
                         : isLocked
-                            ? AppColors.inkDim.withOpacity(0.2)
-                            : AppColors.primaryContainer.withOpacity(0.4),
+                            ? c.inkDim.withOpacity(0.2)
+                            : c.primaryContainer.withOpacity(0.4),
                     width: allCompleted ? 2 : 1,
                   ),
                   boxShadow: allCompleted
                       ? [
                           BoxShadow(
-                            color: AppColors.tertiary.withOpacity(0.2),
+                            color: c.tertiary.withOpacity(0.2),
                             blurRadius: 12,
                           ),
                         ]
@@ -282,21 +281,20 @@ class _UnitTile extends ConsumerWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: allCompleted
-                                ? AppColors.tertiary.withOpacity(0.2)
-                                : AppColors.primaryContainer.withOpacity(0.18),
+                                ? c.tertiary.withOpacity(0.2)
+                                : c.primaryContainer.withOpacity(0.18),
                             border: Border.all(
                                 color: allCompleted
-                                    ? AppColors.tertiary
-                                    : AppColors.primaryContainer
-                                        .withOpacity(0.5)),
+                                    ? c.tertiary
+                                    : c.primaryContainer.withOpacity(0.5)),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             '${index + 1}',
                             style: AppText.title(15,
                                 color: allCompleted
-                                    ? AppColors.tertiary
-                                    : AppColors.primaryContainer,
+                                    ? c.tertiary
+                                    : c.primaryContainer,
                                 weight: FontWeight.w800),
                           ),
                         ),
@@ -305,35 +303,31 @@ class _UnitTile extends ConsumerWidget {
                           child: Text(
                             unit.title(locale),
                             style: AppText.title(15,
-                                color: AppColors.ink, weight: FontWeight.w700),
+                                color: c.ink, weight: FontWeight.w700),
                           ),
                         ),
                         if (isLocked)
-                          const Icon(Icons.lock_outline,
-                              color: AppColors.inkDim, size: 18)
+                          Icon(Icons.lock_outline, color: c.inkDim, size: 18)
                         else if (allCompleted)
-                          const Icon(Icons.workspace_premium,
-                              color: AppColors.tertiary, size: 22)
+                          Icon(Icons.workspace_premium,
+                              color: c.tertiary, size: 22)
                         else
-                          const Icon(Icons.chevron_right,
-                              color: AppColors.inkDim),
+                          Icon(Icons.chevron_right, color: c.inkDim),
                       ],
                     ),
                     const SizedBox(height: 10),
                     LinearProgressIndicator(
                       value: progressRatio,
                       minHeight: 5,
-                      backgroundColor: AppColors.inkDim.withOpacity(0.15),
+                      backgroundColor: c.inkDim.withOpacity(0.15),
                       valueColor: AlwaysStoppedAnimation(
-                        allCompleted
-                            ? AppColors.tertiary
-                            : AppColors.primaryContainer,
+                        allCompleted ? c.tertiary : c.primaryContainer,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '$completedCount / ${lessons.length} ${locale == 'en' ? "lessons" : "ders"}',
-                      style: AppText.label(10, color: AppColors.inkDim),
+                      '$completedCount / ${lessons.length} ${l.lesson_lessonsSuffix}',
+                      style: AppText.label(10, color: c.inkDim),
                     ),
                   ],
                 ),
@@ -347,26 +341,27 @@ class _UnitTile extends ConsumerWidget {
 }
 
 class _CustomScenarioCard extends StatelessWidget {
-  const _CustomScenarioCard({required this.locale});
-  final String locale;
+  const _CustomScenarioCard();
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return GestureDetector(
       onTap: () => context.push('/scenario-builder'),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.primaryContainer.withOpacity(0.15),
+          color: c.primaryContainer.withOpacity(0.15),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.primaryContainer.withOpacity(0.5),
+            color: c.primaryContainer.withOpacity(0.5),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryContainer.withOpacity(0.1),
+              color: c.primaryContainer.withOpacity(0.1),
               blurRadius: 10,
               spreadRadius: 2,
             )
@@ -376,13 +371,13 @@ class _CustomScenarioCard extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: AppColors.primaryContainer,
+              decoration: BoxDecoration(
+                color: c.primaryContainer,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.smart_toy,
-                color: AppColors.onPrimary,
+                color: c.onPrimary,
                 size: 24,
               ),
             ),
@@ -392,24 +387,19 @@ class _CustomScenarioCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    locale == 'en'
-                        ? 'Create Custom Scenario'
-                        : 'Özel Senaryo Oluştur',
+                    l.lesson_customScenarioTitle,
                     style: AppText.title(15,
-                        color: AppColors.ink, weight: FontWeight.w700),
+                        color: c.ink, weight: FontWeight.w700),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    locale == 'en'
-                        ? 'Practice with AI on any topic you want.'
-                        : 'Yapay zeka ile dilediğin konuda pratik yap.',
-                    style: AppText.body(11, color: AppColors.inkDim),
+                    l.lesson_customScenarioBody,
+                    style: AppText.body(11, color: c.inkDim),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios,
-                size: 16, color: AppColors.primaryContainer),
+            Icon(Icons.arrow_forward_ios, size: 16, color: c.primaryContainer),
           ],
         ),
       ),

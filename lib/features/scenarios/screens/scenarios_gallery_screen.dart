@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/errors/error_handler.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../conversation/screens/conversation_screen.dart';
 import '../../../theme/app_theme.dart';
@@ -16,35 +17,36 @@ class ScenariosGalleryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final async = ref.watch(visibleScenariosProvider);
     final locale = ref.watch(localeProvider).languageCode;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: c.ink,
         title: Text(
-          locale == 'en' ? 'Scenarios' : 'Senaryolar',
+          l.nav_scenarios,
           style: AppText.title(18,
-              color: AppColors.primaryContainer, weight: FontWeight.w700),
+              color: c.primaryContainer, weight: FontWeight.w700),
         ),
         actions: [
           IconButton(
-            tooltip: locale == 'en' ? 'New scenario' : 'Yeni senaryo',
-            icon: const Icon(Icons.auto_awesome,
-                color: AppColors.primaryContainer),
+            tooltip: l.scen_newScenario,
+            icon: Icon(Icons.auto_awesome, color: c.primaryContainer),
             onPressed: () => context.push('/scenario-builder'),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryContainer,
-        foregroundColor: AppColors.onPrimary,
+        backgroundColor: c.primaryContainer,
+        foregroundColor: c.onPrimary,
         onPressed: () => context.push('/scenario-builder'),
         icon: const Icon(Icons.add, size: 18),
-        label: Text(locale == 'en' ? 'Create' : 'Yarat'),
+        label: Text(l.scen_create),
       ),
       body: CosmicBackground(
         child: SafeArea(
@@ -58,12 +60,12 @@ class ScenariosGalleryScreen extends ConsumerWidget {
                   children: [
                     Text(
                       getErrorMessage(context, e),
-                      style: AppText.body(13, color: AppColors.inkDim),
+                      style: AppText.body(13, color: c.inkDim),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     GhostButton(
-                      label: locale == 'en' ? 'Retry' : 'Tekrar dene',
+                      label: l.common_retry,
                       icon: Icons.refresh,
                       onTap: () => ref.invalidate(visibleScenariosProvider),
                     ),
@@ -75,10 +77,8 @@ class ScenariosGalleryScreen extends ConsumerWidget {
               if (list.isEmpty) {
                 return Center(
                   child: Text(
-                    locale == 'en'
-                        ? 'No scenarios yet. Tap Create to generate one.'
-                        : 'Henüz senaryo yok. Yarat butonuna bas.',
-                    style: AppText.body(13, color: AppColors.inkDim),
+                    l.scen_empty,
+                    style: AppText.body(13, color: c.inkDim),
                   ),
                 );
               }
@@ -88,17 +88,13 @@ class ScenariosGalleryScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 88),
                 children: [
                   if (mine.isNotEmpty) ...[
-                    _SectionHeader(
-                        title:
-                            locale == 'en' ? 'Yours' : 'Senin yarattıkların'),
+                    _SectionHeader(title: l.scen_yours),
                     for (final s in mine)
                       _ScenarioTile(scenario: s, locale: locale),
                     const SizedBox(height: 16),
                   ],
                   if (system.isNotEmpty) ...[
-                    _SectionHeader(
-                        title:
-                            locale == 'en' ? 'Built-in' : 'Hazır senaryolar'),
+                    _SectionHeader(title: l.scen_builtIn),
                     for (final s in system)
                       _ScenarioTile(scenario: s, locale: locale),
                   ],
@@ -122,7 +118,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: AppText.label(11,
-            color: AppColors.primaryContainer, weight: FontWeight.w800),
+            color: context.c.primaryContainer, weight: FontWeight.w800),
       ),
     );
   }
@@ -135,6 +131,8 @@ class _ScenarioTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final model = scenario.toScenarioModel();
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -152,9 +150,9 @@ class _ScenarioTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.bgCard.withOpacity(0.6),
+            color: c.bgCard.withOpacity(0.6),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.inkDim.withOpacity(0.18)),
+            border: Border.all(color: c.inkDim.withOpacity(0.18)),
           ),
           child: Row(
             children: [
@@ -163,12 +161,11 @@ class _ScenarioTile extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primaryContainer.withOpacity(0.16),
-                  border: Border.all(
-                      color: AppColors.primaryContainer.withOpacity(0.5)),
+                  color: c.primaryContainer.withOpacity(0.16),
+                  border:
+                      Border.all(color: c.primaryContainer.withOpacity(0.5)),
                 ),
-                child: Icon(model.icon,
-                    color: AppColors.primaryContainer, size: 22),
+                child: Icon(model.icon, color: c.primaryContainer, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -178,7 +175,7 @@ class _ScenarioTile extends StatelessWidget {
                     Text(
                       scenario.title(locale),
                       style: AppText.title(14,
-                          color: AppColors.ink, weight: FontWeight.w700),
+                          color: c.ink, weight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
                     Row(
@@ -187,27 +184,26 @@ class _ScenarioTile extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.tertiary.withOpacity(0.15),
+                            color: c.tertiary.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             scenario.difficulty.label(locale),
                             style: AppText.label(9,
-                                color: AppColors.tertiary,
-                                weight: FontWeight.w800),
+                                color: c.tertiary, weight: FontWeight.w800),
                           ),
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '~${scenario.estimatedTurns} ${locale == 'en' ? 'turns' : 'tur'}',
-                          style: AppText.label(10, color: AppColors.inkDim),
+                          l.scen_turnsCount(scenario.estimatedTurns),
+                          style: AppText.label(10, color: c.inkDim),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.inkDim),
+              Icon(Icons.chevron_right, color: c.inkDim),
             ],
           ),
         ),

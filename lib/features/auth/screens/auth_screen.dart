@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../theme/app_theme.dart';
 
@@ -32,24 +33,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Future<void> _submit() async {
+    final l = AppL10n.of(context);
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text.trim();
     final name = _nameCtrl.text.trim();
 
     if (email.isEmpty || pass.isEmpty) {
-      setState(() => _error = 'Tüm alanları doldur.');
+      setState(() => _error = l.auth_validation_fillAll);
       return;
     }
     if (!_isLogin && name.isEmpty) {
-      setState(() => _error = 'Adını gir.');
+      setState(() => _error = l.auth_err_enterName);
       return;
     }
     if (!_emailRegex.hasMatch(email)) {
-      setState(() => _error = 'Geçerli bir e-posta adresi gir.');
+      setState(() => _error = l.auth_err_invalidEmail);
       return;
     }
     if (pass.length < 6) {
-      setState(() => _error = 'Şifre en az 6 karakter olmalı.');
+      setState(() => _error = l.auth_err_passwordMin6);
       return;
     }
 
@@ -75,30 +77,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   String _humanize(String raw) {
-    final l = raw.toLowerCase();
-    if (l.contains('invalid login') || l.contains('invalid credentials')) {
-      return 'E-posta veya şifre yanlış.';
+    final l = AppL10n.of(context);
+    final s = raw.toLowerCase();
+    if (s.contains('invalid login') || s.contains('invalid credentials')) {
+      return l.auth_err_invalidCredentials;
     }
-    if (l.contains('email') && l.contains('confirm')) {
-      return 'E-posta adresini doğrulaman gerekiyor.';
+    if (s.contains('email') && s.contains('confirm')) {
+      return l.auth_err_emailNotConfirmed;
     }
-    if (l.contains('email not confirmed')) {
-      return 'E-posta adresini doğrulaman gerekiyor.';
+    if (s.contains('email not confirmed')) {
+      return l.auth_err_emailNotConfirmed;
     }
-    if (l.contains('user already') || l.contains('already registered')) {
-      return 'Bu e-posta zaten kayıtlı. Giriş yapmayı dene.';
+    if (s.contains('user already') || s.contains('already registered')) {
+      return l.auth_err_alreadyRegistered;
     }
-    if (l.contains('password') && l.contains('6')) {
-      return 'Şifre en az 6 karakter olmalı.';
+    if (s.contains('password') && s.contains('6')) {
+      return l.auth_err_passwordMin6;
     }
-    if (l.contains('network') || l.contains('socket')) {
-      return 'İnternet bağlantısı yok.';
+    if (s.contains('network') || s.contains('socket')) {
+      return l.auth_err_noInternet;
     }
-    return 'Bir hata oluştu. Tekrar dene.';
+    return l.auth_err_generic;
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     if (_showConfirmEmail) {
       return _ConfirmEmailScreen(
         email: _emailCtrl.text.trim(),
@@ -110,7 +114,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: CosmicBackground(
         child: SafeArea(
           child: SingleChildScrollView(
@@ -137,6 +141,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildPanel() {
+    final l = AppL10n.of(context);
+    final c = context.c;
+    final dark = c.isDark;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -144,17 +151,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         child: Container(
           padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
+            color: (dark ? Colors.black : Colors.white).withOpacity(0.4),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.10)),
+            border: Border.all(
+                color: (dark ? Colors.white : Colors.black).withOpacity(0.10)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.8),
+                color: Colors.black.withOpacity(dark ? 0.8 : 0.15),
                 blurRadius: 50,
                 spreadRadius: -10,
               ),
               BoxShadow(
-                color: AppColors.primaryContainer.withOpacity(0.08),
+                color: c.primaryContainer.withOpacity(0.08),
                 blurRadius: 40,
               ),
             ],
@@ -171,17 +179,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ],
               if (!_isLogin) ...[
                 _FieldGroup(
-                  label: 'AD SOYAD',
+                  label: l.auth_fullName,
                   child: NeonField(
                     controller: _nameCtrl,
                     leadingIcon: Icons.person_outline,
-                    hint: 'Adın',
+                    hint: l.auth_nameHint,
                   ),
                 ),
                 const SizedBox(height: 18),
               ],
               _FieldGroup(
-                label: _isLogin ? 'E-POSTA' : 'İLETİŞİM KANALI',
+                label: _isLogin ? l.auth_emailLabel : l.auth_commsChannel,
                 child: NeonField(
                   controller: _emailCtrl,
                   leadingIcon: Icons.mail_outline,
@@ -191,7 +199,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ),
               const SizedBox(height: 18),
               _FieldGroup(
-                label: _isLogin ? 'GÜVENLİK KODU' : 'ERİŞİM ANAHTARI',
+                label: _isLogin ? l.auth_securityCode : l.auth_accessKey,
                 child: NeonField(
                   controller: _passCtrl,
                   leadingIcon: Icons.lock_outline,
@@ -202,7 +210,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       _obscurePass
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
-                      color: AppColors.inkDim,
+                      color: c.inkDim,
                       size: 20,
                     ),
                     onPressed: () =>
@@ -212,7 +220,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ),
               const SizedBox(height: 28),
               NeonButton(
-                label: _isLogin ? 'GİRİŞ YAP' : 'KAYDOL',
+                label: _isLogin ? l.auth_loginBtn : l.auth_signupBtn,
                 loading: _loading,
                 onTap: _submit,
                 height: 56,
@@ -227,6 +235,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildBrand() {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Column(
       children: [
         Container(
@@ -235,32 +245,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-                color: AppColors.primaryContainer.withOpacity(0.4), width: 1.5),
+                color: c.primaryContainer.withOpacity(0.4), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryContainer.withOpacity(0.4),
+                color: c.primaryContainer.withOpacity(0.4),
                 blurRadius: 24,
               ),
             ],
           ),
-          child: const Icon(Icons.public,
-              color: AppColors.primaryContainer, size: 28),
+          child: Icon(Icons.public, color: c.primaryContainer, size: 28),
         ),
         const SizedBox(height: 18),
         Text(
           'VOICELINGO',
           style: AppText.hero(34,
-                  color: AppColors.primaryContainer, weight: FontWeight.w700)
+                  color: c.primaryContainer, weight: FontWeight.w700)
               .copyWith(
-            shadows:
-                neonGlow(AppColors.primaryContainer, blur: 18, opacity: 0.6),
+            shadows: neonGlow(c.primaryContainer, blur: 18, opacity: 0.6),
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          _isLogin ? 'İletişim Kanalını Başlat' : 'Dilbilim yolculuğuna başla.',
-          style: AppText.body(14, color: AppColors.inkMuted),
+          _isLogin ? l.auth_subtitleLogin : l.auth_subtitleSignup,
+          style: AppText.body(14, color: c.inkMuted),
           textAlign: TextAlign.center,
         ),
       ],
@@ -268,6 +276,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildToggle() {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Center(
       child: TextButton(
         onPressed: () => setState(() {
@@ -275,21 +285,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           _error = null;
         }),
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.inkMuted,
+          foregroundColor: c.inkMuted,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         ),
         child: RichText(
           text: TextSpan(
-            style: AppText.body(13, color: AppColors.inkMuted),
+            style: AppText.body(13, color: c.inkMuted),
             children: [
               TextSpan(
                   text: _isLogin
-                      ? 'Henüz yörüngede değil misin? '
-                      : 'Zaten yörüngede misin? '),
+                      ? l.auth_toggleToSignup
+                      : l.auth_toggleToLogin),
               TextSpan(
-                text: _isLogin ? 'Kaydol' : 'Giriş yap',
+                text: _isLogin ? l.auth_signUpShort : l.auth_signInShort,
                 style: AppText.ink(13,
-                    color: AppColors.primaryContainer, weight: FontWeight.w600),
+                    color: c.primaryContainer, weight: FontWeight.w600),
               ),
             ],
           ),
@@ -312,7 +322,7 @@ class _FieldGroup extends StatelessWidget {
       children: [
         Text(label,
             style: AppText.label(10,
-                color: AppColors.inkMuted, weight: FontWeight.w600)),
+                color: context.c.inkMuted, weight: FontWeight.w600)),
         const SizedBox(height: 8),
         child,
       ],
@@ -326,20 +336,20 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.errorContainer.withOpacity(0.25),
+        color: c.errorContainer.withOpacity(0.25),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.error.withOpacity(0.5)),
+        border: Border.all(color: c.error.withOpacity(0.5)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+          Icon(Icons.error_outline, color: c.error, size: 18),
           const SizedBox(width: 10),
           Expanded(
-            child:
-                Text(message, style: AppText.ink(13, color: AppColors.error)),
+            child: Text(message, style: AppText.ink(13, color: c.error)),
           ),
         ],
       ),
@@ -355,8 +365,10 @@ class _ConfirmEmailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: CosmicBackground(
         child: SafeArea(
           child: Padding(
@@ -366,7 +378,7 @@ class _ConfirmEmailScreen extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 460),
                 child: GlassPanel(
                   padding: const EdgeInsets.all(32),
-                  glowColor: AppColors.primaryFixedDim,
+                  glowColor: c.primaryFixedDim,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -377,31 +389,28 @@ class _ConfirmEmailScreen extends StatelessWidget {
                           height: 64,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.primaryFixedDim.withOpacity(0.15),
+                            color: c.primaryFixedDim.withOpacity(0.15),
                             border: Border.all(
-                                color:
-                                    AppColors.primaryFixedDim.withOpacity(0.5)),
+                                color: c.primaryFixedDim.withOpacity(0.5)),
                             boxShadow: [
                               BoxShadow(
-                                color:
-                                    AppColors.primaryFixedDim.withOpacity(0.4),
+                                color: c.primaryFixedDim.withOpacity(0.4),
                                 blurRadius: 20,
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.mark_email_read_outlined,
-                              color: AppColors.primaryFixedDim, size: 30),
+                          child: Icon(Icons.mark_email_read_outlined,
+                              color: c.primaryFixedDim, size: 30),
                         ),
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Gelen kutunu aç.',
+                        l.auth_confirmTitle,
                         textAlign: TextAlign.center,
                         style: AppText.hero(28,
-                                color: AppColors.primary,
-                                weight: FontWeight.w700)
+                                color: c.primary, weight: FontWeight.w700)
                             .copyWith(
-                          shadows: neonGlow(AppColors.primary, blur: 12),
+                          shadows: neonGlow(c.primary, blur: 12),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -409,18 +418,17 @@ class _ConfirmEmailScreen extends StatelessWidget {
                         email,
                         textAlign: TextAlign.center,
                         style: AppText.code(13,
-                            color: AppColors.primaryContainer,
-                            weight: FontWeight.w600),
+                            color: c.primaryContainer, weight: FontWeight.w600),
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'adresine bir doğrulama linki gönderdik. Linke tıkladıktan sonra giriş yapabilirsin.',
+                        l.auth_confirmBody,
                         textAlign: TextAlign.center,
-                        style: AppText.body(13),
+                        style: AppText.body(13, color: c.inkMuted),
                       ),
                       const SizedBox(height: 28),
                       GhostButton(
-                        label: 'Giriş Ekranına Dön',
+                        label: l.auth_backToLogin,
                         icon: Icons.arrow_back,
                         onTap: onBack,
                       ),

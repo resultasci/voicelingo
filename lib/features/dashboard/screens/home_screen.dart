@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/perf/device_tier.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/nav_provider.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../services/notification_service.dart';
@@ -75,7 +76,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final padding = MediaQuery.paddingOf(context);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.c.bg,
       extendBodyBehindAppBar: true,
       extendBody: true,
       body: CosmicBackground(
@@ -108,12 +109,16 @@ class _TopAppBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final profile = ref.watch(profileProvider).value;
     final initial = (profile?.username.isNotEmpty ?? false)
         ? profile!.username[0].toUpperCase()
         : 'V';
 
     final blur = DevicePerf.chromeBlurSigma;
+    final chromeBase = c.isDark ? Colors.black : Colors.white;
+    final hairline = (c.isDark ? Colors.white : Colors.black).withOpacity(0.08);
     Widget chromeContent = Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -121,16 +126,16 @@ class _TopAppBar extends ConsumerWidget {
           end: Alignment.bottomCenter,
           colors: blur == 0
               ? [
-                  Colors.black.withOpacity(0.82),
-                  Colors.black.withOpacity(0.70),
+                  chromeBase.withOpacity(0.82),
+                  chromeBase.withOpacity(0.70),
                 ]
               : [
-                  Colors.black.withOpacity(0.55),
-                  Colors.black.withOpacity(0.30),
+                  chromeBase.withOpacity(0.55),
+                  chromeBase.withOpacity(0.30),
                 ],
         ),
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.08)),
+          bottom: BorderSide(color: hairline),
         ),
       ),
       child: SafeArea(
@@ -146,37 +151,35 @@ class _TopAppBar extends ConsumerWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primaryContainer.withOpacity(0.12),
+                    color: c.primaryContainer.withOpacity(0.12),
                     border: Border.all(
-                        color: AppColors.primaryContainer.withOpacity(0.4)),
+                        color: c.primaryContainer.withOpacity(0.4)),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     initial,
                     style: AppText.title(16,
-                        color: AppColors.primaryContainer,
-                        weight: FontWeight.w700),
+                        color: c.primaryContainer, weight: FontWeight.w700),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'VOICELINGO',
                   style: AppText.title(18,
-                          color: AppColors.primaryContainer,
-                          weight: FontWeight.w700)
+                          color: c.primaryContainer, weight: FontWeight.w700)
                       .copyWith(
                     letterSpacing: -0.4,
-                    shadows: neonGlow(AppColors.primaryContainer,
-                        blur: 8, opacity: 0.5),
+                    shadows:
+                        neonGlow(c.primaryContainer, blur: 8, opacity: 0.5),
                   ),
                 ),
                 const Spacer(),
                 Semantics(
-                  label: 'Ayarlar',
+                  label: l.nav_settings,
                   button: true,
                   child: IconButton(
-                    icon: const Icon(Icons.settings_outlined,
-                        color: AppColors.inkDim, size: 26),
+                    icon: Icon(Icons.settings_outlined,
+                        color: c.inkDim, size: 26),
                     onPressed: () {
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => const SettingsScreen(),
@@ -213,16 +216,19 @@ class _BottomNav extends StatelessWidget {
   final ValueChanged<int> onTap;
   const _BottomNav({required this.index, required this.onTap});
 
-  static const _items = [
-    (Icons.grid_view_outlined, Icons.grid_view, 'GENEL'),
-    (Icons.menu_book_outlined, Icons.menu_book, 'KELİME'),
-    (Icons.chat_bubble_outline, Icons.chat_bubble, 'PRATİK'),
-    (Icons.person_outline, Icons.person, 'PROFİL'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
+    final items = [
+      (Icons.grid_view_outlined, Icons.grid_view, l.nav_dashboard),
+      (Icons.menu_book_outlined, Icons.menu_book, l.nav_words),
+      (Icons.chat_bubble_outline, Icons.chat_bubble, l.nav_practice),
+      (Icons.person_outline, Icons.person, l.nav_profile),
+    ];
     final blur = DevicePerf.chromeBlurSigma;
+    final chromeBase = c.isDark ? Colors.black : Colors.white;
+    final hairline = (c.isDark ? Colors.white : Colors.black).withOpacity(0.10);
     Widget navContent = Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -230,21 +236,21 @@ class _BottomNav extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: blur == 0
               ? [
-                  Colors.black.withOpacity(0.85),
-                  Colors.black.withOpacity(0.95),
+                  chromeBase.withOpacity(0.85),
+                  chromeBase.withOpacity(0.95),
                 ]
               : [
-                  Colors.black.withOpacity(0.55),
-                  Colors.black.withOpacity(0.75),
+                  chromeBase.withOpacity(0.55),
+                  chromeBase.withOpacity(0.75),
                 ],
         ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.10)),
+          top: BorderSide(color: hairline),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withOpacity(c.isDark ? 0.5 : 0.12),
             blurRadius: 30,
             offset: const Offset(0, -4),
           ),
@@ -258,9 +264,9 @@ class _BottomNav extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(_items.length, (i) {
+              children: List.generate(items.length, (i) {
                 final selected = i == index;
-                final (off, on, label) = _items[i];
+                final (off, on, label) = items[i];
                 return _NavItem(
                   icon: selected ? on : off,
                   label: label,
@@ -307,7 +313,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.primaryContainer : AppColors.inkDim;
+    final c = context.c;
+    final color = selected ? c.primaryContainer : c.inkDim;
     return Semantics(
       label: label,
       selected: selected,
@@ -328,8 +335,7 @@ class _NavItem extends StatelessWidget {
                 color: color,
                 size: 22,
                 shadows: selected
-                    ? neonGlow(AppColors.primaryContainer,
-                        blur: 10, opacity: 0.6)
+                    ? neonGlow(c.primaryContainer, blur: 10, opacity: 0.6)
                     : null,
                 semanticLabel: null,
               ),

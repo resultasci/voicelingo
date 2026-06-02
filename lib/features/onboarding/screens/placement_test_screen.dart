@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../services/settings_service.dart';
 import '../../../theme/app_theme.dart';
@@ -93,7 +94,7 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.c.bg,
       body: CosmicBackground(
         child: SafeArea(
           child: Padding(
@@ -132,6 +133,8 @@ class _QuestionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final progress = (index + 1) / total;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -144,15 +147,14 @@ class _QuestionView extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 4,
-                  backgroundColor: AppColors.surfaceHighest,
-                  valueColor:
-                      const AlwaysStoppedAnimation(AppColors.primaryContainer),
+                  backgroundColor: c.surfaceHighest,
+                  valueColor: AlwaysStoppedAnimation(c.primaryContainer),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Text('${index + 1}/$total',
-                style: AppText.code(11, color: AppColors.inkDim)),
+                style: AppText.code(11, color: c.inkDim)),
           ],
         ),
         // Question + options scroll so long prompts / large text scaling never
@@ -163,13 +165,12 @@ class _QuestionView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
-                const SectionLabel('Seviye Belirleme',
-                    color: AppColors.primaryContainer),
+                SectionLabel(l.placement_title, color: c.primaryContainer),
                 const SizedBox(height: 14),
                 Text(
                   question.prompt,
                   style: AppText.title(22,
-                      color: AppColors.primary, weight: FontWeight.w600),
+                      color: c.primary, weight: FontWeight.w600),
                 ),
                 const SizedBox(height: 24),
                 ...List.generate(question.options.length, (i) {
@@ -204,36 +205,37 @@ class _ResultView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Center(
       child: GlassPanel(
         padding: const EdgeInsets.all(28),
-        glowColor: AppColors.primaryContainer,
+        glowColor: c.primaryContainer,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SectionLabel('Sonuç', color: AppColors.primaryContainer),
+            SectionLabel(l.placement_result, color: c.primaryContainer),
             const SizedBox(height: 18),
             Text(
               cefr,
-              style: AppText.hero(64,
-                      color: AppColors.primary, weight: FontWeight.w800)
+              style: AppText.hero(64, color: c.primary, weight: FontWeight.w800)
                   .copyWith(
-                shadows: neonGlow(AppColors.primary, blur: 18, opacity: 0.5),
+                shadows: neonGlow(c.primary, blur: 18, opacity: 0.5),
               ),
             ),
             const SizedBox(height: 8),
-            Text('$correct / 10 doğru',
-                style: AppText.body(13, color: AppColors.inkMuted)),
+            Text(l.placement_correctCount(correct),
+                style: AppText.body(13, color: c.inkMuted)),
             const SizedBox(height: 24),
             if (saving) ...[
-              const SizedBox(
+              SizedBox(
                   width: 22,
                   height: 22,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.primaryContainer)),
+                      strokeWidth: 2, color: c.primaryContainer)),
             ] else
               NeonButton(
-                label: 'Devam et',
+                label: l.onb_continue,
                 icon: Icons.arrow_forward,
                 onTap: onContinue,
               ),

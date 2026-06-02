@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../providers/theme_provider.dart';
@@ -86,30 +87,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final email = Supabase.instance.client.auth.currentUser?.email ?? '';
     final themeMode = ref.watch(themeModeProvider);
-    final locale = ref.watch(localeProvider).languageCode;
-    final isEn = locale == 'en';
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: CosmicBackground(
         child: SafeArea(
           child: Column(
             children: [
-              _TopBar(title: isEn ? 'SETTINGS' : 'AYARLAR'),
+              _TopBar(title: l.settings_title.toUpperCase()),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   children: [
-                    _AccountSection(email: email, isEn: isEn),
+                    _AccountSection(email: email),
                     const SizedBox(height: 16),
                     _CommunicationsSection(
                       enabled: _notificationsEnabled,
                       reviewHour: _reviewHour,
                       onToggle: _setNotifications,
                       onReviewHour: _setReviewHour,
-                      isEn: isEn,
                     ),
                     const SizedBox(height: 16),
                     _PreferencesSection(
@@ -117,75 +117,72 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       theme: _themeKey(themeMode),
                       onLang: _setLanguage,
                       onTheme: (s) => _setTheme(_decodeTheme(s)),
-                      isEn: isEn,
                     ),
                     const SizedBox(height: 16),
                     Semantics(
-                      label: isEn ? 'AI Coach' : 'AI Koç',
+                      label: l.settings_aiCoach,
                       button: true,
                       child: GhostButton(
-                        label: isEn ? 'AI Coach' : 'AI Koç',
+                        label: l.settings_aiCoach,
                         icon: Icons.psychology_outlined,
-                        color: AppColors.secondaryContainer,
+                        color: c.secondaryContainer,
                         onTap: () => context.push('/character-picker'),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Semantics(
-                      label: isEn ? 'Progress' : 'İlerleme',
+                      label: l.settings_progress,
                       button: true,
                       child: GhostButton(
-                        label:
-                            isEn ? 'Progress & Stats' : 'İlerleme & İstatistik',
+                        label: l.settings_progressStats,
                         icon: Icons.insights_outlined,
-                        color: AppColors.primaryFixed,
+                        color: c.primaryFixed,
                         onTap: () => context.push('/progress'),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Semantics(
-                      label: isEn ? 'Course Tree' : 'Ders Yolu',
+                      label: l.settings_courseTree,
                       button: true,
                       child: GhostButton(
-                        label:
-                            isEn ? 'Course Tree (A1-C2)' : 'Ders Yolu (A1-C2)',
+                        label: l.settings_courseTreeFull,
                         icon: Icons.account_tree_outlined,
-                        color: AppColors.success,
+                        color: c.success,
                         onTap: () => context.push('/lessons'),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Semantics(
-                      label: isEn ? 'Grammar' : 'Gramer',
+                      label: l.settings_grammar,
                       button: true,
                       child: GhostButton(
-                        label: isEn ? 'Grammar' : 'Gramer',
+                        label: l.settings_grammar,
                         icon: Icons.menu_book_outlined,
-                        color: AppColors.tertiary,
+                        color: c.tertiary,
                         onTap: () => context.push('/grammar'),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Semantics(
-                      label: isEn ? 'Badges' : 'Rozetler',
+                      label: l.settings_badges,
                       button: true,
                       child: GhostButton(
-                        label: isEn ? 'Badges' : 'Rozetler',
+                        label: l.settings_badges,
                         icon: Icons.emoji_events_outlined,
-                        color: AppColors.primaryContainer,
+                        color: c.primaryContainer,
                         onTap: () => context.push('/badges'),
                       ),
                     ),
                     const SizedBox(height: 28),
                     Center(
                       child: Semantics(
-                        label: isEn ? 'Sign Out' : 'Çıkış yap',
+                        label: l.auth_signOut,
                         button: true,
                         child: GhostButton(
-                          label: isEn ? 'Disconnect' : 'Çıkış Yap',
+                          label: l.settings_disconnect,
                           icon: Icons.logout,
-                          color: AppColors.error,
-                          onTap: () => _confirmSignOut(context, ref, isEn),
+                          color: c.error,
+                          onTap: () => _confirmSignOut(context, ref),
                         ),
                       ),
                     ),
@@ -200,8 +197,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<void> _confirmSignOut(
-      BuildContext context, WidgetRef ref, bool isEn) async {
+  Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -209,35 +207,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: GlassPanel(
           padding: const EdgeInsets.all(24),
-          glowColor: AppColors.error,
+          glowColor: c.error,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SectionLabel(isEn ? 'Disconnect' : 'Çıkış',
-                  color: AppColors.error),
+              SectionLabel(l.settings_disconnect, color: c.error),
               const SizedBox(height: 14),
               Text(
-                isEn
-                    ? 'Are you sure you want to sign out?'
-                    : 'Çıkmak istediğine emin misin?',
+                l.settings_signOutConfirm,
                 style: AppText.title(20,
-                    color: AppColors.primary, weight: FontWeight.w600),
+                    color: c.primary, weight: FontWeight.w600),
               ),
               const SizedBox(height: 22),
               Row(
                 children: [
                   Expanded(
                     child: GhostButton(
-                      label: isEn ? 'Cancel' : 'Vazgeç',
+                      label: l.common_cancel,
                       onTap: () => Navigator.pop(ctx, false),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: NeonButton(
-                      label: isEn ? 'Sign Out' : 'Çıkış',
+                      label: l.auth_signOut,
                       icon: Icons.logout,
-                      color: AppColors.error,
+                      color: c.error,
                       onTap: () => Navigator.pop(ctx, true),
                     ),
                   ),
@@ -262,27 +257,27 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         border: Border(
-          bottom:
-              BorderSide(color: AppColors.primaryContainer.withOpacity(0.2)),
+          bottom: BorderSide(color: c.primaryContainer.withOpacity(0.2)),
         ),
         boxShadow: [
           BoxShadow(
-              color: AppColors.primaryContainer.withOpacity(0.08),
-              blurRadius: 30),
+              color: c.primaryContainer.withOpacity(0.08), blurRadius: 30),
         ],
       ),
       child: Row(
         children: [
           Semantics(
-            label: 'Geri',
+            label: l.common_back,
             child: IconButton(
-              icon: const Icon(Icons.arrow_back,
-                  color: AppColors.primaryContainer, size: 22),
+              icon: Icon(Icons.arrow_back,
+                  color: c.primaryContainer, size: 22),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
@@ -291,11 +286,10 @@ class _TopBar extends StatelessWidget {
               child: Text(
                 title,
                 style: AppText.label(13,
-                        color: AppColors.primaryContainer,
-                        weight: FontWeight.w700)
+                        color: c.primaryContainer, weight: FontWeight.w700)
                     .copyWith(
-                  shadows: neonGlow(AppColors.primaryContainer,
-                      blur: 12, opacity: 0.8),
+                  shadows:
+                      neonGlow(c.primaryContainer, blur: 12, opacity: 0.8),
                 ),
               ),
             ),
@@ -310,19 +304,20 @@ class _TopBar extends StatelessWidget {
 // =============================================================================
 class _AccountSection extends StatelessWidget {
   final String email;
-  final bool isEn;
-  const _AccountSection({required this.email, required this.isEn});
+  const _AccountSection({required this.email});
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return _Section(
       icon: Icons.person_outline,
-      title: isEn ? 'Account' : 'Hesap',
+      title: l.settings_account,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Field(
-            label: isEn ? 'Email Address' : 'E-Posta Adresi',
+            label: l.settings_emailAddress,
             child: NeonField(
               controller: TextEditingController(text: email),
               readOnly: true,
@@ -330,17 +325,17 @@ class _AccountSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _Field(
-            label: isEn ? 'Password' : 'Şifre',
+            label: l.auth_password,
             child: NeonField(
               controller: TextEditingController(text: '••••••••'),
               readOnly: true,
               obscure: true,
               suffix: Semantics(
-                label: isEn ? 'Change password' : 'Şifre değiştir',
+                label: l.auth_changePassword,
                 button: true,
                 child: IconButton(
-                  icon: const Icon(Icons.edit,
-                      color: AppColors.primaryContainer, size: 18),
+                  icon: Icon(Icons.edit,
+                      color: c.primaryContainer, size: 18),
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -353,11 +348,9 @@ class _AccountSection extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           GhostButton(
-            label: isEn
-                ? 'Download Data / Delete Account'
-                : 'Veri İndir / Hesabı Sil',
+            label: l.settings_downloadDeleteAccount,
             icon: Icons.security,
-            color: AppColors.error,
+            color: c.error,
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const DeleteAccountScreen()),
@@ -376,29 +369,26 @@ class _CommunicationsSection extends StatelessWidget {
   final int reviewHour;
   final ValueChanged<bool> onToggle;
   final ValueChanged<int> onReviewHour;
-  final bool isEn;
 
   const _CommunicationsSection({
     required this.enabled,
     required this.reviewHour,
     required this.onToggle,
     required this.onReviewHour,
-    required this.isEn,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return _Section(
       icon: Icons.notifications_outlined,
-      title: isEn ? 'Notifications' : 'Bildirimler',
+      title: l.settings_notifications,
       child: Column(
         children: [
           _ToggleRow(
-            title:
-                isEn ? 'Daily Review Reminder' : 'Günlük Tekrar Hatırlatması',
-            subtitle: isEn
-                ? 'One notification per day for due words'
-                : 'Vadesi gelen kelimeler için günde bir bildirim',
+            title: l.settings_dailyReviewReminder,
+            subtitle: l.settings_reminderSubtitle,
             value: enabled,
             onChanged: onToggle,
             divider: true,
@@ -414,21 +404,20 @@ class _CommunicationsSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isEn ? 'Reminder Time' : 'Hatırlatma Saati',
+                          l.settings_reminderTime,
                           style: AppText.ink(15,
-                              color: AppColors.ink, weight: FontWeight.w500),
+                              color: c.ink, weight: FontWeight.w500),
                         ),
                         const SizedBox(height: 4),
-                        Text(isEn ? 'ONCE A DAY' : 'GÜNDE BİR KEZ',
+                        Text(l.settings_onceADay,
                             style: AppText.label(9,
-                                color:
-                                    AppColors.primaryContainer.withOpacity(0.6),
+                                color: c.primaryContainer.withOpacity(0.6),
                                 weight: FontWeight.w600)),
                       ],
                     ),
                   ),
                   Semantics(
-                    label: isEn ? 'Pick reminder time' : 'Hatırlatma saati seç',
+                    label: l.settings_reminderTime,
                     button: true,
                     child: TextButton(
                       onPressed: enabled
@@ -437,8 +426,7 @@ class _CommunicationsSection extends StatelessWidget {
                                 context: context,
                                 initialTime:
                                     TimeOfDay(hour: reviewHour, minute: 0),
-                                helpText:
-                                    isEn ? 'Reminder time' : 'Hatırlatma saati',
+                                helpText: l.settings_reminderTime,
                               );
                               if (picked != null) {
                                 onReviewHour(picked.hour);
@@ -448,7 +436,7 @@ class _CommunicationsSection extends StatelessWidget {
                       child: Text(
                         '${reviewHour.toString().padLeft(2, '0')}:00',
                         style: AppText.title(16,
-                            color: AppColors.primaryContainer,
+                            color: c.primaryContainer,
                             weight: FontWeight.w700),
                       ),
                     ),
@@ -458,13 +446,12 @@ class _CommunicationsSection extends StatelessWidget {
             ),
           ),
           _Field(
-            label: isEn ? 'COMING SOON' : 'YAKINDA',
+            label: l.settings_comingSoon,
             child: Opacity(
               opacity: 0.45,
               child: _ToggleRow(
-                title: isEn ? 'System Updates' : 'Sistem Güncellemeleri',
-                subtitle:
-                    isEn ? 'New features — soon' : 'Yeni özellikler — yakında',
+                title: l.settings_systemUpdates,
+                subtitle: l.settings_systemUpdatesSub,
                 value: false,
                 onChanged: (_) {},
               ),
@@ -482,26 +469,25 @@ class _PreferencesSection extends StatelessWidget {
   final String theme;
   final ValueChanged<String> onLang;
   final ValueChanged<String> onTheme;
-  final bool isEn;
 
   const _PreferencesSection({
     required this.language,
     required this.theme,
     required this.onLang,
     required this.onTheme,
-    required this.isEn,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
     return _Section(
       icon: Icons.tune,
-      title: isEn ? 'System Preferences' : 'Sistem Tercihleri',
+      title: l.settings_systemPreferences,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Field(
-            label: isEn ? 'Interface Language' : 'Arayüz Dili',
+            label: l.settings_language,
             child: _NeonDropdown<String>(
               value: language,
               items: const [
@@ -513,19 +499,13 @@ class _PreferencesSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _Field(
-            label: isEn ? 'Visual Theme' : 'Görsel Tema',
+            label: l.settings_visualTheme,
             child: _NeonDropdown<String>(
               value: theme,
               items: [
-                (
-                  'dark',
-                  isEn ? 'Obsidian Void (Dark)' : 'Obsidian Void (Karanlık)'
-                ),
-                (
-                  'light',
-                  isEn ? 'Solar Flare (Light)' : 'Solar Flare (Aydınlık)'
-                ),
-                ('system', isEn ? 'System Default' : 'Sistem ile uyumlu'),
+                ('dark', l.settings_themeObsidian),
+                ('light', l.settings_themeSolar),
+                ('system', l.settings_themeSystemDefault),
               ],
               onChanged: (v) => onTheme(v ?? theme),
             ),
@@ -549,6 +529,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return GlassPanel(
       padding: const EdgeInsets.all(22),
       child: Column(
@@ -557,19 +538,18 @@ class _Section extends StatelessWidget {
           Row(
             children: [
               Icon(icon,
-                  color: AppColors.primaryContainer,
+                  color: c.primaryContainer,
                   size: 24,
-                  shadows: neonGlow(AppColors.primaryContainer,
-                      blur: 10, opacity: 0.6)),
+                  shadows:
+                      neonGlow(c.primaryContainer, blur: 10, opacity: 0.6)),
               const SizedBox(width: 10),
               Text(
                 title,
                 style: AppText.title(20,
-                        color: AppColors.primaryContainer,
-                        weight: FontWeight.w600)
+                        color: c.primaryContainer, weight: FontWeight.w600)
                     .copyWith(
-                  shadows: neonGlow(AppColors.primaryContainer,
-                      blur: 10, opacity: 0.5),
+                  shadows:
+                      neonGlow(c.primaryContainer, blur: 10, opacity: 0.5),
                 ),
               ),
             ],
@@ -595,7 +575,7 @@ class _Field extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: AppText.label(10,
-              color: AppColors.primaryContainer.withOpacity(0.7),
+              color: context.c.primaryContainer.withOpacity(0.7),
               weight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
@@ -621,13 +601,13 @@ class _ToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: divider
           ? BoxDecoration(
               border: Border(
-                bottom: BorderSide(
-                    color: AppColors.primaryContainer.withOpacity(0.10)),
+                bottom: BorderSide(color: c.primaryContainer.withOpacity(0.10)),
               ),
             )
           : null,
@@ -639,11 +619,11 @@ class _ToggleRow extends StatelessWidget {
               children: [
                 Text(title,
                     style: AppText.ink(15,
-                        color: AppColors.ink, weight: FontWeight.w500)),
+                        color: c.ink, weight: FontWeight.w500)),
                 const SizedBox(height: 4),
                 Text(subtitle.toUpperCase(),
                     style: AppText.label(9,
-                        color: AppColors.primaryContainer.withOpacity(0.6),
+                        color: c.primaryContainer.withOpacity(0.6),
                         weight: FontWeight.w600)),
               ],
             ),
@@ -666,6 +646,7 @@ class _NeonSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: AnimatedContainer(
@@ -675,18 +656,16 @@ class _NeonSwitch extends StatelessWidget {
         padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           color: value
-              ? AppColors.primaryContainer.withOpacity(0.18)
-              : AppColors.surfaceHigh,
+              ? c.primaryContainer.withOpacity(0.18)
+              : c.surfaceHigh,
           border: Border.all(
-            color: value
-                ? AppColors.primaryContainer
-                : AppColors.inkDim.withOpacity(0.5),
+            color: value ? c.primaryContainer : c.inkDim.withOpacity(0.5),
           ),
           borderRadius: BorderRadius.circular(99),
           boxShadow: value
               ? [
                   BoxShadow(
-                      color: AppColors.primaryContainer.withOpacity(0.2),
+                      color: c.primaryContainer.withOpacity(0.2),
                       blurRadius: 8),
                 ]
               : null,
@@ -699,11 +678,11 @@ class _NeonSwitch extends StatelessWidget {
             height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: value ? AppColors.primaryContainer : AppColors.inkDim,
+              color: value ? c.primaryContainer : c.inkDim,
               boxShadow: value
                   ? [
                       BoxShadow(
-                          color: AppColors.primaryContainer.withOpacity(0.8),
+                          color: c.primaryContainer.withOpacity(0.8),
                           blurRadius: 8),
                     ]
                   : null,
@@ -727,21 +706,22 @@ class _NeonDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
+    final hairline = (c.isDark ? Colors.white : Colors.black).withOpacity(0.05);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceHighest,
+        color: c.surfaceHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: hairline),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
           isExpanded: true,
-          dropdownColor: AppColors.bgElevated,
-          icon: const Icon(Icons.expand_more,
-              color: AppColors.primaryContainer, size: 20),
-          style: AppText.ink(14, color: AppColors.ink),
+          dropdownColor: c.bgElevated,
+          icon: Icon(Icons.expand_more, color: c.primaryContainer, size: 20),
+          style: AppText.ink(14, color: c.ink),
           borderRadius: BorderRadius.circular(12),
           items: items
               .map((e) => DropdownMenuItem<T>(

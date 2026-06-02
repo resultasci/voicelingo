@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/user_profile.dart';
 import '../../../providers/nav_provider.dart';
 import '../../../providers/profile_provider.dart';
@@ -13,14 +14,15 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
     final profileAsync = ref.watch(profileProvider);
     final wordsAsync = ref.watch(wordsProvider);
 
     final initialLoading = profileAsync.isLoading && wordsAsync.value == null;
 
     return RefreshIndicator(
-      color: AppColors.primaryContainer,
-      backgroundColor: AppColors.bgCard,
+      color: context.c.primaryContainer,
+      backgroundColor: context.c.bgCard,
       onRefresh: () async {
         ref.invalidate(profileProvider);
         await ref.read(wordsProvider.notifier).load(forceRefresh: true);
@@ -39,7 +41,7 @@ class DashboardScreen extends ConsumerWidget {
                   data: (p) => _Welcome(profile: p),
                   loading: () => const _LoadingDot(),
                   error: (e, _) => _ErrorBlock(
-                    message: 'Profil yüklenemedi.',
+                    message: l.dashboard_profileLoadError,
                     onRetry: () => ref.invalidate(profileProvider),
                   ),
                 ),
@@ -86,52 +88,54 @@ class _DashboardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final base = context.c.surfaceHigh;
     return Shimmer.fromColors(
-      baseColor: AppColors.surfaceHigh,
-      highlightColor: AppColors.surfaceHighest,
+      baseColor: base,
+      highlightColor: context.c.surfaceHighest,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _bar(width: 220, height: 28),
+          _bar(width: 220, height: 28, color: base),
           const SizedBox(height: 12),
-          _bar(width: 280, height: 14),
+          _bar(width: 280, height: 14, color: base),
           const SizedBox(height: 28),
           Row(
             children: [
-              Expanded(child: _block(height: 84)),
+              Expanded(child: _block(height: 84, color: base)),
               const SizedBox(width: 14),
-              Expanded(child: _block(height: 84)),
+              Expanded(child: _block(height: 84, color: base)),
             ],
           ),
           const SizedBox(height: 24),
-          _block(height: 180),
+          _block(height: 180, color: base),
           const SizedBox(height: 28),
-          _bar(width: 160, height: 18),
+          _bar(width: 160, height: 18, color: base),
           const SizedBox(height: 14),
-          _block(height: 92),
+          _block(height: 92, color: base),
           const SizedBox(height: 12),
-          _block(height: 92),
+          _block(height: 92, color: base),
         ],
       ),
     );
   }
 
-  Widget _bar({required double width, required double height}) {
+  Widget _bar(
+      {required double width, required double height, required Color color}) {
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surfaceHigh,
+        color: color,
         borderRadius: BorderRadius.circular(6),
       ),
     );
   }
 
-  Widget _block({required double height}) {
+  Widget _block({required double height, required Color color}) {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surfaceHigh,
+        color: color,
         borderRadius: BorderRadius.circular(16),
       ),
     );
@@ -145,22 +149,23 @@ class _Welcome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = profile?.username ?? 'Kaptan';
+    final l = AppL10n.of(context);
+    final c = context.c;
+    final name = profile?.username ?? l.dashboard_defaultName;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Merhaba, $name',
-          style: AppText.hero(32,
-                  color: AppColors.primary, weight: FontWeight.w700)
+          l.dashboard_greeting(name),
+          style: AppText.hero(32, color: c.primary, weight: FontWeight.w700)
               .copyWith(
-            shadows: neonGlow(AppColors.primary, blur: 10, opacity: 0.3),
+            shadows: neonGlow(c.primary, blur: 10, opacity: 0.3),
           ),
         ),
         const SizedBox(height: 6),
         Text(
-          'Günlük galaktik hedeflerine hazır mısın?',
-          style: AppText.body(15, color: AppColors.inkMuted),
+          l.dashboard_greetingSubtitle,
+          style: AppText.body(15, color: c.inkMuted),
         ),
       ],
     );
@@ -175,6 +180,8 @@ class _StatsHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final streak = profile?.streakDays ?? 0;
     final xp = profile?.xp ?? 0;
     return Row(
@@ -182,22 +189,22 @@ class _StatsHud extends StatelessWidget {
         Expanded(
           child: _HudTile(
             icon: Icons.local_fire_department,
-            iconColor: AppColors.secondary,
-            iconBg: AppColors.secondaryContainer,
-            label: 'SERİ',
-            value: '$streak Gün',
-            valueColor: AppColors.secondary,
+            iconColor: c.secondary,
+            iconBg: c.secondaryContainer,
+            label: l.dashboard_statStreak,
+            value: l.dashboard_streakValue(streak),
+            valueColor: c.secondary,
           ),
         ),
         const SizedBox(width: 14),
         Expanded(
           child: _HudTile(
             icon: Icons.auto_awesome,
-            iconColor: AppColors.primaryFixedDim,
-            iconBg: AppColors.primaryContainer,
+            iconColor: c.primaryFixedDim,
+            iconBg: c.primaryContainer,
             label: 'XP',
             value: _fmt(xp),
-            valueColor: AppColors.primaryFixedDim,
+            valueColor: c.primaryFixedDim,
           ),
         ),
       ],
@@ -254,7 +261,7 @@ class _HudTile extends StatelessWidget {
               children: [
                 Text(label,
                     style: AppText.label(9,
-                        color: AppColors.inkDim, weight: FontWeight.w700)),
+                        color: context.c.inkDim, weight: FontWeight.w700)),
                 const SizedBox(height: 4),
                 Text(
                   value,
@@ -282,9 +289,11 @@ class _AiPracticeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return GlassPanel(
       padding: EdgeInsets.zero,
-      glowColor: AppColors.tertiaryContainer,
+      glowColor: c.tertiaryContainer,
       child: Stack(
         children: [
           Positioned(
@@ -295,7 +304,7 @@ class _AiPracticeCard extends StatelessWidget {
               height: 160,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.tertiaryFixedDim.withOpacity(0.18),
+                color: c.tertiaryFixedDim.withOpacity(0.18),
               ),
             ),
           ),
@@ -304,29 +313,28 @@ class _AiPracticeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const NeonChip(
-                  text: 'YAPAY ZEKA MODÜLÜ',
+                NeonChip(
+                  text: l.dashboard_aiModule,
                   icon: Icons.smart_toy_outlined,
-                  color: AppColors.tertiaryFixedDim,
+                  color: c.tertiaryFixedDim,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Derin Uzay Pratiği',
+                  l.dashboard_aiTitle,
                   style: AppText.title(24,
-                          color: AppColors.tertiary, weight: FontWeight.w600)
+                          color: c.tertiary, weight: FontWeight.w600)
                       .copyWith(
-                    shadows:
-                        neonGlow(AppColors.tertiary, blur: 8, opacity: 0.4),
+                    shadows: neonGlow(c.tertiary, blur: 8, opacity: 0.4),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Kişiselleştirilmiş AI asistanın ile günlük konuşma simülasyonunu başlat.',
-                  style: AppText.body(13, color: AppColors.inkMuted),
+                  l.dashboard_aiSubtitle,
+                  style: AppText.body(13, color: c.inkMuted),
                 ),
                 const SizedBox(height: 18),
                 NeonButton(
-                  label: 'Simülasyonu Başlat',
+                  label: l.dashboard_aiStart,
                   icon: Icons.rocket_launch,
                   onTap: onTap,
                 ),
@@ -349,6 +357,8 @@ class _DailyGoals extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final progress =
         total == 0 ? 0.0 : ((total - due) / total).clamp(0.0, 1.0).toDouble();
     final pct = (progress * 100).round();
@@ -357,21 +367,20 @@ class _DailyGoals extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Günlük Görevler',
-          style:
-              AppText.title(20, color: AppColors.ink, weight: FontWeight.w600),
+          l.dashboard_dailyGoals,
+          style: AppText.title(20, color: c.ink, weight: FontWeight.w600),
         ),
         const SizedBox(height: 14),
         _GoalCard(
-          language: 'İngilizce',
+          language: l.dashboard_goalLanguage,
           subtitle: total == 0
-              ? 'Kütüphane Yükleniyor'
+              ? l.dashboard_goalLoading
               : due == 0
-                  ? 'Tüm Kelimeler Güncel'
-                  : '$due Kelime Tekrar Bekliyor',
+                  ? l.dashboard_goalAllCurrent
+                  : l.words_review_due(due),
           progress: progress,
           percent: pct,
-          color: AppColors.primaryContainer,
+          color: c.primaryContainer,
           onTap: onTap,
         ),
       ],
@@ -397,6 +406,8 @@ class _GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return GlassPanel(
       onTap: onTap,
       padding: const EdgeInsets.all(18),
@@ -414,12 +425,12 @@ class _GoalCard extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: progress,
                     strokeWidth: 4,
-                    backgroundColor: AppColors.surfaceHighest,
+                    backgroundColor: c.surfaceHighest,
                     valueColor: AlwaysStoppedAnimation(color),
                   ),
                 ),
                 Text(
-                  '%$percent',
+                  l.dashboard_percentValue(percent),
                   style:
                       AppText.label(11, color: color, weight: FontWeight.w700),
                 ),
@@ -433,11 +444,11 @@ class _GoalCard extends StatelessWidget {
               children: [
                 Text(language,
                     style: AppText.title(18,
-                        color: AppColors.primary, weight: FontWeight.w600)),
+                        color: c.primary, weight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 Text(subtitle.toUpperCase(),
                     style: AppText.label(9,
-                        color: AppColors.inkDim, weight: FontWeight.w600)),
+                        color: c.inkDim, weight: FontWeight.w600)),
               ],
             ),
           ),
@@ -465,14 +476,14 @@ class _LoadingDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
       child: Center(
         child: SizedBox(
           width: 18,
           height: 18,
           child: CircularProgressIndicator(
-              strokeWidth: 2, color: AppColors.primaryContainer),
+              strokeWidth: 2, color: context.c.primaryContainer),
         ),
       ),
     );
@@ -486,22 +497,23 @@ class _ErrorBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return GlassPanel(
-      borderColor: AppColors.error.withOpacity(0.4),
+      borderColor: c.error.withOpacity(0.4),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+          Icon(Icons.error_outline, color: c.error, size: 20),
           const SizedBox(width: 12),
           Expanded(
-            child:
-                Text(message, style: AppText.ink(13, color: AppColors.error)),
+            child: Text(message, style: AppText.ink(13, color: c.error)),
           ),
           TextButton(
             onPressed: onRetry,
             child: Text(
-              'TEKRAR DENE',
+              l.common_retry.toUpperCase(),
               style: AppText.label(10,
-                  color: AppColors.primaryContainer, weight: FontWeight.w700),
+                  color: c.primaryContainer, weight: FontWeight.w700),
             ),
           ),
         ],

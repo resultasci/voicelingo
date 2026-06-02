@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/error_handler.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/conversation.dart';
 import '../../../theme/app_theme.dart';
 
@@ -26,9 +27,11 @@ class ConversationViewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final messages = ref.watch(_messagesProvider(conversationId));
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: CosmicBackground(
         child: SafeArea(
           child: Column(
@@ -38,17 +41,17 @@ class ConversationViewScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     Semantics(
-                      label: 'Geri',
+                      label: l.common_back,
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back,
-                            color: AppColors.primaryContainer, size: 22),
+                        icon: Icon(Icons.arrow_back,
+                            color: c.primaryContainer, size: 22),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Text('Sohbet',
+                    Text(l.convView_title,
                         style: AppText.title(20,
-                            color: AppColors.primary, weight: FontWeight.w600)),
+                            color: c.primary, weight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -59,12 +62,12 @@ class ConversationViewScreen extends ConsumerWidget {
                     itemCount: items.length,
                     itemBuilder: (context, i) => _Bubble(message: items[i]),
                   ),
-                  loading: () => const Center(
+                  loading: () => Center(
                     child: SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.primaryContainer),
+                          strokeWidth: 2, color: c.primaryContainer),
                     ),
                   ),
                   error: (e, _) => Center(
@@ -72,7 +75,7 @@ class ConversationViewScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(20),
                       child: Text(getErrorMessage(context, e),
                           textAlign: TextAlign.center,
-                          style: AppText.body(13, color: AppColors.error)),
+                          style: AppText.body(13, color: c.error)),
                     ),
                   ),
                 ),
@@ -91,6 +94,8 @@ class _Bubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final isUser = message.isUser;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -106,9 +111,9 @@ class _Bubble extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryContainer.withOpacity(0.10),
+                      color: c.primaryContainer.withOpacity(0.10),
                       border: Border.all(
-                          color: AppColors.primaryContainer.withOpacity(0.4)),
+                          color: c.primaryContainer.withOpacity(0.4)),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(18),
                         topRight: Radius.circular(4),
@@ -119,7 +124,7 @@ class _Bubble extends StatelessWidget {
                     child: Text(
                       message.content,
                       style: AppText.ink(14,
-                          color: AppColors.primary, weight: FontWeight.w500),
+                          color: c.primary, weight: FontWeight.w500),
                     ),
                   )
                 : GlassPanel(
@@ -128,7 +133,7 @@ class _Bubble extends StatelessWidget {
                     radius: 18,
                     child: Text(
                       message.content,
-                      style: AppText.ink(14, color: AppColors.ink),
+                      style: AppText.ink(14, color: c.ink),
                     ),
                   ),
           ),
@@ -136,10 +141,10 @@ class _Bubble extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                'Puan: ${message.evalScore}'
+                '${l.convView_score(message.evalScore!)}'
                 '${message.evalSuggestion?.isNotEmpty == true ? " · ${message.evalSuggestion}" : ""}',
                 style: AppText.label(10,
-                    color: AppColors.primaryFixedDim, weight: FontWeight.w600),
+                    color: c.primaryFixedDim, weight: FontWeight.w600),
               ),
             ),
         ],

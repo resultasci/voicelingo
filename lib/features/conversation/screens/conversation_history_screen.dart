@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/error_handler.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/conversation.dart';
 import '../../../theme/app_theme.dart';
 import 'conversation_view_screen.dart';
@@ -27,9 +28,11 @@ class ConversationHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final history = ref.watch(_historyProvider);
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: CosmicBackground(
         child: SafeArea(
           child: Column(
@@ -40,8 +43,8 @@ class ConversationHistoryScreen extends ConsumerWidget {
                   data: (items) => items.isEmpty
                       ? _EmptyView()
                       : RefreshIndicator(
-                          color: AppColors.primaryContainer,
-                          backgroundColor: AppColors.bgCard,
+                          color: c.primaryContainer,
+                          backgroundColor: c.bgCard,
                           onRefresh: () async {
                             ref.invalidate(_historyProvider);
                             await ref.read(_historyProvider.future);
@@ -54,12 +57,12 @@ class ConversationHistoryScreen extends ConsumerWidget {
                             itemBuilder: (context, i) => _Tile(item: items[i]),
                           ),
                         ),
-                  loading: () => const Center(
+                  loading: () => Center(
                     child: SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.primaryContainer),
+                          strokeWidth: 2, color: c.primaryContainer),
                     ),
                   ),
                   error: (e, _) => Center(
@@ -70,10 +73,10 @@ class ConversationHistoryScreen extends ConsumerWidget {
                         children: [
                           Text(getErrorMessage(context, e),
                               textAlign: TextAlign.center,
-                              style: AppText.body(13, color: AppColors.error)),
+                              style: AppText.body(13, color: c.error)),
                           const SizedBox(height: 16),
                           GhostButton(
-                            label: 'Tekrar dene',
+                            label: l.common_retry,
                             icon: Icons.refresh,
                             onTap: () => ref.invalidate(_historyProvider),
                           ),
@@ -94,23 +97,23 @@ class ConversationHistoryScreen extends ConsumerWidget {
 class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
       child: Row(
         children: [
           Semantics(
-            label: 'Geri',
+            label: l.common_back,
             child: IconButton(
-              icon: const Icon(Icons.arrow_back,
-                  color: AppColors.primaryContainer, size: 22),
+              icon: Icon(Icons.arrow_back, color: c.primaryContainer, size: 22),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
           const SizedBox(width: 4),
           Text(
-            'Sohbet Geçmişi',
-            style: AppText.title(20,
-                color: AppColors.primary, weight: FontWeight.w600),
+            l.convHist_title,
+            style: AppText.title(20, color: c.primary, weight: FontWeight.w600),
           ),
         ],
       ),
@@ -124,9 +127,11 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     final title = item.title?.isNotEmpty == true
         ? item.title!
-        : (item.scenario ?? 'Serbest sohbet');
+        : (item.scenario ?? l.convHist_freeChat);
     final date = '${item.updatedAt.day.toString().padLeft(2, '0')}.'
         '${item.updatedAt.month.toString().padLeft(2, '0')}.'
         '${item.updatedAt.year}';
@@ -139,8 +144,7 @@ class _Tile extends StatelessWidget {
       },
       child: Row(
         children: [
-          const Icon(Icons.chat_bubble_outline,
-              color: AppColors.primaryContainer, size: 22),
+          Icon(Icons.chat_bubble_outline, color: c.primaryContainer, size: 22),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -148,16 +152,15 @@ class _Tile extends StatelessWidget {
               children: [
                 Text(title,
                     style: AppText.title(16,
-                        color: AppColors.primary, weight: FontWeight.w600),
+                        color: c.primary, weight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
-                Text(date, style: AppText.code(11, color: AppColors.inkDim)),
+                Text(date, style: AppText.code(11, color: c.inkDim)),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right,
-              color: AppColors.primaryContainer, size: 18),
+          Icon(Icons.chevron_right, color: c.primaryContainer, size: 18),
         ],
       ),
     );
@@ -167,6 +170,8 @@ class _Tile extends StatelessWidget {
 class _EmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -175,12 +180,11 @@ class _EmptyView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.history,
-                  color: AppColors.primaryContainer, size: 32),
+              Icon(Icons.history, color: c.primaryContainer, size: 32),
               const SizedBox(height: 12),
               Text(
-                'Henüz kaydedilmiş bir sohbet yok.',
-                style: AppText.body(13, color: AppColors.inkMuted),
+                l.convHist_empty,
+                style: AppText.body(13, color: c.inkMuted),
                 textAlign: TextAlign.center,
               ),
             ],

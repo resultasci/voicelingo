@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../theme/app_theme.dart';
 
 class LevelUpDialog extends StatefulWidget {
@@ -64,6 +65,8 @@ class _LevelUpDialogState extends State<LevelUpDialog>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Material(
       color: Colors.transparent,
       child: Stack(
@@ -81,10 +84,10 @@ class _LevelUpDialogState extends State<LevelUpDialog>
               numberOfParticles: 32,
               gravity: 0.22,
               shouldLoop: false,
-              colors: const [
-                AppColors.primaryContainer,
-                AppColors.secondaryContainer,
-                AppColors.tertiary,
+              colors: [
+                c.primaryContainer,
+                c.secondaryContainer,
+                c.tertiary,
                 Colors.white,
               ],
             ),
@@ -93,8 +96,8 @@ class _LevelUpDialogState extends State<LevelUpDialog>
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: GlassPanel(
-                borderColor: AppColors.primaryContainer.withOpacity(0.5),
-                glowColor: AppColors.primaryContainer,
+                borderColor: c.primaryContainer.withOpacity(0.5),
+                glowColor: c.primaryContainer,
                 padding:
                     const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
                 child: Column(
@@ -107,9 +110,9 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                         'https://assets9.lottiefiles.com/packages/lf20_touohxv0.json',
                         repeat: false,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
+                          return Icon(
                             Icons.star_rounded,
-                            color: AppColors.primaryContainer,
+                            color: c.primaryContainer,
                             size: 100,
                           );
                         },
@@ -117,29 +120,29 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'SEVİYE ATLADIN!',
+                      l.levelup_title,
                       style: AppText.hero(28,
-                              color: AppColors.primaryContainer,
+                              color: c.primaryContainer,
                               weight: FontWeight.w800)
                           .copyWith(
-                        shadows: neonGlow(AppColors.primaryContainer,
-                            blur: 16, opacity: 0.6),
+                        shadows:
+                            neonGlow(c.primaryContainer, blur: 16, opacity: 0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Harika gidiyorsun! Yeni seviyeye ulaştın:\nSeviye ${widget.level}',
-                      style: AppText.body(15, color: AppColors.inkMuted),
+                      l.levelup_body(widget.level),
+                      style: AppText.body(15, color: c.inkMuted),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
                       child: GhostButton(
-                        label: 'DEVAM ET',
+                        label: l.levelup_continue,
                         icon: Icons.rocket_launch,
-                        color: AppColors.primaryContainer,
+                        color: c.primaryContainer,
                         onTap: widget.onDismiss,
                       ),
                     ),

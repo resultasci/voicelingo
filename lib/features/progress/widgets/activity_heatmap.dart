@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 
 /// GitHub-tarzı 90 günlük (varsayılan) XP heatmap.
@@ -18,6 +19,7 @@ class ActivityHeatmap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.c;
     final today = _normalize(DateTime.now());
     final start = today.subtract(Duration(days: days - 1));
     // Pazartesi başlangıç için ofset
@@ -51,7 +53,7 @@ class ActivityHeatmap extends StatelessWidget {
                     final dayIndex = cellIndex - padding;
                     final day = start.add(Duration(days: dayIndex));
                     final xp = dailyXp[_normalize(day)] ?? 0;
-                    final color = _colorForXp(xp);
+                    final color = _colorForXp(xp, c);
 
                     return Padding(
                       padding: EdgeInsets.only(top: dow == 0 ? 0 : 3),
@@ -64,7 +66,7 @@ class ActivityHeatmap extends StatelessWidget {
                             color: color,
                             borderRadius: BorderRadius.circular(3),
                             border: Border.all(
-                              color: AppColors.inkDim.withOpacity(0.1),
+                              color: c.inkDim.withOpacity(0.1),
                               width: 0.5,
                             ),
                           ),
@@ -82,12 +84,12 @@ class ActivityHeatmap extends StatelessWidget {
   }
 
   /// XP miktarına göre 5 seviyeli renk.
-  Color _colorForXp(int xp) {
-    if (xp == 0) return AppColors.inkDim.withOpacity(0.08);
-    if (xp < 20) return AppColors.primaryContainer.withOpacity(0.25);
-    if (xp < 50) return AppColors.primaryContainer.withOpacity(0.5);
-    if (xp < 100) return AppColors.primaryContainer.withOpacity(0.75);
-    return AppColors.primaryContainer;
+  Color _colorForXp(int xp, AppPalette c) {
+    if (xp == 0) return c.inkDim.withOpacity(0.08);
+    if (xp < 20) return c.primaryContainer.withOpacity(0.25);
+    if (xp < 50) return c.primaryContainer.withOpacity(0.5);
+    if (xp < 100) return c.primaryContainer.withOpacity(0.75);
+    return c.primaryContainer;
   }
 
   DateTime _normalize(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -100,12 +102,14 @@ class HeatmapLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         Text(
-          locale == 'en' ? 'Less' : 'Az',
-          style: AppText.label(10, color: AppColors.inkDim),
+          l.heatmap_less,
+          style: AppText.label(10, color: c.inkDim),
         ),
         const SizedBox(width: 6),
         for (final op in const [0.08, 0.25, 0.5, 0.75, 1.0])
@@ -116,16 +120,16 @@ class HeatmapLegend extends StatelessWidget {
               height: 10,
               decoration: BoxDecoration(
                 color: op == 0.08
-                    ? AppColors.inkDim.withOpacity(0.08)
-                    : AppColors.primaryContainer.withOpacity(op),
+                    ? c.inkDim.withOpacity(0.08)
+                    : c.primaryContainer.withOpacity(op),
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
           ),
         const SizedBox(width: 6),
         Text(
-          locale == 'en' ? 'More' : 'Çok',
-          style: AppText.label(10, color: AppColors.inkDim),
+          l.heatmap_more,
+          style: AppText.label(10, color: c.inkDim),
         ),
       ],
     );
