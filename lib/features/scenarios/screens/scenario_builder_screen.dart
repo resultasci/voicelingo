@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/error_handler.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../theme/app_theme.dart';
@@ -52,7 +53,7 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
       setState(() => _draft = draft);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() => _error = getErrorMessage(context, e));
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -71,7 +72,7 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> {
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() => _error = getErrorMessage(context, e));
     } finally {
       if (mounted) setState(() => _generating = false);
     }

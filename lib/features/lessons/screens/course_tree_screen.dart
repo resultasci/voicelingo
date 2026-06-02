@@ -102,8 +102,12 @@ class _CourseUnits extends ConsumerWidget {
     return unitsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
-        child: Text(e.toString(),
-            style: AppText.body(13, color: AppColors.inkDim)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(getErrorMessage(context, e),
+              textAlign: TextAlign.center,
+              style: AppText.body(13, color: AppColors.inkDim)),
+        ),
       ),
       data: (units) {
         if (units.isEmpty) {

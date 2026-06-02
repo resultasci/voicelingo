@@ -155,25 +155,36 @@ class _QuestionView extends StatelessWidget {
                 style: AppText.code(11, color: AppColors.inkDim)),
           ],
         ),
-        const SizedBox(height: 32),
-        const SectionLabel('Seviye Belirleme',
-            color: AppColors.primaryContainer),
-        const SizedBox(height: 14),
-        Text(
-          question.prompt,
-          style: AppText.title(22,
-              color: AppColors.primary, weight: FontWeight.w600),
-        ),
-        const SizedBox(height: 24),
-        ...List.generate(question.options.length, (i) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: GhostButton(
-              label: question.options[i],
-              onTap: () => onAnswer(i),
+        // Question + options scroll so long prompts / large text scaling never
+        // overflow on small screens.
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 32),
+                const SectionLabel('Seviye Belirleme',
+                    color: AppColors.primaryContainer),
+                const SizedBox(height: 14),
+                Text(
+                  question.prompt,
+                  style: AppText.title(22,
+                      color: AppColors.primary, weight: FontWeight.w600),
+                ),
+                const SizedBox(height: 24),
+                ...List.generate(question.options.length, (i) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: GhostButton(
+                      label: question.options[i],
+                      onTap: () => onAnswer(i),
+                    ),
+                  );
+                }),
+              ],
             ),
-          );
-        }),
+          ),
+        ),
       ],
     );
   }

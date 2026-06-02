@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/errors/error_handler.dart';
 import '../../../models/conversation.dart';
 import '../../../theme/app_theme.dart';
 import 'conversation_view_screen.dart';
@@ -64,8 +65,20 @@ class ConversationHistoryScreen extends ConsumerWidget {
                   error: (e, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
-                      child: Text('Geçmiş yüklenemedi: $e',
-                          style: AppText.body(13, color: AppColors.error)),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(getErrorMessage(context, e),
+                              textAlign: TextAlign.center,
+                              style: AppText.body(13, color: AppColors.error)),
+                          const SizedBox(height: 16),
+                          GhostButton(
+                            label: 'Tekrar dene',
+                            icon: Icons.refresh,
+                            onTap: () => ref.invalidate(_historyProvider),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/errors/error_handler.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../models/word.dart';
 import '../../../providers/words_provider.dart';
@@ -356,10 +357,24 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
               strokeWidth: 2, color: AppColors.primaryContainer),
         ),
       ),
-      error: (e, _) => Padding(
-        padding: const EdgeInsets.all(24),
-        child:
-            Text('Hata: $e', style: AppText.body(13, color: AppColors.error)),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(getErrorMessage(context, e),
+                  textAlign: TextAlign.center,
+                  style: AppText.body(13, color: AppColors.error)),
+              const SizedBox(height: 16),
+              GhostButton(
+                label: 'Tekrar dene',
+                icon: Icons.refresh,
+                onTap: () => ref.invalidate(wordsProvider),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

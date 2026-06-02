@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/errors/error_handler.dart';
 import '../../../providers/locale_provider.dart';
 import '../../conversation/screens/conversation_screen.dart';
 import '../../../theme/app_theme.dart';
@@ -52,10 +53,21 @@ class ScenariosGalleryScreen extends ConsumerWidget {
             error: (e, _) => Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text(
-                  e.toString(),
-                  style: AppText.body(13, color: AppColors.inkDim),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      getErrorMessage(context, e),
+                      style: AppText.body(13, color: AppColors.inkDim),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    GhostButton(
+                      label: locale == 'en' ? 'Retry' : 'Tekrar dene',
+                      icon: Icons.refresh,
+                      onTap: () => ref.invalidate(visibleScenariosProvider),
+                    ),
+                  ],
                 ),
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/errors/error_handler.dart';
 import '../../../models/conversation.dart';
 import '../../../theme/app_theme.dart';
 
@@ -69,7 +70,8 @@ class ConversationViewScreen extends ConsumerWidget {
                   error: (e, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
-                      child: Text('Hata: $e',
+                      child: Text(getErrorMessage(context, e),
+                          textAlign: TextAlign.center,
                           style: AppText.body(13, color: AppColors.error)),
                     ),
                   ),

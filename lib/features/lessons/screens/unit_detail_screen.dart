@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/errors/error_handler.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../models/course.dart';
@@ -39,8 +40,21 @@ class UnitDetailScreen extends ConsumerWidget {
             error: (e, _) => Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text(e.toString(),
-                    style: AppText.body(13, color: AppColors.inkDim)),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(getErrorMessage(context, e),
+                        textAlign: TextAlign.center,
+                        style: AppText.body(13, color: AppColors.inkDim)),
+                    const SizedBox(height: 16),
+                    GhostButton(
+                      label: locale == 'en' ? 'Retry' : 'Tekrar dene',
+                      icon: Icons.refresh,
+                      onTap: () =>
+                          ref.invalidate(lessonsForUnitProvider(unit.id)),
+                    ),
+                  ],
+                ),
               ),
             ),
             data: (lessons) {

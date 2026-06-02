@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/error_handler.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../models/badge.dart';
@@ -34,8 +35,25 @@ class BadgesScreen extends ConsumerWidget {
           child: catalogAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
-              child: Text(e.toString(),
-                  style: AppText.body(13, color: AppColors.inkDim)),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      getErrorMessage(context, e),
+                      textAlign: TextAlign.center,
+                      style: AppText.body(13, color: AppColors.inkDim),
+                    ),
+                    const SizedBox(height: 16),
+                    GhostButton(
+                      label: locale == 'en' ? 'Retry' : 'Tekrar dene',
+                      icon: Icons.refresh,
+                      onTap: () => ref.invalidate(badgesCatalogProvider),
+                    ),
+                  ],
+                ),
+              ),
             ),
             data: (catalog) {
               final earned = earnedAsync.value ?? const [];

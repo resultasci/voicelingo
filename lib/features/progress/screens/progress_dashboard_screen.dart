@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/error_handler.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
 import '../services/activity_service.dart';
@@ -47,7 +48,7 @@ class ProgressDashboardScreen extends ConsumerWidget {
                         child: Center(child: CircularProgressIndicator()),
                       ),
                       error: (e, _) => Text(
-                        e.toString(),
+                        getErrorMessage(context, e),
                         style: AppText.body(12, color: AppColors.inkDim),
                       ),
                       data: (xp) => ActivityHeatmap(
@@ -71,7 +72,7 @@ class ProgressDashboardScreen extends ConsumerWidget {
                   child: Center(child: CircularProgressIndicator()),
                 ),
                 error: (e, _) => Text(
-                  e.toString(),
+                  getErrorMessage(context, e),
                   style: AppText.body(12, color: AppColors.inkDim),
                 ),
                 data: (s) => s == null
