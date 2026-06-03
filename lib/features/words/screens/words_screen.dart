@@ -564,15 +564,69 @@ class _WordGrid extends StatelessWidget {
           ),
           const SizedBox(height: 14),
         ],
-        ...words.map((w) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+        ...words.indexed.map((entry) {
+          final (index, w) = entry;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _StaggeredItem(
+              index: index,
               child: _WordCard(
                 word: w,
                 onDelete: () => onDelete(w.id),
                 onSpeak: () => onSpeak(w.word),
               ),
-            )),
+            ),
+          );
+        }),
       ],
+    );
+  }
+}
+
+/// Wraps a list item in a brief fade + slide-up entrance, staggered by [index]
+/// so cards cascade in. No-op (renders [child] directly) when motion is reduced.
+class _StaggeredItem extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _StaggeredItem({required this.index, required this.child});
+
+  @override
+  State<_StaggeredItem> createState() => _StaggeredItemState();
+}
+
+class _StaggeredItemState extends State<_StaggeredItem> {
+  bool _shown = false;
+  bool _decided = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_decided) return;
+    _decided = true;
+    if (reduceMotion(context)) {
+      _shown = true; // skip animation entirely
+      return;
+    }
+    // Cap the cascade so far-down items don't wait too long.
+    final delayMs = 40 * widget.index.clamp(0, 8);
+    Future.delayed(Duration(milliseconds: delayMs), () {
+      if (mounted) setState(() => _shown = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (reduceMotion(context)) return widget.child;
+    return AnimatedSlide(
+      offset: _shown ? Offset.zero : const Offset(0, 0.08),
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+      child: AnimatedOpacity(
+        opacity: _shown ? 1 : 0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+        child: widget.child,
+      ),
     );
   }
 }
@@ -698,114 +752,164 @@ class _WordCard extends StatelessWidget {
         child: GlassPanel(
           padding: EdgeInsets.zero,
           glowColor: s.color,
-          child: Stack(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
             clipBehavior: Clip.hardEdge,
-            children: [
-              Positioned(
-                top: -30,
-                right: -30,
-                child: Container(
-                  width: 110,
-                  height: 110,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Status accent sliver flush to the top edge.
+                Container(
+                  height: 3,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: s.color.withOpacity(0.15),
+                    gradient: LinearGradient(
+                      colors: [s.color, s.color.withOpacity(0)],
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      word.word,
-                                      style: AppText.title(22,
-                                          color: c.primary,
-                                          weight: FontWeight.w600),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Semantics(
-                                    label: l.words_pronounce,
-                                    button: true,
-                                    child: InkWell(
-                                      onTap: onSpeak,
-                                      borderRadius: BorderRadius.circular(99),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(2),
-                                        child: Icon(Icons.volume_up,
-                                            color: c.primaryContainer,
-                                            size: 18),
-                                      ),
-                                    ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Circular mastery ring with the status icon at its
+                          // center — replaces the old flat bottom progress bar.
+                          _ProgressRing(
+                            progress: _progress,
+                            color: s.color,
+                            track: c.surfaceHighest,
+                            icon: s.icon,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  word.word,
+                                  style: AppText.title(22,
+                                      color: c.primary,
+                                      weight: FontWeight.w600),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (word.ipa != null &&
+                                    word.ipa!.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    word.ipa!,
+                                    style: AppText.code(11, color: c.inkDim),
                                   ),
                                 ],
-                              ),
-                              if (word.ipa != null && word.ipa!.isNotEmpty) ...[
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 4),
                                 Text(
-                                  word.ipa!,
-                                  style: AppText.code(11, color: c.inkDim),
+                                  _intervalText(l),
+                                  style: AppText.label(10,
+                                      color: c.primaryContainer,
+                                      weight: FontWeight.w600),
                                 ),
                               ],
-                              const SizedBox(height: 4),
-                              Text(
-                                _intervalText(l),
-                                style: AppText.label(10,
-                                    color: c.primaryContainer,
-                                    weight: FontWeight.w600),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                        NeonChip(
-                          text: s.label,
-                          icon: s.icon,
-                          color: s.color,
+                          const SizedBox(width: 10),
+                          // Prominent circular pronounce button.
+                          Semantics(
+                            label: l.words_pronounce,
+                            button: true,
+                            child: Material(
+                              color: c.primaryContainer.withOpacity(0.12),
+                              shape: const CircleBorder(),
+                              clipBehavior: Clip.antiAlias,
+                              child: InkWell(
+                                onTap: onSpeak,
+                                child: SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: Icon(Icons.volume_up,
+                                      color: c.primaryContainer, size: 18),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              word.translation,
+                              style: AppText.ink(15, color: c.ink),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          NeonChip(
+                            text: s.label,
+                            icon: s.icon,
+                            color: s.color,
+                          ),
+                        ],
+                      ),
+                      if (word.exampleSentence != null &&
+                          word.exampleSentence!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          word.exampleSentence!,
+                          style: AppText.body(12, color: c.inkMuted)
+                              .copyWith(fontStyle: FontStyle.italic),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      word.translation,
-                      style: AppText.ink(15, color: c.ink),
-                    ),
-                    if (word.exampleSentence != null &&
-                        word.exampleSentence!.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        word.exampleSentence!,
-                        style: AppText.body(12, color: c.inkMuted)
-                            .copyWith(fontStyle: FontStyle.italic),
-                      ),
                     ],
-                    const SizedBox(height: 14),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(99),
-                      child: LinearProgressIndicator(
-                        value: _progress,
-                        minHeight: 4,
-                        backgroundColor: c.surfaceHighest,
-                        valueColor: AlwaysStoppedAnimation(s.color),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Small circular mastery indicator: a status-colored ring over a faint track,
+/// with the status icon centered. Reused only by [_WordCard].
+class _ProgressRing extends StatelessWidget {
+  final double progress;
+  final Color color;
+  final Color track;
+  final IconData? icon;
+  const _ProgressRing({
+    required this.progress,
+    required this.color,
+    required this.track,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 4,
+              backgroundColor: track,
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+          if (icon != null) Icon(icon, color: color, size: 18),
+        ],
       ),
     );
   }

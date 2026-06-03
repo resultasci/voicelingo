@@ -450,11 +450,61 @@ ThemeData buildLightAppTheme() {
 // COSMIC WIDGETS
 // =============================================================================
 
-/// Deep-space background with three soft radial color blooms + a faint star
+/// Returns true when motion should be suppressed — either the user enabled the
+/// OS "remove animations" accessibility setting, or the device is a low tier
+/// where extra animation budget risks jank. Shared by every ambient animation
+/// (cosmic background breathe, staggered list entrances) so the policy stays
+/// consistent across the app.
+bool reduceMotion(BuildContext context) {
+  final disabled = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+  return disabled || DevicePerf.detect() == DeviceTier.low;
+}
+
+/// Deep-space background with two soft radial color blooms + a faint star
 /// field. Sits behind every screen.
-class CosmicBackground extends StatelessWidget {
+///
+/// The blooms gently "breathe" — their centers (and radii/opacity) drift along
+/// a tiny easing loop so the gradient feels alive without distracting. Motion is
+/// suppressed via [reduceMotion]; in that case the original static gradient is
+/// rendered verbatim, so behavior is unchanged for accessibility/low-end.
+class CosmicBackground extends StatefulWidget {
   final Widget child;
   const CosmicBackground({super.key, required this.child});
+
+  @override
+  State<CosmicBackground> createState() => _CosmicBackgroundState();
+}
+
+class _CosmicBackgroundState extends State<CosmicBackground>
+    with SingleTickerProviderStateMixin {
+  // Null when motion is disabled — the build falls back to a static gradient.
+  AnimationController? _ctrl;
+  late Animation<double> _t;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // MediaQuery isn't available in initState; recompute here so an accessibility
+    // toggle at runtime correctly starts/stops the animation.
+    if (reduceMotion(context)) {
+      _ctrl?.dispose();
+      _ctrl = null;
+      return;
+    }
+    if (_ctrl == null) {
+      _ctrl = AnimationController(
+        vsync: this,
+        duration: const Duration(seconds: 22),
+      )..repeat(reverse: true);
+      _t = CurvedAnimation(parent: _ctrl!, curve: Curves.easeInOut);
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -464,38 +514,65 @@ class CosmicBackground extends StatelessWidget {
     final cyanBloom = dark ? const Color(0x1400F2FF) : const Color(0x0F008CA6);
     final violetBloom = dark ? const Color(0x147318FF) : const Color(0x0D6B26D9);
     final fade = palette.bg.withOpacity(0);
+
     return Container(
-      decoration: BoxDecoration(
-        color: palette.bg,
-        gradient: RadialGradient(
-          center: const Alignment(-0.7, -0.2),
-          radius: 1.4,
-          colors: [cyanBloom, fade],
-        ),
-      ),
+      // Base color stays static; only the inner bloom layer animates.
+      color: palette.bg,
       child: Stack(
         children: [
+          // Animated (or static) bloom layer — isolated in its own
+          // RepaintBoundary so it never invalidates the star field or child.
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: IgnorePointer(
+                child: _ctrl == null
+                    ? _blooms(0, cyanBloom, violetBloom, fade)
+                    : AnimatedBuilder(
+                        animation: _t,
+                        builder: (_, __) =>
+                            _blooms(_t.value, cyanBloom, violetBloom, fade),
+                      ),
+              ),
+            ),
+          ),
           // RepaintBoundary: static star field, never invalidates due to upstream
           // rebuilds. Only rendered on dark surfaces (white stars vanish on light).
           if (dark)
             const Positioned.fill(
               child: RepaintBoundary(child: _StarField()),
             ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: const Alignment(0.8, 0.6),
-                    radius: 1.0,
-                    colors: [violetBloom, fade],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          child,
+          widget.child,
         ],
+      ),
+    );
+  }
+
+  /// Renders the two radial blooms at progress [t] (0..1). At t=0 this matches
+  /// the original static layout exactly.
+  Widget _blooms(double t, Color cyan, Color violet, Color fade) {
+    final cyanCenter = Alignment.lerp(
+        const Alignment(-0.7, -0.2), const Alignment(-0.5, 0.0), t)!;
+    final violetCenter = Alignment.lerp(
+        const Alignment(0.8, 0.6), const Alignment(0.6, 0.4), t)!;
+    final cyanRadius = lerpDouble(1.4, 1.55, t)!;
+    final violetRadius = lerpDouble(1.0, 1.12, t)!;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: cyanCenter,
+          radius: cyanRadius,
+          colors: [cyan, fade],
+        ),
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: violetCenter,
+            radius: violetRadius,
+            colors: [violet, fade],
+          ),
+        ),
+        child: const SizedBox.expand(),
       ),
     );
   }
