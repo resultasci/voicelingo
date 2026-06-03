@@ -535,13 +535,51 @@ class AppL10nTr extends AppL10n {
   String get words_pronounce => 'Telaffuz et';
 
   @override
-  String get words_emptyTitle => 'Kütüphanen boş';
+  String get words_emptyTitle => 'Kütüphaneni oluştur';
 
   @override
-  String get words_emptyBody => 'Eklediğin her kelime SM-2 algoritması ile bilimsel aralıklarla karşına çıkar.';
+  String get words_emptyBody => 'Bir konu seç, yapay zeka sana özel kelime listesi üretsin — ya da tek tek kelime ekle. Her kelime SM-2 algoritması ile doğru zamanda karşına çıkar.';
 
   @override
-  String get words_addFirst => 'İlk kelimeni ekle';
+  String get words_addFirst => 'Elle kelime ekle';
+
+  @override
+  String get words_generateCta => 'Yapay zeka ile üret';
+
+  @override
+  String get words_genTitle => 'Kelime üret';
+
+  @override
+  String get words_genSubtitle => 'Bir konu yaz, yapay zeka senin için kelime listesi oluştursun.';
+
+  @override
+  String get words_genTopicLabel => 'KONU';
+
+  @override
+  String get words_genTopicHint => 'ör. Seyahat, Mutfak, İş İngilizcesi';
+
+  @override
+  String get words_genCount => 'Kaç tane?';
+
+  @override
+  String get words_genButton => 'Üret';
+
+  @override
+  String words_genAdded(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count kelime eklendi',
+      one: '1 kelime eklendi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get words_genNone => 'Eklenecek yeni kelime yok — hepsi zaten kütüphanende vardı.';
+
+  @override
+  String get words_genFailed => 'Kelimeler üretilemedi. Lütfen tekrar dene.';
 
   @override
   String get words_filterEmpty => 'Bu filtre boş';

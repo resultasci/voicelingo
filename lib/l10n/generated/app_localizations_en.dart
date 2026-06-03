@@ -535,13 +535,51 @@ class AppL10nEn extends AppL10n {
   String get words_pronounce => 'Pronounce';
 
   @override
-  String get words_emptyTitle => 'Your library is empty';
+  String get words_emptyTitle => 'Build your library';
 
   @override
-  String get words_emptyBody => 'Every word you add resurfaces at scientific intervals via the SM-2 algorithm.';
+  String get words_emptyBody => 'Pick a topic and let AI generate a custom word list — or add words one by one. Everything resurfaces at the right time via the SM-2 algorithm.';
 
   @override
-  String get words_addFirst => 'Add your first word';
+  String get words_addFirst => 'Add a word manually';
+
+  @override
+  String get words_generateCta => 'Generate with AI';
+
+  @override
+  String get words_genTitle => 'Generate words';
+
+  @override
+  String get words_genSubtitle => 'Type a topic and let AI build a word list for you.';
+
+  @override
+  String get words_genTopicLabel => 'TOPIC';
+
+  @override
+  String get words_genTopicHint => 'e.g. Travel, Kitchen, Business English';
+
+  @override
+  String get words_genCount => 'How many?';
+
+  @override
+  String get words_genButton => 'Generate';
+
+  @override
+  String words_genAdded(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Added $count words',
+      one: 'Added 1 word',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get words_genNone => 'No new words to add — they were all already in your library.';
+
+  @override
+  String get words_genFailed => 'Couldn\'t generate words. Please try again.';
 
   @override
   String get words_filterEmpty => 'This filter is empty';

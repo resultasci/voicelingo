@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/ai/gemini_service.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -231,6 +232,164 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
     );
   }
 
+  void _showGenerate() {
+    final l = AppL10n.of(context);
+    final topicCtrl = TextEditingController();
+    int count = 10;
+    bool loading = false;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      isDismissible: true,
+      builder: (ctx) {
+        final c = ctx.c;
+        return StatefulBuilder(
+          builder: (ctx, setSheet) {
+            Future<void> run() async {
+              final topic = topicCtrl.text.trim();
+              if (topic.isEmpty || loading) return;
+              setSheet(() => loading = true);
+              try {
+                final added = await ref
+                    .read(wordsProvider.notifier)
+                    .generateAndAddWords(topic, count);
+                if (!ctx.mounted) return;
+                Navigator.pop(ctx);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      added > 0 ? l.words_genAdded(added) : l.words_genNone,
+                      style: AppText.ink(13,
+                          color: added > 0
+                              ? context.c.primaryContainer
+                              : context.c.warn),
+                    ),
+                  ),
+                );
+              } catch (e, st) {
+                AppLogger.error('Kelime üretimi başarısız', e, st);
+                if (!ctx.mounted) return;
+                setSheet(() => loading = false);
+                final msg =
+                    e is AiException ? e.message : l.words_genFailed;
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(
+                    content: Text(msg,
+                        style: AppText.ink(13, color: ctx.c.error)),
+                  ),
+                );
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: GlassPanel(
+                padding: const EdgeInsets.all(24),
+                glowColor: c.primaryContainer,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 3,
+                        margin: const EdgeInsets.only(bottom: 18),
+                        decoration: BoxDecoration(
+                          color: c.rule,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Icon(Icons.auto_awesome,
+                            color: c.primaryContainer, size: 18),
+                        const SizedBox(width: 8),
+                        SectionLabel(l.words_genTitle,
+                            color: c.primaryContainer),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      l.words_genSubtitle,
+                      style: AppText.body(13, color: c.inkMuted),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(l.words_genTopicLabel,
+                        style: AppText.label(10,
+                            color: c.inkMuted, weight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    NeonField(
+                      controller: topicCtrl,
+                      autofocus: true,
+                      hint: l.words_genTopicHint,
+                    ),
+                    const SizedBox(height: 20),
+                    Text(l.words_genCount,
+                        style: AppText.label(10,
+                            color: c.inkMuted, weight: FontWeight.w600)),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      children: [5, 10, 15, 20].map((n) {
+                        final sel = n == count;
+                        return InkWell(
+                          onTap: loading
+                              ? null
+                              : () => setSheet(() => count = n),
+                          borderRadius: BorderRadius.circular(99),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: sel
+                                  ? c.primaryContainer.withOpacity(0.12)
+                                  : c.bgCard.withOpacity(0.5),
+                              border: Border.all(
+                                color: sel
+                                    ? c.primaryContainer
+                                    : c.rule.withOpacity(0.6),
+                              ),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              '$n',
+                              style: AppText.label(12,
+                                  color: sel
+                                      ? c.primaryContainer
+                                      : c.inkMuted,
+                                  weight: FontWeight.w700),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 22),
+                    NeonButton(
+                      label: l.words_genButton,
+                      icon: Icons.auto_awesome,
+                      loading: loading,
+                      onTap: run,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   List<Word> _applyFilter(List<Word> all) {
     Iterable<Word> r = all;
     switch (_filter) {
@@ -331,7 +490,10 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           children: [
-            _Header(count: words.length, onAdd: _showAdd),
+            _Header(
+                count: words.length,
+                onAdd: _showAdd,
+                onGenerate: _showGenerate),
             const SizedBox(height: 22),
             _SearchBar(controller: _searchCtrl),
             const SizedBox(height: 18),
@@ -342,7 +504,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
             ),
             const SizedBox(height: 22),
             if (words.isEmpty)
-              _EmptyState(onAdd: _showAdd)
+              _EmptyState(onAdd: _showAdd, onGenerate: _showGenerate)
             else if (filtered.isEmpty)
               _NoResults(query: _query)
             else
@@ -391,7 +553,12 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
 class _Header extends StatelessWidget {
   final int count;
   final VoidCallback onAdd;
-  const _Header({required this.count, required this.onAdd});
+  final VoidCallback onGenerate;
+  const _Header({
+    required this.count,
+    required this.onAdd,
+    required this.onGenerate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -411,7 +578,30 @@ class _Header extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
+            // AI generate — secondary (outlined) so the primary "+" stays the
+            // visual anchor while the AI flow is one tap away even when full.
+            Material(
+              color: c.primaryContainer.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: onGenerate,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                        Border.all(color: c.primaryContainer.withOpacity(0.5)),
+                  ),
+                  child: Icon(Icons.auto_awesome,
+                      color: c.primaryContainer, size: 20),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
             Material(
               color: c.primaryContainer,
               borderRadius: BorderRadius.circular(12),
@@ -918,7 +1108,8 @@ class _ProgressRing extends StatelessWidget {
 // =============================================================================
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAdd;
-  const _EmptyState({required this.onAdd});
+  final VoidCallback onGenerate;
+  const _EmptyState({required this.onAdd, required this.onGenerate});
 
   @override
   Widget build(BuildContext context) {
@@ -928,6 +1119,7 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.only(top: 48),
       child: GlassPanel(
         padding: const EdgeInsets.all(28),
+        glowColor: c.primaryContainer,
         child: Column(
           children: [
             Container(
@@ -939,8 +1131,8 @@ class _EmptyState extends StatelessWidget {
                 border:
                     Border.all(color: c.primaryContainer.withOpacity(0.3)),
               ),
-              child:
-                  Icon(Icons.menu_book, color: c.primaryContainer, size: 30),
+              child: Icon(Icons.auto_awesome,
+                  color: c.primaryContainer, size: 30),
             ),
             const SizedBox(height: 18),
             Text(l.words_emptyTitle,
@@ -953,7 +1145,14 @@ class _EmptyState extends StatelessWidget {
               style: AppText.body(13, color: c.inkMuted),
             ),
             const SizedBox(height: 22),
+            // Hero CTA: AI generation is the primary path.
             NeonButton(
+              label: l.words_generateCta,
+              icon: Icons.auto_awesome,
+              onTap: onGenerate,
+            ),
+            const SizedBox(height: 12),
+            GhostButton(
               label: l.words_addFirst,
               icon: Icons.add,
               onTap: onAdd,

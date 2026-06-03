@@ -27,39 +27,6 @@ class DuplicateWordException extends AppException {
       : super('Kelime zaten ekli: $word', code: 'duplicate_word');
 }
 
-const _starterWords = [
-  ('apple', 'elma'),
-  ('book', 'kitap'),
-  ('water', 'su'),
-  ('house', 'ev'),
-  ('car', 'araba'),
-  ('phone', 'telefon'),
-  ('food', 'yemek'),
-  ('time', 'zaman'),
-  ('friend', 'arkadaş'),
-  ('school', 'okul'),
-  ('work', 'iş'),
-  ('day', 'gün'),
-  ('night', 'gece'),
-  ('city', 'şehir'),
-  ('country', 'ülke'),
-  ('money', 'para'),
-  ('help', 'yardım'),
-  ('love', 'sevgi'),
-  ('music', 'müzik'),
-  ('sport', 'spor'),
-  ('computer', 'bilgisayar'),
-  ('family', 'aile'),
-  ('health', 'sağlık'),
-  ('weather', 'hava durumu'),
-  ('travel', 'seyahat'),
-  ('coffee', 'kahve'),
-  ('language', 'dil'),
-  ('study', 'çalışmak'),
-  ('happy', 'mutlu'),
-  ('success', 'başarı'),
-];
-
 class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   WordsNotifier(this._ref) : super(const AsyncValue.loading()) {
     load();
@@ -106,17 +73,8 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
           .map((e) => Word.fromMap(e as Map<String, dynamic>))
           .toList();
 
-      // Seed only on the very first launch. profileProvider already fetched
-      // `seeded_at`; read from there to avoid a second round-trip.
-      if (words.isEmpty) {
-        final profile = await _ref.read(profileProvider.future);
-        if (profile != null && profile.seededAt == null) {
-          await _insertStarterWords(userId);
-          await _markSeeded(userId);
-          await load(forceRefresh: true);
-          return;
-        }
-      }
+      // No auto-seeding: new users start with an empty library and populate it
+      // via manual add or AI topic generation (see generateAndAddWords).
 
       _cache = words;
       // Online fetch sonrası Hive cache'i yenile (fire-and-forget).
@@ -135,30 +93,6 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
       } catch (_) {}
       state = AsyncValue.error(e, st);
     }
-  }
-
-  Future<void> _markSeeded(String userId) async {
-    try {
-      await _db
-          .from('profiles')
-          .update({'seeded_at': DateTime.now().toUtc().toIso8601String()}).eq(
-              'id', userId);
-    } catch (_) {
-      // If this fails the user just risks a one-time re-seed; non-critical.
-    }
-  }
-
-  Future<void> _insertStarterWords(String userId) async {
-    final today = DateTime.now().toIso8601String().split('T')[0];
-    final rows = _starterWords
-        .map((pair) => {
-              'user_id': userId,
-              'word': pair.$1,
-              'translation': pair.$2,
-              'next_review': today,
-            })
-        .toList();
-    await _db.from('words').insert(rows);
   }
 
   void _scheduleDailyReminderFor(List<Word> words) {
@@ -230,6 +164,75 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     } catch (e, st) {
       AppLogger.error('Kelime eklenirken beklenmeyen bir hata oluştu', e, st);
       rethrow;
+    }
+  }
+
+  /// Generates topic-based words via Gemini, inserts the de-duplicated set, then
+  /// enriches a bounded subset (IPA + example). Returns how many words were
+  /// actually inserted (after local + server-side dedup). May throw
+  /// [AiException] (e.g. 429 daily limit) from the generation call — callers
+  /// should catch and surface its localized message.
+  Future<int> generateAndAddWords(String topic, int count) async {
+    final userId = _db.auth.currentUser?.id;
+    if (userId == null) {
+      throw const AuthException('Oturum bulunamadı.');
+    }
+
+    final profile = await _ref.read(profileProvider.future);
+    final ai = _ref.read(geminiServiceProvider);
+    final generated = await ai.generateWords(
+      topic,
+      count: count,
+      targetLanguage: profile?.targetLanguage ?? 'en',
+      userLevel: profile?.cefrLevel ?? 'A2',
+    );
+    if (generated.isEmpty) return 0;
+
+    // Dedup against the local cache (case-insensitive) and within the batch,
+    // mirroring addWord's pre-check. The DB unique index is the source of truth.
+    final existing = (_cache ?? state.value ?? const <Word>[])
+        .map((w) => w.word.trim().toLowerCase())
+        .toSet();
+    final seen = <String>{};
+    final today = DateTime.now().toIso8601String().split('T')[0];
+    final fresh = generated.where((g) {
+      final k = g.en.trim().toLowerCase();
+      if (k.isEmpty || existing.contains(k) || !seen.add(k)) return false;
+      return true;
+    }).toList();
+    if (fresh.isEmpty) return 0;
+
+    // Insert one-by-one so a 23505 on a partial duplicate skips only that row
+    // instead of rolling back the whole batch.
+    final inserted = <({String id, String word})>[];
+    for (final g in fresh) {
+      try {
+        final row = await _db.from('words').insert({
+          'user_id': userId,
+          'word': g.en.trim(),
+          'translation': g.tr.trim(),
+          'next_review': today,
+        }).select('id').single();
+        inserted.add((id: row['id'] as String, word: g.en.trim()));
+      } on PostgrestException catch (e) {
+        if (e.code == '23505') continue; // partial dup — keep going
+        rethrow;
+      }
+    }
+
+    _cache = null;
+    await load(forceRefresh: true);
+
+    // Enrich a bounded subset to stay well under the daily enrich cap (100/day).
+    unawaited(_enrichBatch(inserted));
+    return inserted.length;
+  }
+
+  Future<void> _enrichBatch(List<({String id, String word})> items) async {
+    const maxEnrich = 10;
+    for (final it in items.take(maxEnrich)) {
+      await _enrichWord(id: it.id, word: it.word);
+      await Future.delayed(const Duration(milliseconds: 600)); // gentle pacing
     }
   }
 

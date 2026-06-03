@@ -1028,20 +1028,80 @@ abstract class AppL10n {
   /// No description provided for @words_emptyTitle.
   ///
   /// In tr, this message translates to:
-  /// **'Kütüphanen boş'**
+  /// **'Kütüphaneni oluştur'**
   String get words_emptyTitle;
 
   /// No description provided for @words_emptyBody.
   ///
   /// In tr, this message translates to:
-  /// **'Eklediğin her kelime SM-2 algoritması ile bilimsel aralıklarla karşına çıkar.'**
+  /// **'Bir konu seç, yapay zeka sana özel kelime listesi üretsin — ya da tek tek kelime ekle. Her kelime SM-2 algoritması ile doğru zamanda karşına çıkar.'**
   String get words_emptyBody;
 
   /// No description provided for @words_addFirst.
   ///
   /// In tr, this message translates to:
-  /// **'İlk kelimeni ekle'**
+  /// **'Elle kelime ekle'**
   String get words_addFirst;
+
+  /// No description provided for @words_generateCta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yapay zeka ile üret'**
+  String get words_generateCta;
+
+  /// No description provided for @words_genTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kelime üret'**
+  String get words_genTitle;
+
+  /// No description provided for @words_genSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir konu yaz, yapay zeka senin için kelime listesi oluştursun.'**
+  String get words_genSubtitle;
+
+  /// No description provided for @words_genTopicLabel.
+  ///
+  /// In tr, this message translates to:
+  /// **'KONU'**
+  String get words_genTopicLabel;
+
+  /// No description provided for @words_genTopicHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'ör. Seyahat, Mutfak, İş İngilizcesi'**
+  String get words_genTopicHint;
+
+  /// No description provided for @words_genCount.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaç tane?'**
+  String get words_genCount;
+
+  /// No description provided for @words_genButton.
+  ///
+  /// In tr, this message translates to:
+  /// **'Üret'**
+  String get words_genButton;
+
+  /// No description provided for @words_genAdded.
+  ///
+  /// In tr, this message translates to:
+  /// **'{count, plural, =1{1 kelime eklendi} other{{count} kelime eklendi}}'**
+  String words_genAdded(num count);
+
+  /// No description provided for @words_genNone.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eklenecek yeni kelime yok — hepsi zaten kütüphanende vardı.'**
+  String get words_genNone;
+
+  /// No description provided for @words_genFailed.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kelimeler üretilemedi. Lütfen tekrar dene.'**
+  String get words_genFailed;
 
   /// No description provided for @words_filterEmpty.
   ///

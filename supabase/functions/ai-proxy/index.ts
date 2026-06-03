@@ -34,6 +34,7 @@ const LIMITS = {
   transcribe: 100,
   enrich: 100,
   "generate-scenario": 30,
+  "generate-words": 20,
 } as const;
 
 type Action = keyof typeof LIMITS;
@@ -131,6 +132,7 @@ Deno.serve(async (req: Request) => {
     if (action === "evaluate") return await handleEvaluate(req);
     if (action === "transcribe") return await handleTranscribe(req);
     if (action === "generate-scenario") return await handleGenerateScenario(req);
+    if (action === "generate-words") return await handleGenerateWords(req);
     return await handleEnrich(req);
   } catch (e) {
     console.error(`ai-proxy[${action}] threw:`, e);
@@ -152,6 +154,8 @@ function labelFor(a: Action): string {
       return "kelime zenginleştirme";
     case "generate-scenario":
       return "senaryo üretimi";
+    case "generate-words":
+      return "kelime üretimi";
   }
 }
 
@@ -671,6 +675,58 @@ async function handleGenerateScenario(req: Request): Promise<Response> {
   }
 
   return new Response(result.text || "{}", {
+    status: 200,
+    headers: JSON_HEADERS,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// /generate-words — produce a themed vocabulary list from a free-form topic.
+// Returns { words: [{ en, tr }] }. The `en` field is the word in the learner's
+// target language (field name is fixed regardless of which language that is).
+// ---------------------------------------------------------------------------
+async function handleGenerateWords(req: Request): Promise<Response> {
+  let payload: unknown;
+  try {
+    payload = await req.json();
+  } catch {
+    return jsonError(400, "Invalid JSON body");
+  }
+
+  const body = payload as Record<string, unknown>;
+  const topic = (body.topic ?? "").toString().trim();
+  const count = Math.min(Math.max(Number(body.count ?? 10), 1), 25); // clamp 1..25
+  const targetLanguage = (body.target_language ?? "en").toString();
+  const userLevel = (body.user_level ?? "A2").toString();
+
+  if (topic.length === 0 || topic.length > 120) {
+    return jsonError(400, "`topic` must be 1–120 chars");
+  }
+
+  const systemPrompt =
+    `You generate vocabulary lists for language learners studying ${targetLanguage} at CEFR ${userLevel} level. ` +
+    `Given a topic, return UP TO ${count} of the most useful, level-appropriate ${targetLanguage} words for that topic. ` +
+    "Output JSON ONLY with this exact schema:\n" +
+    `{"words":[{"en":"word in ${targetLanguage}","tr":"concise Turkish meaning"}]}\n` +
+    `Each "en" is a single ${targetLanguage} word or a short common phrase; "tr" is its concise Turkish translation. ` +
+    "No duplicates, no numbering, no explanations, no markdown, JSON only.";
+
+  const result = await geminiCall({
+    contents: [{ role: "user", parts: [{ text: `Topic: ${topic}` }] }],
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    generationConfig: {
+      temperature: 0.5,
+      responseMimeType: "application/json",
+      maxOutputTokens: 1024,
+    },
+  });
+
+  if (!result.ok) {
+    console.error("gemini /generate-words failed", result.status, result.err);
+    return jsonError(502, "Kelime üretim servisi şu an cevap vermiyor.");
+  }
+
+  return new Response(result.text || '{"words":[]}', {
     status: 200,
     headers: JSON_HEADERS,
   });
