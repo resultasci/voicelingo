@@ -477,9 +477,10 @@ class CosmicBackground extends StatefulWidget {
 
 class _CosmicBackgroundState extends State<CosmicBackground>
     with SingleTickerProviderStateMixin {
-  // Null when motion is disabled — the build falls back to a static gradient.
+  // Both null when motion is disabled — the build falls back to a static
+  // gradient. Kept in lockstep so toggling reduce-motion never leaks either.
   AnimationController? _ctrl;
-  late Animation<double> _t;
+  CurvedAnimation? _t;
 
   @override
   void didChangeDependencies() {
@@ -487,7 +488,9 @@ class _CosmicBackgroundState extends State<CosmicBackground>
     // MediaQuery isn't available in initState; recompute here so an accessibility
     // toggle at runtime correctly starts/stops the animation.
     if (reduceMotion(context)) {
+      _t?.dispose();
       _ctrl?.dispose();
+      _t = null;
       _ctrl = null;
       return;
     }
@@ -502,6 +505,7 @@ class _CosmicBackgroundState extends State<CosmicBackground>
 
   @override
   void dispose() {
+    _t?.dispose();
     _ctrl?.dispose();
     super.dispose();
   }
@@ -525,12 +529,12 @@ class _CosmicBackgroundState extends State<CosmicBackground>
           Positioned.fill(
             child: RepaintBoundary(
               child: IgnorePointer(
-                child: _ctrl == null
+                child: _t == null
                     ? _blooms(0, cyanBloom, violetBloom, fade)
                     : AnimatedBuilder(
-                        animation: _t,
+                        animation: _t!,
                         builder: (_, __) =>
-                            _blooms(_t.value, cyanBloom, violetBloom, fade),
+                            _blooms(_t!.value, cyanBloom, violetBloom, fade),
                       ),
               ),
             ),

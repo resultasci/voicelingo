@@ -83,7 +83,8 @@ class CharacterAvatar extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Text(
-              character.displayName.characters.first.toUpperCase(),
+              (character.displayName.characters.firstOrNull ?? '?')
+                  .toUpperCase(),
               style: AppText.title(
                 size * 0.34,
                 color: Colors.white,

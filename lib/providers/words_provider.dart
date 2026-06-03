@@ -230,24 +230,44 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
 
   Future<void> _enrichBatch(List<({String id, String word})> items) async {
     const maxEnrich = 10;
+    var anyEnriched = false;
     for (final it in items.take(maxEnrich)) {
-      await _enrichWord(id: it.id, word: it.word);
+      // Update each word's DB row in place but DON'T reload per word — reloading
+      // 10× back-to-back flickers the list to a spinner and wastes round-trips.
+      anyEnriched = await _writeEnrichment(id: it.id, word: it.word) || anyEnriched;
       await Future.delayed(const Duration(milliseconds: 600)); // gentle pacing
+    }
+    if (anyEnriched) {
+      _cache = null;
+      await load(forceRefresh: true);
     }
   }
 
   Future<void> _enrichWord({required String id, required String word}) async {
+    if (await _writeEnrichment(id: id, word: word)) {
+      _cache = null;
+      await load(forceRefresh: true);
+    }
+  }
+
+  /// Fetches enrichment for [word] and writes it to the row. Returns true if a
+  /// row update was issued (so callers can decide whether to reload). Does not
+  /// touch the cache or reload — that's the caller's call.
+  Future<bool> _writeEnrichment(
+      {required String id, required String word}) async {
     try {
       final ai = _ref.read(geminiServiceProvider);
       final enriched = await ai.enrichWord(word);
-      if (enriched == null) return;
+      if (enriched == null) return false;
+      if (enriched.ipa == null && enriched.example == null) return false;
       await _db.from('words').update({
         if (enriched.ipa != null) 'ipa': enriched.ipa,
         if (enriched.example != null) 'example_sentence': enriched.example,
       }).eq('id', id);
-      _cache = null;
-      await load(forceRefresh: true);
-    } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> reviewWord(Word word, int quality) async {

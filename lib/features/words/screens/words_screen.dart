@@ -229,7 +229,10 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      wCtrl.dispose();
+      tCtrl.dispose();
+    });
   }
 
   void _showGenerate() {
@@ -245,6 +248,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
       isDismissible: true,
       builder: (ctx) {
         final c = ctx.c;
+        // (controller disposed via whenComplete below)
         return StatefulBuilder(
           builder: (ctx, setSheet) {
             Future<void> run() async {
@@ -352,7 +356,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                                 horizontal: 18, vertical: 8),
                             decoration: BoxDecoration(
                               color: sel
-                                  ? c.primaryContainer.withOpacity(0.12)
+                                  ? c.primaryContainer.withOpacity(0.10)
                                   : c.bgCard.withOpacity(0.5),
                               border: Border.all(
                                 color: sel
@@ -387,7 +391,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
           },
         );
       },
-    );
+    ).whenComplete(topicCtrl.dispose);
   }
 
   List<Word> _applyFilter(List<Word> all) {
