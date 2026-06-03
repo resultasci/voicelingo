@@ -69,8 +69,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  l.flashcard_cardOf(
-                      _currentIndex + 1, widget.dueWords.length),
+                  l.flashcard_cardOf(_currentIndex + 1, widget.dueWords.length),
                   style: AppText.label(12,
                       color: c.inkDim, weight: FontWeight.bold),
                   textAlign: TextAlign.center,
@@ -121,8 +120,8 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
               word.word,
               style: AppText.hero(36, color: c.primary, weight: FontWeight.bold)
                   .copyWith(
-                      shadows: neonGlow(c.primaryContainer,
-                          blur: 12, opacity: 0.4)),
+                      shadows:
+                          neonGlow(c.primaryContainer, blur: 12, opacity: 0.4)),
               textAlign: TextAlign.center,
             ),
             if (word.ipa != null && word.ipa!.isNotEmpty) ...[
@@ -153,8 +152,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                 ),
               ],
             ] else ...[
-              Icon(Icons.touch_app,
-                  color: c.inkDim.withOpacity(0.5), size: 48),
+              Icon(Icons.touch_app, color: c.inkDim.withOpacity(0.5), size: 48),
               const SizedBox(height: 16),
               Text(
                 l.flashcard_revealHint,

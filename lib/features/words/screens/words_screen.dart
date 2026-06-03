@@ -54,9 +54,17 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
 
   Future<void> _speak(String text) async {
     try {
+      final cleanText = text
+          .replaceAll(RegExp(r'\(.*?\)'), '')
+          .replaceAll(RegExp(r'\[.*?\]'), '')
+          .replaceAll(RegExp(r"[^a-zA-Z0-9\s'\-]"),
+              '') // Sadece harf, sayı, boşluk, tırnak ve tire
+          .trim();
+      if (cleanText.isEmpty) return;
+
       await _tts.setLanguage('en-US');
       await _tts.setSpeechRate(0.5);
-      await _tts.speak(text);
+      await _tts.speak(cleanText);
     } catch (_) {
       // Speaker is best-effort; silent failure is fine.
     }
@@ -198,6 +206,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                           'Kullanıcı arayüzden yeni kelime eklemeyi denedi: $w',
                           tag: 'WordsScreen');
                       await ref.read(wordsProvider.notifier).addWord(w, t);
+                      _speak(w); // Eklenen kelimeyi hemen sesli oku
                     } on DuplicateWordException {
                       AppLogger.warning(
                           'Arayüzde kelime eklendi ama zaten vardı, uyarı gösteriliyor: $w',
@@ -277,12 +286,11 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                 AppLogger.error('Kelime üretimi başarısız', e, st);
                 if (!ctx.mounted) return;
                 setSheet(() => loading = false);
-                final msg =
-                    e is AiException ? e.message : l.words_genFailed;
+                final msg = e is AiException ? e.message : l.words_genFailed;
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   SnackBar(
-                    content: Text(msg,
-                        style: AppText.ink(13, color: ctx.c.error)),
+                    content:
+                        Text(msg, style: AppText.ink(13, color: ctx.c.error)),
                   ),
                 );
               }
@@ -347,9 +355,8 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                       children: [5, 10, 15, 20].map((n) {
                         final sel = n == count;
                         return InkWell(
-                          onTap: loading
-                              ? null
-                              : () => setSheet(() => count = n),
+                          onTap:
+                              loading ? null : () => setSheet(() => count = n),
                           borderRadius: BorderRadius.circular(99),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -368,9 +375,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                             child: Text(
                               '$n',
                               style: AppText.label(12,
-                                  color: sel
-                                      ? c.primaryContainer
-                                      : c.inkMuted,
+                                  color: sel ? c.primaryContainer : c.inkMuted,
                                   weight: FontWeight.w700),
                             ),
                           ),
@@ -576,8 +581,9 @@ class _Header extends StatelessWidget {
             Expanded(
               child: Text(
                 l.words_libraryTitle,
-                style: AppText.hero(28, color: c.primary, weight: FontWeight.w700)
-                    .copyWith(
+                style:
+                    AppText.hero(28, color: c.primary, weight: FontWeight.w700)
+                        .copyWith(
                   shadows: neonGlow(c.primary, blur: 12, opacity: 0.25),
                 ),
               ),
@@ -704,9 +710,7 @@ class _FilterChips extends StatelessWidget {
                     ? c.primaryContainer.withOpacity(0.10)
                     : c.bgCard.withOpacity(0.5),
                 border: Border.all(
-                  color: isSel
-                      ? c.primaryContainer
-                      : c.rule.withOpacity(0.6),
+                  color: isSel ? c.primaryContainer : c.rule.withOpacity(0.6),
                 ),
                 borderRadius: BorderRadius.circular(99),
                 boxShadow: isSel
@@ -1132,11 +1136,10 @@ class _EmptyState extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.primaryContainer.withOpacity(0.10),
-                border:
-                    Border.all(color: c.primaryContainer.withOpacity(0.3)),
+                border: Border.all(color: c.primaryContainer.withOpacity(0.3)),
               ),
-              child: Icon(Icons.auto_awesome,
-                  color: c.primaryContainer, size: 30),
+              child:
+                  Icon(Icons.auto_awesome, color: c.primaryContainer, size: 30),
             ),
             const SizedBox(height: 18),
             Text(l.words_emptyTitle,
@@ -1380,8 +1383,7 @@ class _ReviewView extends StatelessWidget {
                         style: AppText.hero(40,
                                 color: c.primary, weight: FontWeight.w700)
                             .copyWith(
-                          shadows:
-                              neonGlow(c.primary, blur: 14, opacity: 0.4),
+                          shadows: neonGlow(c.primary, blur: 14, opacity: 0.4),
                         ),
                       ),
                       const SizedBox(height: 26),
