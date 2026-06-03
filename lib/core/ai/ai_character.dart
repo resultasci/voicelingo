@@ -17,6 +17,13 @@ class AICharacter {
   final int age;
   final String accent;
   final String personality;
+
+  /// 'female' | 'male' — drives the vector avatar styling (ring style) and the
+  /// 3F/3M grouping in the picker. Not sent to the AI.
+  final String gender;
+
+  /// Emoji glyph — kept as a lightweight fallback motif inside the vector
+  /// [CharacterAvatar]; no longer the primary avatar.
   final String avatarEmoji;
 
   // TTS özellikleri — flutter_tts.setVoice ile eşleşir
@@ -41,6 +48,7 @@ class AICharacter {
     required this.age,
     required this.accent,
     required this.personality,
+    required this.gender,
     required this.avatarEmoji,
     required this.ttsLocale,
     required this.systemPromptTemplate,

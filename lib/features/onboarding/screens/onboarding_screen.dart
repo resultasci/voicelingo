@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
 import '../../../core/audio/audio_permission_service.dart';
 import '../../../features/conversation/services/characters_service.dart';
@@ -631,19 +632,10 @@ class _CharacterPage extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(colors: [
-                                c.primaryContainer,
-                                c.secondaryContainer,
-                              ]),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(character.avatarEmoji,
-                                style: const TextStyle(fontSize: 26)),
+                          CharacterAvatar(
+                            character: character,
+                            size: 52,
+                            selected: selected,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
