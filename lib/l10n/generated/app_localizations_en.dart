@@ -843,6 +843,15 @@ class AppL10nEn extends AppL10n {
   String get conv_errorsLabel => 'ERRORS';
 
   @override
+  String get conv_replay => 'Listen again';
+
+  @override
+  String get conv_copied => 'Copied to clipboard';
+
+  @override
+  String get conv_changeCoach => 'Change AI coach';
+
+  @override
   String get convHist_title => 'Chat History';
 
   @override

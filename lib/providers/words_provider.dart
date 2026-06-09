@@ -232,7 +232,8 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     // eder, yalnız gerçekten eklenen satırları döndürür (partial dup'lar düşer).
     final rows = await _db.rpc('add_words_batch', params: {
       'p_words': [
-        for (final g in fresh) {'word': g.en.trim(), 'translation': g.tr.trim()},
+        for (final g in fresh)
+          {'word': g.en.trim(), 'translation': g.tr.trim()},
       ],
     });
     final inserted = (rows as List)

@@ -842,6 +842,15 @@ class AppL10nTr extends AppL10n {
   String get conv_errorsLabel => 'HATALAR';
 
   @override
+  String get conv_replay => 'Tekrar dinle';
+
+  @override
+  String get conv_copied => 'Panoya kopyalandı';
+
+  @override
+  String get conv_changeCoach => 'AI koçu değiştir';
+
+  @override
   String get convHist_title => 'Sohbet Geçmişi';
 
   @override

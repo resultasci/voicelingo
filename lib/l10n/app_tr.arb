@@ -355,6 +355,9 @@
     "placeholders": { "score": { "type": "int" } }
   },
   "conv_errorsLabel": "HATALAR",
+  "conv_replay": "Tekrar dinle",
+  "conv_copied": "Panoya kopyalandı",
+  "conv_changeCoach": "AI koçu değiştir",
 
   "convHist_title": "Sohbet Geçmişi",
   "convHist_freeChat": "Serbest sohbet",

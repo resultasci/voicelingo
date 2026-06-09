@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#0A0A0A</color>
+    <!-- Launch screen backdrop — matches the in-app cosmic background so the
+         splash → first frame handoff is seamless in both day/night modes. -->
+    <color name="splash_background">#0A0A0A</color>
 </resources>

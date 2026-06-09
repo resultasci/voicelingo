@@ -294,6 +294,9 @@
   "conv_evalSemantics": "Speech evaluation: {label}",
   "conv_score": "SCORE: {score}/100",
   "conv_errorsLabel": "ERRORS",
+  "conv_replay": "Listen again",
+  "conv_copied": "Copied to clipboard",
+  "conv_changeCoach": "Change AI coach",
 
   "convHist_title": "Chat History",
   "convHist_freeChat": "Free chat",

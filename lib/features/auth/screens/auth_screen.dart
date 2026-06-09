@@ -1,9 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/widgets/brand_logo.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../theme/app_theme.dart';
+import 'forgot_password_screen.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -129,7 +131,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 480),
-                    child: _buildPanel(),
+                    // One-shot entrance: panel fades in and settles upward.
+                    child: reduceMotion(context)
+                        ? _buildPanel()
+                        : TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: 1),
+                            duration: const Duration(milliseconds: 420),
+                            curve: Curves.easeOutCubic,
+                            builder: (_, t, child) => Opacity(
+                              opacity: t,
+                              child: Transform.translate(
+                                offset: Offset(0, (1 - t) * 24),
+                                child: child,
+                              ),
+                            ),
+                            child: _buildPanel(),
+                          ),
                   ),
                 ),
               ),
@@ -167,67 +184,98 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildBrand(),
-              const SizedBox(height: 28),
-              if (_error != null) ...[
-                _ErrorBanner(message: _error!),
-                const SizedBox(height: 16),
-              ],
-              if (!_isLogin) ...[
+          // AnimatedSize: login ↔ signup toggle ve hata banner'ı yumuşak
+          // yükseklik geçişiyle girer/çıkar.
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildBrand(),
+                const SizedBox(height: 28),
+                if (_error != null) ...[
+                  _ErrorBanner(message: _error!),
+                  const SizedBox(height: 16),
+                ],
+                if (!_isLogin) ...[
+                  _FieldGroup(
+                    label: l.auth_fullName,
+                    child: NeonField(
+                      controller: _nameCtrl,
+                      leadingIcon: Icons.person_outline,
+                      hint: l.auth_nameHint,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ],
                 _FieldGroup(
-                  label: l.auth_fullName,
+                  label: _isLogin ? l.auth_emailLabel : l.auth_commsChannel,
                   child: NeonField(
-                    controller: _nameCtrl,
-                    leadingIcon: Icons.person_outline,
-                    hint: l.auth_nameHint,
+                    controller: _emailCtrl,
+                    leadingIcon: Icons.mail_outline,
+                    hint: 'user@galaxy.net',
+                    keyboardType: TextInputType.emailAddress,
                   ),
                 ),
                 const SizedBox(height: 18),
-              ],
-              _FieldGroup(
-                label: _isLogin ? l.auth_emailLabel : l.auth_commsChannel,
-                child: NeonField(
-                  controller: _emailCtrl,
-                  leadingIcon: Icons.mail_outline,
-                  hint: 'user@galaxy.net',
-                  keyboardType: TextInputType.emailAddress,
-                ),
-              ),
-              const SizedBox(height: 18),
-              _FieldGroup(
-                label: _isLogin ? l.auth_securityCode : l.auth_accessKey,
-                child: NeonField(
-                  controller: _passCtrl,
-                  leadingIcon: Icons.lock_outline,
-                  hint: '••••••••',
-                  obscure: _obscurePass,
-                  suffix: IconButton(
-                    icon: Icon(
-                      _obscurePass
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: c.inkDim,
-                      size: 20,
+                _FieldGroup(
+                  label: _isLogin ? l.auth_securityCode : l.auth_accessKey,
+                  child: NeonField(
+                    controller: _passCtrl,
+                    leadingIcon: Icons.lock_outline,
+                    hint: '••••••••',
+                    obscure: _obscurePass,
+                    suffix: IconButton(
+                      icon: Icon(
+                        _obscurePass
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: c.inkDim,
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePass = !_obscurePass),
                     ),
-                    onPressed: () =>
-                        setState(() => _obscurePass = !_obscurePass),
                   ),
                 ),
-              ),
-              const SizedBox(height: 28),
-              NeonButton(
-                label: _isLogin ? l.auth_loginBtn : l.auth_signupBtn,
-                loading: _loading,
-                onTap: _submit,
-                height: 56,
-              ),
-              const SizedBox(height: 22),
-              _buildToggle(),
-            ],
+                if (_isLogin)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => ForgotPasswordScreen(
+                            initialEmail: _emailCtrl.text.trim(),
+                          ),
+                        ));
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: c.inkMuted,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        l.auth_forgotPassword,
+                        style: AppText.body(12, color: c.primaryContainer),
+                      ),
+                    ),
+                  ),
+                SizedBox(height: _isLogin ? 16 : 28),
+                NeonButton(
+                  label: _isLogin ? l.auth_loginBtn : l.auth_signupBtn,
+                  loading: _loading,
+                  onTap: _submit,
+                  height: 56,
+                ),
+                const SizedBox(height: 22),
+                _buildToggle(),
+              ],
+            ),
           ),
         ),
       ),
@@ -239,22 +287,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final c = context.c;
     return Column(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-                color: c.primaryContainer.withOpacity(0.4), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: c.primaryContainer.withOpacity(0.4),
-                blurRadius: 24,
-              ),
-            ],
-          ),
-          child: Icon(Icons.public, color: c.primaryContainer, size: 28),
-        ),
+        const BrandLogo(size: 76),
         const SizedBox(height: 18),
         Text(
           'VOICELINGO',

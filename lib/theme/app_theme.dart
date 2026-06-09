@@ -379,11 +379,54 @@ class AppText {
       );
 }
 
+/// Shared-axis style route transition: fade + slight upward slide. Replaces
+/// the stock Android zoom so every push/pop across the app feels cohesive
+/// with the cosmic theme. Pops reverse the same motion.
+class CosmicPageTransitionsBuilder extends PageTransitionsBuilder {
+  const CosmicPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.035),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
+    );
+  }
+}
+
+const _pageTransitions = PageTransitionsTheme(
+  builders: {
+    TargetPlatform.android: CosmicPageTransitionsBuilder(),
+    TargetPlatform.iOS: CosmicPageTransitionsBuilder(),
+    TargetPlatform.windows: CosmicPageTransitionsBuilder(),
+    TargetPlatform.macOS: CosmicPageTransitionsBuilder(),
+    TargetPlatform.linux: CosmicPageTransitionsBuilder(),
+  },
+);
+
 ThemeData buildAppTheme() {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
     extensions: const [AppPalette.dark],
+    pageTransitionsTheme: _pageTransitions,
     scaffoldBackgroundColor: AppColors.bg,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryContainer,
@@ -419,6 +462,7 @@ ThemeData buildLightAppTheme() {
     useMaterial3: true,
     brightness: Brightness.light,
     extensions: const [AppPalette.light],
+    pageTransitionsTheme: _pageTransitions,
     scaffoldBackgroundColor: AppPalette.light.bg,
     colorScheme: const ColorScheme.light(
       primary: Color(0xFF008CA6), // light primaryContainer

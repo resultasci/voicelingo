@@ -1543,6 +1543,24 @@ abstract class AppL10n {
   /// **'HATALAR'**
   String get conv_errorsLabel;
 
+  /// No description provided for @conv_replay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tekrar dinle'**
+  String get conv_replay;
+
+  /// No description provided for @conv_copied.
+  ///
+  /// In tr, this message translates to:
+  /// **'Panoya kopyalandı'**
+  String get conv_copied;
+
+  /// No description provided for @conv_changeCoach.
+  ///
+  /// In tr, this message translates to:
+  /// **'AI koçu değiştir'**
+  String get conv_changeCoach;
+
   /// No description provided for @convHist_title.
   ///
   /// In tr, this message translates to:

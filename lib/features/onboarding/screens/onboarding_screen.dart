@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
 import '../../../core/audio/audio_permission_service.dart';
+import '../../../core/widgets/brand_logo.dart';
 import '../../../features/conversation/services/characters_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
@@ -250,26 +251,7 @@ class _WelcomePage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                c.primaryContainer,
-                c.secondaryContainer,
-              ]),
-              boxShadow: [
-                BoxShadow(
-                  color: c.primaryContainer.withOpacity(0.5),
-                  blurRadius: 30,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child:
-                const Icon(Icons.auto_awesome, color: Colors.white, size: 56),
-          ),
+          const BrandLogo(size: 120),
           const SizedBox(height: 32),
           Text(
             l.onb_welcomeTitle,

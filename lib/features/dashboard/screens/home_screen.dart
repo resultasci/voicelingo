@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/perf/device_tier.dart';
+import '../../../core/widgets/brand_logo.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/nav_provider.dart';
 import '../../../providers/profile_provider.dart';
@@ -111,10 +112,6 @@ class _TopAppBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppL10n.of(context);
     final c = context.c;
-    final profile = ref.watch(profileProvider).value;
-    final initial = (profile?.username.isNotEmpty ?? false)
-        ? profile!.username[0].toUpperCase()
-        : 'V';
 
     final blur = DevicePerf.chromeBlurSigma;
     final chromeBase = c.isDark ? Colors.black : Colors.white;
@@ -146,22 +143,7 @@ class _TopAppBar extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: c.primaryContainer.withOpacity(0.12),
-                    border:
-                        Border.all(color: c.primaryContainer.withOpacity(0.4)),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    initial,
-                    style: AppText.title(16,
-                        color: c.primaryContainer, weight: FontWeight.w700),
-                  ),
-                ),
+                const BrandLogo(size: 34),
                 const SizedBox(width: 12),
                 Text(
                   'VOICELINGO',
