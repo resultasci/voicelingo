@@ -27,47 +27,31 @@ class DuplicateWordException extends AppException {
       : super('Kelime zaten ekli: $word', code: 'duplicate_word');
 }
 
-const _starterWords = [
-  ('apple', 'elma'),
-  ('book', 'kitap'),
-  ('water', 'su'),
-  ('house', 'ev'),
-  ('car', 'araba'),
-  ('phone', 'telefon'),
-  ('food', 'yemek'),
-  ('time', 'zaman'),
-  ('friend', 'arkadaş'),
-  ('school', 'okul'),
-  ('work', 'iş'),
-  ('day', 'gün'),
-  ('night', 'gece'),
-  ('city', 'şehir'),
-  ('country', 'ülke'),
-  ('money', 'para'),
-  ('help', 'yardım'),
-  ('love', 'sevgi'),
-  ('music', 'müzik'),
-  ('sport', 'spor'),
-  ('computer', 'bilgisayar'),
-  ('family', 'aile'),
-  ('health', 'sağlık'),
-  ('weather', 'hava durumu'),
-  ('travel', 'seyahat'),
-  ('coffee', 'kahve'),
-  ('language', 'dil'),
-  ('study', 'çalışmak'),
-  ('happy', 'mutlu'),
-  ('success', 'başarı'),
-];
-
 class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   WordsNotifier(this._ref) : super(const AsyncValue.loading()) {
     load();
+    // Hesap değişiminde (signIn/signOut) bellekteki liste önceki kullanıcıya
+    // ait kalmasın — provider global olduğu için autoDispose ile çözülmüyor.
+    _authSub = _db.auth.onAuthStateChange.listen((change) {
+      final event = change.event;
+      if (event == AuthChangeEvent.signedIn ||
+          event == AuthChangeEvent.signedOut) {
+        _cache = null;
+        load(forceRefresh: true);
+      }
+    });
   }
 
   final Ref _ref;
   final _db = Supabase.instance.client;
   List<Word>? _cache;
+  StreamSubscription<AuthState>? _authSub;
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
 
   Future<void> load({bool forceRefresh = false}) async {
     try {
@@ -75,7 +59,6 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         state = AsyncValue.data(_cache!);
         return;
       }
-      state = const AsyncValue.loading();
       final userId = _db.auth.currentUser?.id;
       if (userId == null) {
         _cache = const [];
@@ -83,15 +66,22 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         return;
       }
 
-      // Offline ise Hive cache'ten oku — kullanıcı yenileme bekleyince empty
-      // göstermek yerine bilinen state'i göster.
+      // Stale-while-revalidate: Hive'da veri varsa spinner yerine onu hemen
+      // göster, ağ cevabı gelince üzerine yaz. Soğuk açılışta liste anında dolar.
+      final wordsCache = _ref.read(wordsCacheProvider);
+      final hiveCached = wordsCache.readAll();
+      if (hiveCached.isNotEmpty) {
+        state = AsyncValue.data(hiveCached);
+      } else {
+        state = const AsyncValue.loading();
+      }
+
+      // Offline ise ağ timeout'u beklemeden bilinen state'te kal.
       final connectivity = _ref.read(connectivityServiceProvider);
       final online = await connectivity.isOnline();
-      final wordsCache = _ref.read(wordsCacheProvider);
       if (!online) {
-        final cached = wordsCache.readAll();
-        _cache = cached;
-        state = AsyncValue.data(cached);
+        _cache = hiveCached;
+        state = AsyncValue.data(hiveCached);
         return;
       }
 
@@ -106,17 +96,8 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
           .map((e) => Word.fromMap(e as Map<String, dynamic>))
           .toList();
 
-      // Seed only on the very first launch. profileProvider already fetched
-      // `seeded_at`; read from there to avoid a second round-trip.
-      if (words.isEmpty) {
-        final profile = await _ref.read(profileProvider.future);
-        if (profile != null && profile.seededAt == null) {
-          await _insertStarterWords(userId);
-          await _markSeeded(userId);
-          await load(forceRefresh: true);
-          return;
-        }
-      }
+      // No auto-seeding: new users start with an empty library and populate it
+      // via manual add or AI topic generation (see generateAndAddWords).
 
       _cache = words;
       // Online fetch sonrası Hive cache'i yenile (fire-and-forget).
@@ -135,30 +116,6 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
       } catch (_) {}
       state = AsyncValue.error(e, st);
     }
-  }
-
-  Future<void> _markSeeded(String userId) async {
-    try {
-      await _db
-          .from('profiles')
-          .update({'seeded_at': DateTime.now().toUtc().toIso8601String()}).eq(
-              'id', userId);
-    } catch (_) {
-      // If this fails the user just risks a one-time re-seed; non-critical.
-    }
-  }
-
-  Future<void> _insertStarterWords(String userId) async {
-    final today = DateTime.now().toIso8601String().split('T')[0];
-    final rows = _starterWords
-        .map((pair) => {
-              'user_id': userId,
-              'word': pair.$1,
-              'translation': pair.$2,
-              'next_review': today,
-            })
-        .toList();
-    await _db.from('words').insert(rows);
   }
 
   void _scheduleDailyReminderFor(List<Word> words) {
@@ -208,8 +165,12 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
           .select()
           .single();
 
-      _cache = null;
-      await load(forceRefresh: true);
+      // Insert zaten yeni satırı döndürüyor — tüm tabloyu yeniden çekmek yerine
+      // listenin başına ekle (created_at desc sıralamasıyla uyumlu).
+      final newWord = Word.fromMap(inserted);
+      _cache = [newWord, ...(_cache ?? state.value ?? const <Word>[])];
+      state = AsyncValue.data(_cache!);
+      unawaited(_ref.read(wordsCacheProvider).putAll(_cache!));
       AppLogger.info('Yeni kelime başarıyla eklendi: $trimmedWord',
           tag: 'WordsProvider');
 
@@ -233,18 +194,102 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     }
   }
 
+  /// Generates topic-based words via Gemini, inserts the de-duplicated set, then
+  /// enriches a bounded subset (IPA + example). Returns how many words were
+  /// actually inserted (after local + server-side dedup). May throw
+  /// [AiException] (e.g. 429 daily limit) from the generation call — callers
+  /// should catch and surface its localized message.
+  Future<int> generateAndAddWords(String topic, int count) async {
+    final userId = _db.auth.currentUser?.id;
+    if (userId == null) {
+      throw const AuthException('Oturum bulunamadı.');
+    }
+
+    final profile = await _ref.read(profileProvider.future);
+    final ai = _ref.read(geminiServiceProvider);
+    final generated = await ai.generateWords(
+      topic,
+      count: count,
+      targetLanguage: profile?.targetLanguage ?? 'en',
+      userLevel: profile?.cefrLevel ?? 'A2',
+    );
+    if (generated.isEmpty) return 0;
+
+    // Dedup against the local cache (case-insensitive) and within the batch,
+    // mirroring addWord's pre-check. The DB unique index is the source of truth.
+    final existing = (_cache ?? state.value ?? const <Word>[])
+        .map((w) => w.word.trim().toLowerCase())
+        .toSet();
+    final seen = <String>{};
+    final fresh = generated.where((g) {
+      final k = g.en.trim().toLowerCase();
+      if (k.isEmpty || existing.contains(k) || !seen.add(k)) return false;
+      return true;
+    }).toList();
+    if (fresh.isEmpty) return 0;
+
+    // Tek round-trip: RPC server tarafında ON CONFLICT DO NOTHING ile insert
+    // eder, yalnız gerçekten eklenen satırları döndürür (partial dup'lar düşer).
+    final rows = await _db.rpc('add_words_batch', params: {
+      'p_words': [
+        for (final g in fresh)
+          {'word': g.en.trim(), 'translation': g.tr.trim()},
+      ],
+    });
+    final inserted = (rows as List)
+        .whereType<Map>()
+        .map((r) => (id: r['id'] as String, word: r['word'] as String))
+        .toList();
+
+    _cache = null;
+    await load(forceRefresh: true);
+
+    // Enrich a bounded subset to stay well under the daily enrich cap (100/day).
+    unawaited(_enrichBatch(inserted));
+    return inserted.length;
+  }
+
+  Future<void> _enrichBatch(List<({String id, String word})> items) async {
+    const maxEnrich = 10;
+    var anyEnriched = false;
+    for (final it in items.take(maxEnrich)) {
+      // Update each word's DB row in place but DON'T reload per word — reloading
+      // 10× back-to-back flickers the list to a spinner and wastes round-trips.
+      anyEnriched =
+          await _writeEnrichment(id: it.id, word: it.word) || anyEnriched;
+      await Future.delayed(const Duration(milliseconds: 600)); // gentle pacing
+    }
+    if (anyEnriched) {
+      _cache = null;
+      await load(forceRefresh: true);
+    }
+  }
+
   Future<void> _enrichWord({required String id, required String word}) async {
+    if (await _writeEnrichment(id: id, word: word)) {
+      _cache = null;
+      await load(forceRefresh: true);
+    }
+  }
+
+  /// Fetches enrichment for [word] and writes it to the row. Returns true if a
+  /// row update was issued (so callers can decide whether to reload). Does not
+  /// touch the cache or reload — that's the caller's call.
+  Future<bool> _writeEnrichment(
+      {required String id, required String word}) async {
     try {
       final ai = _ref.read(geminiServiceProvider);
       final enriched = await ai.enrichWord(word);
-      if (enriched == null) return;
+      if (enriched == null) return false;
+      if (enriched.ipa == null && enriched.example == null) return false;
       await _db.from('words').update({
         if (enriched.ipa != null) 'ipa': enriched.ipa,
         if (enriched.example != null) 'example_sentence': enriched.example,
       }).eq('id', id);
-      _cache = null;
-      await load(forceRefresh: true);
-    } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> reviewWord(Word word, int quality) async {
@@ -257,15 +302,16 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         'next_review': updatedWord.nextReview.toIso8601String().split('T')[0],
       }).eq('id', word.id);
 
-      // Update cache
-      if (_cache != null) {
-        final index = _cache!.indexWhere((w) => w.id == word.id);
-        if (index != -1) {
-          _cache![index] = updatedWord;
-        }
+      // Update cache; _cache yoksa mevcut state'i ezme ([] ile silme riski).
+      final current = _cache ?? state.value;
+      if (current != null) {
+        final next = [...current];
+        final index = next.indexWhere((w) => w.id == word.id);
+        if (index != -1) next[index] = updatedWord;
+        _cache = next;
+        state = AsyncValue.data(next);
+        _scheduleDailyReminderFor(next);
       }
-      state = AsyncValue.data(_cache ?? []);
-      _scheduleDailyReminderFor(_cache ?? []);
     } catch (e) {
       // Best-effort
     }
@@ -280,22 +326,27 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     if (results.isEmpty) return;
     final words = state.value ?? [];
 
-    final updates = <Future<void>>[];
+    // Tek round-trip: tüm review güncellemeleri tek RPC ile commit edilir
+    // (eskiden kelime başına ayrı UPDATE atılıyordu).
+    final payload = <Map<String, dynamic>>[];
     for (final r in results) {
       final w = words.where((x) => x.id == r.wordId).firstOrNull;
       if (w == null) continue;
       final updated = w.reviewed(r.quality);
-      updates.add(_db.from('words').update({
+      payload.add({
+        'id': r.wordId,
         'ease_factor': updated.easeFactor,
         'interval_days': updated.intervalDays,
         'repetitions': updated.repetitions,
         'next_review': updated.nextReview.toIso8601String().split('T')[0],
-      }).eq('id', r.wordId));
+      });
       // Schedule per-word reminder fire-and-forget; not awaited to keep latency low.
       _scheduleNextReviewNotification(updated);
     }
 
-    await Future.wait(updates);
+    if (payload.isNotEmpty) {
+      await _db.rpc('commit_word_reviews', params: {'p_reviews': payload});
+    }
 
     // Aggregate XP into a single RPC call — quality-weighted per CLAUDE.md.
     final aggregateXp = results.fold<int>(0, (acc, r) {
@@ -316,6 +367,9 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         'p_xp_earned': aggregateXp,
         'p_timezone_offset': tzStr,
       });
+      // XP/streak değişti — profil cache'ini düşür ki dashboard HUD güncellensin.
+      await bustProfileCache();
+      _ref.invalidate(profileProvider);
     } catch (_) {
       // XP is best-effort.
     }
@@ -340,8 +394,15 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
 
   Future<void> deleteWord(String wordId) async {
     await _db.from('words').delete().eq('id', wordId);
-    _cache = null;
-    await load(forceRefresh: true);
+    // Lokal listeden düş — tek silme için tüm tabloyu yeniden çekme.
+    final current = _cache ?? state.value;
+    if (current != null) {
+      _cache = current.where((w) => w.id != wordId).toList();
+      state = AsyncValue.data(_cache!);
+      unawaited(_ref.read(wordsCacheProvider).putAll(_cache!));
+    } else {
+      await load(forceRefresh: true);
+    }
   }
 }
 

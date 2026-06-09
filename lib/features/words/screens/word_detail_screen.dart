@@ -39,8 +39,15 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
   }
 
   Future<void> _speak(String text) async {
+    final cleanText = text
+        .replaceAll(RegExp(r'\(.*?\)'), '')
+        .replaceAll(RegExp(r'\[.*?\]'), '')
+        .replaceAll(RegExp(r"[^a-zA-Z0-9\s'\-]"), '')
+        .trim();
+    if (cleanText.isEmpty) return;
+
     await _tts.stop();
-    await _tts.speak(text);
+    await _tts.speak(cleanText);
   }
 
   @override
@@ -76,7 +83,8 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                   padding: EdgeInsets.symmetric(vertical: 32),
                   child: Center(child: CircularProgressIndicator()),
                 ),
-                error: (e, _) => _SectionPlaceholder(text: l.wordDetail_loadError),
+                error: (e, _) =>
+                    _SectionPlaceholder(text: l.wordDetail_loadError),
                 data: (entry) {
                   if (entry == null) {
                     return _SectionPlaceholder(text: l.wordDetail_noCache);
@@ -128,7 +136,8 @@ class _Header extends StatelessWidget {
               children: [
                 Text(
                   word.word,
-                  style: AppText.hero(28, color: c.ink, weight: FontWeight.w800),
+                  style:
+                      AppText.hero(28, color: c.ink, weight: FontWeight.w800),
                 ),
                 if (word.translation.isNotEmpty)
                   Text(
@@ -253,8 +262,7 @@ class _EnrichedSections extends StatelessWidget {
           _PillBox(
             child: Text(
               entry.etymologyBrief!,
-              style:
-                  AppText.body(13, color: c.inkMuted).copyWith(height: 1.5),
+              style: AppText.body(13, color: c.inkMuted).copyWith(height: 1.5),
             ),
           ),
         ],

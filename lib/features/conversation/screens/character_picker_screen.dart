@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../../core/ai/ai_character.dart';
+import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
@@ -117,8 +118,7 @@ class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
                         selected: _selectedId == character.id,
                         playing: _previewingId == character.id,
                         locale: locale,
-                        onTap: () =>
-                            setState(() => _selectedId = character.id),
+                        onTap: () => setState(() => _selectedId = character.id),
                         onPreview: () => _preview(character),
                       ),
                     );
@@ -207,21 +207,10 @@ class _CharacterCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [
-                  c.primaryContainer,
-                  c.secondaryContainer,
-                ]),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                character.avatarEmoji,
-                style: const TextStyle(fontSize: 36),
-              ),
+            CharacterAvatar(
+              character: character,
+              size: 68,
+              selected: selected,
             ),
             const SizedBox(width: 14),
             Expanded(

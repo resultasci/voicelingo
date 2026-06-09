@@ -62,7 +62,8 @@ import 'app_localizations_tr.dart';
 /// be consistent with the languages listed in the AppL10n.supportedLocales
 /// property.
 abstract class AppL10n {
-  AppL10n(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppL10n(String locale)
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -82,7 +83,8 @@ abstract class AppL10n {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
     delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
@@ -1028,20 +1030,80 @@ abstract class AppL10n {
   /// No description provided for @words_emptyTitle.
   ///
   /// In tr, this message translates to:
-  /// **'Kütüphanen boş'**
+  /// **'Kütüphaneni oluştur'**
   String get words_emptyTitle;
 
   /// No description provided for @words_emptyBody.
   ///
   /// In tr, this message translates to:
-  /// **'Eklediğin her kelime SM-2 algoritması ile bilimsel aralıklarla karşına çıkar.'**
+  /// **'Bir konu seç, yapay zeka sana özel kelime listesi üretsin — ya da tek tek kelime ekle. Her kelime SM-2 algoritması ile doğru zamanda karşına çıkar.'**
   String get words_emptyBody;
 
   /// No description provided for @words_addFirst.
   ///
   /// In tr, this message translates to:
-  /// **'İlk kelimeni ekle'**
+  /// **'Elle kelime ekle'**
   String get words_addFirst;
+
+  /// No description provided for @words_generateCta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yapay zeka ile üret'**
+  String get words_generateCta;
+
+  /// No description provided for @words_genTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kelime üret'**
+  String get words_genTitle;
+
+  /// No description provided for @words_genSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir konu yaz, yapay zeka senin için kelime listesi oluştursun.'**
+  String get words_genSubtitle;
+
+  /// No description provided for @words_genTopicLabel.
+  ///
+  /// In tr, this message translates to:
+  /// **'KONU'**
+  String get words_genTopicLabel;
+
+  /// No description provided for @words_genTopicHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'ör. Seyahat, Mutfak, İş İngilizcesi'**
+  String get words_genTopicHint;
+
+  /// No description provided for @words_genCount.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaç tane?'**
+  String get words_genCount;
+
+  /// No description provided for @words_genButton.
+  ///
+  /// In tr, this message translates to:
+  /// **'Üret'**
+  String get words_genButton;
+
+  /// No description provided for @words_genAdded.
+  ///
+  /// In tr, this message translates to:
+  /// **'{count, plural, =1{1 kelime eklendi} other{{count} kelime eklendi}}'**
+  String words_genAdded(num count);
+
+  /// No description provided for @words_genNone.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eklenecek yeni kelime yok — hepsi zaten kütüphanende vardı.'**
+  String get words_genNone;
+
+  /// No description provided for @words_genFailed.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kelimeler üretilemedi. Lütfen tekrar dene.'**
+  String get words_genFailed;
 
   /// No description provided for @words_filterEmpty.
   ///
@@ -1480,6 +1542,24 @@ abstract class AppL10n {
   /// In tr, this message translates to:
   /// **'HATALAR'**
   String get conv_errorsLabel;
+
+  /// No description provided for @conv_replay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tekrar dinle'**
+  String get conv_replay;
+
+  /// No description provided for @conv_copied.
+  ///
+  /// In tr, this message translates to:
+  /// **'Panoya kopyalandı'**
+  String get conv_copied;
+
+  /// No description provided for @conv_changeCoach.
+  ///
+  /// In tr, this message translates to:
+  /// **'AI koçu değiştir'**
+  String get conv_changeCoach;
 
   /// No description provided for @convHist_title.
   ///
@@ -2703,25 +2783,25 @@ class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'tr'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'tr'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppL10nDelegate old) => false;
 }
 
 AppL10n lookupAppL10n(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return AppL10nEn();
-    case 'tr': return AppL10nTr();
+    case 'en':
+      return AppL10nEn();
+    case 'tr':
+      return AppL10nTr();
   }
 
   throw FlutterError(
-    'AppL10n.delegate failed to load unsupported locale "$locale". This is likely '
-    'an issue with the localizations generation tool. Please file an issue '
-    'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
-  );
+      'AppL10n.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }

@@ -132,8 +132,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.primaryContainer.withOpacity(0.12),
-                border:
-                    Border.all(color: c.primaryContainer.withOpacity(0.5)),
+                border: Border.all(color: c.primaryContainer.withOpacity(0.5)),
                 boxShadow: [
                   BoxShadow(
                     color: c.primaryContainer.withOpacity(0.4),
@@ -141,8 +140,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ),
                 ],
               ),
-              child:
-                  Icon(Icons.vpn_key_outlined, color: c.primaryContainer, size: 30),
+              child: Icon(Icons.vpn_key_outlined,
+                  color: c.primaryContainer, size: 30),
             ),
           ),
           const SizedBox(height: 22),

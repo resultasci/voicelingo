@@ -251,8 +251,8 @@ class _Header extends StatelessWidget {
         const SizedBox(height: 22),
         Text(
           username.toUpperCase(),
-          style: AppText.hero(28, color: c.ink, weight: FontWeight.w700)
-              .copyWith(
+          style:
+              AppText.hero(28, color: c.ink, weight: FontWeight.w700).copyWith(
             letterSpacing: 1.6,
             shadows: neonGlow(Colors.white, blur: 8, opacity: 0.2),
           ),
@@ -267,7 +267,8 @@ class _Header extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               l.profile_levelTitle(level),
-              style: AppText.label(11, color: c.inkDim, weight: FontWeight.w600),
+              style:
+                  AppText.label(11, color: c.inkDim, weight: FontWeight.w600),
             ),
           ],
         ),
@@ -415,8 +416,9 @@ class _StatTile extends StatelessWidget {
                 FittedBox(
                   child: Text(
                     value,
-                    style: AppText.hero(28, color: c.ink, weight: FontWeight.w700)
-                        .copyWith(
+                    style:
+                        AppText.hero(28, color: c.ink, weight: FontWeight.w700)
+                            .copyWith(
                       letterSpacing: -1.0,
                     ),
                   ),

@@ -96,10 +96,12 @@ class AppL10nEn extends AppL10n {
   String get auth_validation_passwordMismatch => 'Passwords do not match';
 
   @override
-  String get auth_error_sessionNotFound => 'Session not found, please sign in again.';
+  String get auth_error_sessionNotFound =>
+      'Session not found, please sign in again.';
 
   @override
-  String get auth_error_sessionExpired => 'Your session expired, please sign in again.';
+  String get auth_error_sessionExpired =>
+      'Your session expired, please sign in again.';
 
   @override
   String get error_network => 'Connection issue. Please check your internet.';
@@ -111,10 +113,12 @@ class AppL10nEn extends AppL10n {
   String get error_unexpected => 'An unexpected error occurred.';
 
   @override
-  String get error_rateLimit => 'Daily usage limit reached. Try again tomorrow.';
+  String get error_rateLimit =>
+      'Daily usage limit reached. Try again tomorrow.';
 
   @override
-  String get error_audioTooLong => 'Audio is too long. Try a shorter recording.';
+  String get error_audioTooLong =>
+      'Audio is too long. Try a shorter recording.';
 
   @override
   String get error_aiUnavailable => 'The AI service is unavailable right now.';
@@ -126,10 +130,12 @@ class AppL10nEn extends AppL10n {
   String get error_offline => 'You are offline.';
 
   @override
-  String get error_audioInvalid => 'Invalid response from speech recognition service.';
+  String get error_audioInvalid =>
+      'Invalid response from speech recognition service.';
 
   @override
-  String get error_evalInvalid => 'Invalid response from the evaluation service.';
+  String get error_evalInvalid =>
+      'Invalid response from the evaluation service.';
 
   @override
   String get error_serverInvalid => 'Unexpected server response.';
@@ -263,7 +269,8 @@ class AppL10nEn extends AppL10n {
   String get conversation_pushToTalk => 'Hold to talk';
 
   @override
-  String get conversation_micPermissionDenied => 'Microphone permission required. You can enable it in Settings.';
+  String get conversation_micPermissionDenied =>
+      'Microphone permission required. You can enable it in Settings.';
 
   @override
   String get notification_reviewReminder_title => 'Review time!';
@@ -300,7 +307,8 @@ class AppL10nEn extends AppL10n {
   String get boot_dotenvFailed_title => 'Failed to load .env';
 
   @override
-  String get boot_dotenvFailed_description => 'The .env file was not found at the project root or could not be read.';
+  String get boot_dotenvFailed_description =>
+      'The .env file was not found at the project root or could not be read.';
 
   @override
   String get dashboard_profileLoadError => 'Couldn\'t load profile.';
@@ -314,7 +322,8 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get dashboard_greetingSubtitle => 'Ready for your daily galactic goals?';
+  String get dashboard_greetingSubtitle =>
+      'Ready for your daily galactic goals?';
 
   @override
   String get dashboard_statStreak => 'STREAK';
@@ -337,7 +346,8 @@ class AppL10nEn extends AppL10n {
   String get dashboard_aiTitle => 'Deep Space Practice';
 
   @override
-  String get dashboard_aiSubtitle => 'Start your daily conversation simulation with your personalized AI assistant.';
+  String get dashboard_aiSubtitle =>
+      'Start your daily conversation simulation with your personalized AI assistant.';
 
   @override
   String get dashboard_aiStart => 'Start Simulation';
@@ -369,7 +379,8 @@ class AppL10nEn extends AppL10n {
   String get settings_dailyReviewReminder => 'Daily Review Reminder';
 
   @override
-  String get settings_reminderSubtitle => 'One notification per day for due words';
+  String get settings_reminderSubtitle =>
+      'One notification per day for due words';
 
   @override
   String get settings_reminderTime => 'Reminder Time';
@@ -535,13 +546,54 @@ class AppL10nEn extends AppL10n {
   String get words_pronounce => 'Pronounce';
 
   @override
-  String get words_emptyTitle => 'Your library is empty';
+  String get words_emptyTitle => 'Build your library';
 
   @override
-  String get words_emptyBody => 'Every word you add resurfaces at scientific intervals via the SM-2 algorithm.';
+  String get words_emptyBody =>
+      'Pick a topic and let AI generate a custom word list — or add words one by one. Everything resurfaces at the right time via the SM-2 algorithm.';
 
   @override
-  String get words_addFirst => 'Add your first word';
+  String get words_addFirst => 'Add a word manually';
+
+  @override
+  String get words_generateCta => 'Generate with AI';
+
+  @override
+  String get words_genTitle => 'Generate words';
+
+  @override
+  String get words_genSubtitle =>
+      'Type a topic and let AI build a word list for you.';
+
+  @override
+  String get words_genTopicLabel => 'TOPIC';
+
+  @override
+  String get words_genTopicHint => 'e.g. Travel, Kitchen, Business English';
+
+  @override
+  String get words_genCount => 'How many?';
+
+  @override
+  String get words_genButton => 'Generate';
+
+  @override
+  String words_genAdded(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Added $count words',
+      one: 'Added 1 word',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get words_genNone =>
+      'No new words to add — they were all already in your library.';
+
+  @override
+  String get words_genFailed => 'Couldn\'t generate words. Please try again.';
 
   @override
   String get words_filterEmpty => 'This filter is empty';
@@ -597,7 +649,8 @@ class AppL10nEn extends AppL10n {
   String get wordDetail_loadError => 'Could not load extra details.';
 
   @override
-  String get wordDetail_noCache => 'No extra details cached yet. Try again later.';
+  String get wordDetail_noCache =>
+      'No extra details cached yet. Try again later.';
 
   @override
   String get wordDetail_ipaCopied => 'IPA copied';
@@ -626,7 +679,8 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get flashcard_revealHint => 'Tap \"Show Answer\" to see the translation';
+  String get flashcard_revealHint =>
+      'Tap \"Show Answer\" to see the translation';
 
   @override
   String get flashcard_showAnswer => 'SHOW ANSWER';
@@ -635,7 +689,8 @@ class AppL10nEn extends AppL10n {
   String get flashcard_congrats => 'CONGRATULATIONS!';
 
   @override
-  String get flashcard_completeBody => 'You\'ve finished today\'s word review. Words will be rescheduled for you tomorrow.';
+  String get flashcard_completeBody =>
+      'You\'ve finished today\'s word review. Words will be rescheduled for you tomorrow.';
 
   @override
   String get flashcard_backHome => 'BACK TO HOME';
@@ -699,10 +754,12 @@ class AppL10nEn extends AppL10n {
   String get conv_errUnknown => 'Unknown error.';
 
   @override
-  String get conv_greeting => 'Hi! I\'m ready to practice your English. Go ahead and speak!';
+  String get conv_greeting =>
+      'Hi! I\'m ready to practice your English. Go ahead and speak!';
 
   @override
-  String get conv_replyFailed => 'Couldn\'t get a reply. Tap the button below to try again.';
+  String get conv_replyFailed =>
+      'Couldn\'t get a reply. Tap the button below to try again.';
 
   @override
   String conv_aiNoResponse(String error) {
@@ -713,7 +770,8 @@ class AppL10nEn extends AppL10n {
   String get conv_practiceMode => 'Practice Mode';
 
   @override
-  String get conv_handsFreeOnTip => 'Hands-free on — listens automatically after the AI finishes';
+  String get conv_handsFreeOnTip =>
+      'Hands-free on — listens automatically after the AI finishes';
 
   @override
   String get conv_handsFreeOffTip => 'Hands-free off — you need to tap the mic';
@@ -785,6 +843,15 @@ class AppL10nEn extends AppL10n {
   String get conv_errorsLabel => 'ERRORS';
 
   @override
+  String get conv_replay => 'Listen again';
+
+  @override
+  String get conv_copied => 'Copied to clipboard';
+
+  @override
+  String get conv_changeCoach => 'Change AI coach';
+
+  @override
   String get convHist_title => 'Chat History';
 
   @override
@@ -846,7 +913,8 @@ class AppL10nEn extends AppL10n {
   String get scen_describeScene => 'Describe a scene';
 
   @override
-  String get scen_descHint => 'e.g. \"Job interview for a senior Flutter role\"';
+  String get scen_descHint =>
+      'e.g. \"Job interview for a senior Flutter role\"';
 
   @override
   String get scen_category => 'Category';
@@ -900,7 +968,8 @@ class AppL10nEn extends AppL10n {
   String get grammar_level => 'Level';
 
   @override
-  String get grammar_emptyTopics => 'No grammar topics yet. Make sure you applied the migration.';
+  String get grammar_emptyTopics =>
+      'No grammar topics yet. Make sure you applied the migration.';
 
   @override
   String get grammar_bestScore => 'Best score';
@@ -933,7 +1002,8 @@ class AppL10nEn extends AppL10n {
   String get lesson_courseTitle => 'Course';
 
   @override
-  String get lesson_emptyCourse => 'No course yet. Make sure the migration is applied.';
+  String get lesson_emptyCourse =>
+      'No course yet. Make sure the migration is applied.';
 
   @override
   String get lesson_noUnits => 'No units yet.';
@@ -948,7 +1018,8 @@ class AppL10nEn extends AppL10n {
   String get lesson_customScenarioTitle => 'Create Custom Scenario';
 
   @override
-  String get lesson_customScenarioBody => 'Practice with AI on any topic you want.';
+  String get lesson_customScenarioBody =>
+      'Practice with AI on any topic you want.';
 
   @override
   String get lesson_typeVocab => 'Vocab';
@@ -960,13 +1031,16 @@ class AppL10nEn extends AppL10n {
   String get lesson_typeListening => 'Listening';
 
   @override
-  String get lesson_grammarBridge => 'This lesson opens the matching grammar topic. Complete the quiz there to mark it done here.';
+  String get lesson_grammarBridge =>
+      'This lesson opens the matching grammar topic. Complete the quiz there to mark it done here.';
 
   @override
-  String get lesson_convBridge => 'Practice the conversation scenario. Min turns will count toward lesson completion.';
+  String get lesson_convBridge =>
+      'Practice the conversation scenario. Min turns will count toward lesson completion.';
 
   @override
-  String get lesson_listenBridge => 'Listening exercises coming soon. Marking complete for now.';
+  String get lesson_listenBridge =>
+      'Listening exercises coming soon. Marking complete for now.';
 
   @override
   String get lesson_openGrammar => 'Open Grammar';
@@ -1034,7 +1108,8 @@ class AppL10nEn extends AppL10n {
   String get progress_topMistakes => 'Top mistakes (30 days)';
 
   @override
-  String get progress_noMistakes => 'No mistakes recorded yet — keep practicing!';
+  String get progress_noMistakes =>
+      'No mistakes recorded yet — keep practicing!';
 
   @override
   String get heatmap_less => 'Less';
@@ -1046,7 +1121,8 @@ class AppL10nEn extends AppL10n {
   String get profile_defaultName => 'User';
 
   @override
-  String get profile_signOutWarning => 'Practice can\'t be saved until you sign in again.';
+  String get profile_signOutWarning =>
+      'Practice can\'t be saved until you sign in again.';
 
   @override
   String profile_levelTitle(int level) {
@@ -1060,7 +1136,8 @@ class AppL10nEn extends AppL10n {
   String get profile_fluency => 'FLUENCY';
 
   @override
-  String get profile_fluencyTooltip => 'Fluency = correct review rate × 50 + streak (≤30d) × 30 + XP (≤2000) × 20';
+  String get profile_fluencyTooltip =>
+      'Fluency = correct review rate × 50 + streak (≤30d) × 30 + XP (≤2000) × 20';
 
   @override
   String get profile_badgesTitle => 'Badges & Achievements';
@@ -1108,10 +1185,12 @@ class AppL10nEn extends AppL10n {
   String get auth_err_invalidCredentials => 'Email or password is incorrect.';
 
   @override
-  String get auth_err_emailNotConfirmed => 'You need to verify your email address.';
+  String get auth_err_emailNotConfirmed =>
+      'You need to verify your email address.';
 
   @override
-  String get auth_err_alreadyRegistered => 'This email is already registered. Try signing in.';
+  String get auth_err_alreadyRegistered =>
+      'This email is already registered. Try signing in.';
 
   @override
   String get auth_err_noInternet => 'No internet connection.';
@@ -1165,7 +1244,8 @@ class AppL10nEn extends AppL10n {
   String get auth_confirmTitle => 'Check your inbox.';
 
   @override
-  String get auth_confirmBody => 'we sent a verification link. After you tap it, you can sign in.';
+  String get auth_confirmBody =>
+      'we sent a verification link. After you tap it, you can sign in.';
 
   @override
   String get auth_backToLogin => 'Back to Sign In';
@@ -1195,7 +1275,8 @@ class AppL10nEn extends AppL10n {
   String get cp_heading => 'Change Your Access Key';
 
   @override
-  String get cp_subtitle => 'For your security, we first need to verify your current password.';
+  String get cp_subtitle =>
+      'For your security, we first need to verify your current password.';
 
   @override
   String get cp_success => 'Your password was updated successfully.';
@@ -1225,7 +1306,8 @@ class AppL10nEn extends AppL10n {
   String get fp_title => 'Forgot your password?';
 
   @override
-  String get fp_subtitle => 'Enter your email and we\'ll send you a link to set a new password.';
+  String get fp_subtitle =>
+      'Enter your email and we\'ll send you a link to set a new password.';
 
   @override
   String get fp_sendBtn => 'SEND LINK';
@@ -1234,7 +1316,8 @@ class AppL10nEn extends AppL10n {
   String get fp_sentTitle => 'Link is on its way.';
 
   @override
-  String get fp_sentBody => 'we sent a link. Check your inbox (and spam folder) — tapping the link opens the app and lets you set a new password.';
+  String get fp_sentBody =>
+      'we sent a link. Check your inbox (and spam folder) — tapping the link opens the app and lets you set a new password.';
 
   @override
   String get rp_mismatch => 'Passwords don\'t match.';
@@ -1246,7 +1329,8 @@ class AppL10nEn extends AppL10n {
   String get rp_title => 'Set a New Password';
 
   @override
-  String get rp_subtitle => 'Link verified. Choose a new password for your account.';
+  String get rp_subtitle =>
+      'Link verified. Choose a new password for your account.';
 
   @override
   String get rp_saveBtn => 'SAVE PASSWORD';
@@ -1276,7 +1360,8 @@ class AppL10nEn extends AppL10n {
   String get del_finalConfirm => 'Final Confirmation';
 
   @override
-  String get del_finalWarning => 'You\'re about to permanently delete your account and all your data. This action cannot be undone.';
+  String get del_finalWarning =>
+      'You\'re about to permanently delete your account and all your data. This action cannot be undone.';
 
   @override
   String get del_deleteAccount => 'Delete Account';
@@ -1288,13 +1373,15 @@ class AppL10nEn extends AppL10n {
   String get del_downloadTitle => 'Download Your Data';
 
   @override
-  String get del_downloadBody => 'Before deleting, you can download and keep all your data (profile, words, practice sessions, messages) in JSON format.';
+  String get del_downloadBody =>
+      'Before deleting, you can download and keep all your data (profile, words, practice sessions, messages) in JSON format.';
 
   @override
   String get del_exportBtn => 'Export My Data';
 
   @override
-  String get del_deleteIntro => 'This action cannot be undone. When you delete your account, all of the following data is permanently removed:';
+  String get del_deleteIntro =>
+      'This action cannot be undone. When you delete your account, all of the following data is permanently removed:';
 
   @override
   String get del_bullet1 => 'Profile and username';
@@ -1337,7 +1424,8 @@ class AppL10nEn extends AppL10n {
   String get onb_welcomeTitle => 'Welcome to VoiceLingo';
 
   @override
-  String get onb_welcomeBody => 'Speak. Improve. Repeat.\nYour AI coach guides every conversation.';
+  String get onb_welcomeBody =>
+      'Speak. Improve. Repeat.\nYour AI coach guides every conversation.';
 
   @override
   String get onb_permTitle => 'Two quick permissions';
@@ -1370,7 +1458,8 @@ class AppL10nEn extends AppL10n {
   String get onb_motivTitle => 'Why are you learning?';
 
   @override
-  String get onb_motivSubtitle => 'This helps us pick the right scenarios for you.';
+  String get onb_motivSubtitle =>
+      'This helps us pick the right scenarios for you.';
 
   @override
   String get onb_motivExam => 'Exam';
@@ -1379,7 +1468,8 @@ class AppL10nEn extends AppL10n {
   String get onb_motivHobby => 'Hobby';
 
   @override
-  String get onb_charSubtitle => 'Each coach has a different voice and style. You can change this anytime in Settings.';
+  String get onb_charSubtitle =>
+      'Each coach has a different voice and style. You can change this anytime in Settings.';
 
   @override
   String get placement_title => 'Placement Test';
@@ -1393,7 +1483,8 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get conn_offlineBanner => 'You are offline. Saved progress will sync later.';
+  String get conn_offlineBanner =>
+      'You are offline. Saved progress will sync later.';
 
   @override
   String get levelup_title => 'LEVEL UP!';

@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/errors/app_exception.dart';
+import '../core/storage/hive_boxes.dart';
 
 class AccountService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -61,6 +62,10 @@ class AccountService {
       throw AccountException(msg);
     }
     await _supabase.auth.signOut();
+    // Hesap silindi — cihazdaki kullanıcı verisi de kalkmalı.
+    try {
+      await HiveBoxes.clearUserData();
+    } catch (_) {}
   }
 }
 

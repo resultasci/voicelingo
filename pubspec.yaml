@@ -88,6 +88,21 @@ dev_dependencies:
   riverpod_generator: ^2.4.0
   hive_generator: ^2.0.1
   mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.14.1
+
+# Branded launcher icon. Source PNGs are produced by tool/gen_icon.dart
+# (run: flutter test tool/gen_icon_test.dart) then regenerated here with:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0A0A0A"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  web:
+    generate: false
 
 
 # For information on the generic Dart part of this file, see the

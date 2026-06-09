@@ -106,6 +106,14 @@ class WordEnrichment {
       );
 }
 
+/// A single word/translation pair produced by topic-based AI generation.
+/// `en` is the word in the learner's target language; `tr` its Turkish meaning.
+class GeneratedWord {
+  final String en;
+  final String tr;
+  const GeneratedWord(this.en, this.tr);
+}
+
 /// All AI calls go through the `ai-proxy` Supabase Edge Function. The Gemini
 /// API key lives only as a Supabase function secret — never in the app bundle.
 class GeminiService {
@@ -276,6 +284,44 @@ class GeminiService {
       return WordEnrichment.fromJson(parsed);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
+      throw _fromDio(e);
+    }
+  }
+
+  /// Generates up to [count] topic-based word/translation pairs. Returns an
+  /// empty list when the response is unparseable; throws [AiException] on
+  /// transport/rate-limit errors so the UI can surface the (already localized)
+  /// message — notably the 429 daily-limit text.
+  Future<List<GeneratedWord>> generateWords(
+    String topic, {
+    int count = 10,
+    String targetLanguage = 'en',
+    String userLevel = 'A2',
+  }) async {
+    try {
+      final res = await _dio.post(
+        '/generate-words',
+        data: {
+          'topic': topic,
+          'count': count,
+          'target_language': targetLanguage,
+          'user_level': userLevel,
+        },
+        options: Options(headers: _headers(contentType: 'application/json')),
+      );
+      _ensureOk(res);
+      final parsed = _parseJsonBody(res.data);
+      final raw = parsed['words'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map>()
+          .map((m) => GeneratedWord(
+                (m['en'] as String?)?.trim() ?? '',
+                (m['tr'] as String?)?.trim() ?? '',
+              ))
+          .where((w) => w.en.isNotEmpty && w.tr.isNotEmpty)
+          .toList();
+    } on DioException catch (e) {
       throw _fromDio(e);
     }
   }

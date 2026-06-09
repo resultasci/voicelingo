@@ -412,8 +412,8 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
                 ),
                 child: Text(
                   opt,
-                  style: AppText.title(15,
-                      color: c.ink, weight: FontWeight.w600),
+                  style:
+                      AppText.title(15, color: c.ink, weight: FontWeight.w600),
                 ),
               ),
             ),

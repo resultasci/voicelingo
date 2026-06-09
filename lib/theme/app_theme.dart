@@ -265,7 +265,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       inkDim: Color.lerp(inkDim, other.inkDim, t)!,
       rule: Color.lerp(rule, other.rule, t)!,
       primary: Color.lerp(primary, other.primary, t)!,
-      primaryContainer: Color.lerp(primaryContainer, other.primaryContainer, t)!,
+      primaryContainer:
+          Color.lerp(primaryContainer, other.primaryContainer, t)!,
       primaryFixed: Color.lerp(primaryFixed, other.primaryFixed, t)!,
       primaryFixedDim: Color.lerp(primaryFixedDim, other.primaryFixedDim, t)!,
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
@@ -273,8 +274,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
       secondaryContainer:
           Color.lerp(secondaryContainer, other.secondaryContainer, t)!,
       tertiary: Color.lerp(tertiary, other.tertiary, t)!,
-      tertiaryContainer: Color.lerp(tertiaryContainer, other.tertiaryContainer, t)!,
-      tertiaryFixedDim: Color.lerp(tertiaryFixedDim, other.tertiaryFixedDim, t)!,
+      tertiaryContainer:
+          Color.lerp(tertiaryContainer, other.tertiaryContainer, t)!,
+      tertiaryFixedDim:
+          Color.lerp(tertiaryFixedDim, other.tertiaryFixedDim, t)!,
       error: Color.lerp(error, other.error, t)!,
       errorContainer: Color.lerp(errorContainer, other.errorContainer, t)!,
       success: Color.lerp(success, other.success, t)!,
@@ -376,11 +379,54 @@ class AppText {
       );
 }
 
+/// Shared-axis style route transition: fade + slight upward slide. Replaces
+/// the stock Android zoom so every push/pop across the app feels cohesive
+/// with the cosmic theme. Pops reverse the same motion.
+class CosmicPageTransitionsBuilder extends PageTransitionsBuilder {
+  const CosmicPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.035),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
+    );
+  }
+}
+
+const _pageTransitions = PageTransitionsTheme(
+  builders: {
+    TargetPlatform.android: CosmicPageTransitionsBuilder(),
+    TargetPlatform.iOS: CosmicPageTransitionsBuilder(),
+    TargetPlatform.windows: CosmicPageTransitionsBuilder(),
+    TargetPlatform.macOS: CosmicPageTransitionsBuilder(),
+    TargetPlatform.linux: CosmicPageTransitionsBuilder(),
+  },
+);
+
 ThemeData buildAppTheme() {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
     extensions: const [AppPalette.dark],
+    pageTransitionsTheme: _pageTransitions,
     scaffoldBackgroundColor: AppColors.bg,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryContainer,
@@ -416,6 +462,7 @@ ThemeData buildLightAppTheme() {
     useMaterial3: true,
     brightness: Brightness.light,
     extensions: const [AppPalette.light],
+    pageTransitionsTheme: _pageTransitions,
     scaffoldBackgroundColor: AppPalette.light.bg,
     colorScheme: const ColorScheme.light(
       primary: Color(0xFF008CA6), // light primaryContainer
@@ -431,7 +478,8 @@ ThemeData buildLightAppTheme() {
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       centerTitle: false,
-      titleTextStyle: AppText.label(11, color: AppPalette.light.primaryContainer),
+      titleTextStyle:
+          AppText.label(11, color: AppPalette.light.primaryContainer),
       iconTheme: const IconThemeData(color: Color(0xFF008CA6)),
     ),
     snackBarTheme: SnackBarThemeData(
@@ -450,11 +498,65 @@ ThemeData buildLightAppTheme() {
 // COSMIC WIDGETS
 // =============================================================================
 
-/// Deep-space background with three soft radial color blooms + a faint star
+/// Returns true when motion should be suppressed — either the user enabled the
+/// OS "remove animations" accessibility setting, or the device is a low tier
+/// where extra animation budget risks jank. Shared by every ambient animation
+/// (cosmic background breathe, staggered list entrances) so the policy stays
+/// consistent across the app.
+bool reduceMotion(BuildContext context) {
+  final disabled = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+  return disabled || DevicePerf.detect() == DeviceTier.low;
+}
+
+/// Deep-space background with two soft radial color blooms + a faint star
 /// field. Sits behind every screen.
-class CosmicBackground extends StatelessWidget {
+///
+/// The blooms gently "breathe" — their centers (and radii/opacity) drift along
+/// a tiny easing loop so the gradient feels alive without distracting. Motion is
+/// suppressed via [reduceMotion]; in that case the original static gradient is
+/// rendered verbatim, so behavior is unchanged for accessibility/low-end.
+class CosmicBackground extends StatefulWidget {
   final Widget child;
   const CosmicBackground({super.key, required this.child});
+
+  @override
+  State<CosmicBackground> createState() => _CosmicBackgroundState();
+}
+
+class _CosmicBackgroundState extends State<CosmicBackground>
+    with SingleTickerProviderStateMixin {
+  // Both null when motion is disabled — the build falls back to a static
+  // gradient. Kept in lockstep so toggling reduce-motion never leaks either.
+  AnimationController? _ctrl;
+  CurvedAnimation? _t;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // MediaQuery isn't available in initState; recompute here so an accessibility
+    // toggle at runtime correctly starts/stops the animation.
+    if (reduceMotion(context)) {
+      _t?.dispose();
+      _ctrl?.dispose();
+      _t = null;
+      _ctrl = null;
+      return;
+    }
+    if (_ctrl == null) {
+      _ctrl = AnimationController(
+        vsync: this,
+        duration: const Duration(seconds: 22),
+      )..repeat(reverse: true);
+      _t = CurvedAnimation(parent: _ctrl!, curve: Curves.easeInOut);
+    }
+  }
+
+  @override
+  void dispose() {
+    _t?.dispose();
+    _ctrl?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -462,40 +564,68 @@ class CosmicBackground extends StatelessWidget {
     final dark = palette.isDark;
     // Bloom tints: cyan top-left, violet bottom-right — softer in light mode.
     final cyanBloom = dark ? const Color(0x1400F2FF) : const Color(0x0F008CA6);
-    final violetBloom = dark ? const Color(0x147318FF) : const Color(0x0D6B26D9);
+    final violetBloom =
+        dark ? const Color(0x147318FF) : const Color(0x0D6B26D9);
     final fade = palette.bg.withOpacity(0);
+
     return Container(
-      decoration: BoxDecoration(
-        color: palette.bg,
-        gradient: RadialGradient(
-          center: const Alignment(-0.7, -0.2),
-          radius: 1.4,
-          colors: [cyanBloom, fade],
-        ),
-      ),
+      // Base color stays static; only the inner bloom layer animates.
+      color: palette.bg,
       child: Stack(
         children: [
+          // Animated (or static) bloom layer — isolated in its own
+          // RepaintBoundary so it never invalidates the star field or child.
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: IgnorePointer(
+                child: _t == null
+                    ? _blooms(0, cyanBloom, violetBloom, fade)
+                    : AnimatedBuilder(
+                        animation: _t!,
+                        builder: (_, __) =>
+                            _blooms(_t!.value, cyanBloom, violetBloom, fade),
+                      ),
+              ),
+            ),
+          ),
           // RepaintBoundary: static star field, never invalidates due to upstream
           // rebuilds. Only rendered on dark surfaces (white stars vanish on light).
           if (dark)
             const Positioned.fill(
               child: RepaintBoundary(child: _StarField()),
             ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: const Alignment(0.8, 0.6),
-                    radius: 1.0,
-                    colors: [violetBloom, fade],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          child,
+          widget.child,
         ],
+      ),
+    );
+  }
+
+  /// Renders the two radial blooms at progress [t] (0..1). At t=0 this matches
+  /// the original static layout exactly.
+  Widget _blooms(double t, Color cyan, Color violet, Color fade) {
+    final cyanCenter = Alignment.lerp(
+        const Alignment(-0.7, -0.2), const Alignment(-0.5, 0.0), t)!;
+    final violetCenter = Alignment.lerp(
+        const Alignment(0.8, 0.6), const Alignment(0.6, 0.4), t)!;
+    final cyanRadius = lerpDouble(1.4, 1.55, t)!;
+    final violetRadius = lerpDouble(1.0, 1.12, t)!;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: RadialGradient(
+          center: cyanCenter,
+          radius: cyanRadius,
+          colors: [cyan, fade],
+        ),
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: violetCenter,
+            radius: violetRadius,
+            colors: [violet, fade],
+          ),
+        ),
+        child: const SizedBox.expand(),
       ),
     );
   }
@@ -733,8 +863,7 @@ class NeonButton extends StatelessWidget {
                       Text(
                         label.toUpperCase(),
                         style: AppText.label(12,
-                            color: onAccent,
-                            weight: FontWeight.w700),
+                            color: onAccent, weight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -785,8 +914,8 @@ class GhostButton extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               Text(label.toUpperCase(),
-                  style:
-                      AppText.label(11, color: accent, weight: FontWeight.w700)),
+                  style: AppText.label(11,
+                      color: accent, weight: FontWeight.w700)),
             ],
           ),
         ),
@@ -858,8 +987,7 @@ class NeonField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: palette.primaryContainer, width: 1.5),
+          borderSide: BorderSide(color: palette.primaryContainer, width: 1.5),
         ),
       ),
     );
@@ -872,8 +1000,7 @@ class SectionLabel extends StatelessWidget {
   final Color? color;
   final bool withRule;
 
-  const SectionLabel(this.text,
-      {super.key, this.color, this.withRule = true});
+  const SectionLabel(this.text, {super.key, this.color, this.withRule = true});
 
   @override
   Widget build(BuildContext context) {

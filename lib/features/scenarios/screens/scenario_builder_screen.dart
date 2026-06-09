@@ -292,9 +292,8 @@ class _CategoryRow extends StatelessWidget {
                   : c.bgCard.withOpacity(0.5),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color: isSelected
-                    ? c.primaryContainer
-                    : c.inkDim.withOpacity(0.2),
+                color:
+                    isSelected ? c.primaryContainer : c.inkDim.withOpacity(0.2),
                 width: isSelected ? 2 : 1,
               ),
             ),

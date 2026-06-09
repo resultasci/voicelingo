@@ -86,6 +86,8 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
       }
     }
     await SettingsService().setPlacementDone(true);
+    // cefr_level az önce yazıldı — Hive'daki eski profil tekrar servis edilmesin.
+    await bustProfileCache();
     ref.invalidate(profileProvider);
     if (!mounted) return;
     setState(() => _saving = false);

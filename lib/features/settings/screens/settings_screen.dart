@@ -276,8 +276,7 @@ class _TopBar extends StatelessWidget {
           Semantics(
             label: l.common_back,
             child: IconButton(
-              icon: Icon(Icons.arrow_back,
-                  color: c.primaryContainer, size: 22),
+              icon: Icon(Icons.arrow_back, color: c.primaryContainer, size: 22),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
@@ -288,8 +287,7 @@ class _TopBar extends StatelessWidget {
                 style: AppText.label(13,
                         color: c.primaryContainer, weight: FontWeight.w700)
                     .copyWith(
-                  shadows:
-                      neonGlow(c.primaryContainer, blur: 12, opacity: 0.8),
+                  shadows: neonGlow(c.primaryContainer, blur: 12, opacity: 0.8),
                 ),
               ),
             ),
@@ -334,8 +332,7 @@ class _AccountSection extends StatelessWidget {
                 label: l.auth_changePassword,
                 button: true,
                 child: IconButton(
-                  icon: Icon(Icons.edit,
-                      color: c.primaryContainer, size: 18),
+                  icon: Icon(Icons.edit, color: c.primaryContainer, size: 18),
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -436,8 +433,7 @@ class _CommunicationsSection extends StatelessWidget {
                       child: Text(
                         '${reviewHour.toString().padLeft(2, '0')}:00',
                         style: AppText.title(16,
-                            color: c.primaryContainer,
-                            weight: FontWeight.w700),
+                            color: c.primaryContainer, weight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -548,8 +544,7 @@ class _Section extends StatelessWidget {
                 style: AppText.title(20,
                         color: c.primaryContainer, weight: FontWeight.w600)
                     .copyWith(
-                  shadows:
-                      neonGlow(c.primaryContainer, blur: 10, opacity: 0.5),
+                  shadows: neonGlow(c.primaryContainer, blur: 10, opacity: 0.5),
                 ),
               ),
             ],
@@ -618,8 +613,8 @@ class _ToggleRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: AppText.ink(15,
-                        color: c.ink, weight: FontWeight.w500)),
+                    style:
+                        AppText.ink(15, color: c.ink, weight: FontWeight.w500)),
                 const SizedBox(height: 4),
                 Text(subtitle.toUpperCase(),
                     style: AppText.label(9,
@@ -655,9 +650,7 @@ class _NeonSwitch extends StatelessWidget {
         height: 28,
         padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
-          color: value
-              ? c.primaryContainer.withOpacity(0.18)
-              : c.surfaceHigh,
+          color: value ? c.primaryContainer.withOpacity(0.18) : c.surfaceHigh,
           border: Border.all(
             color: value ? c.primaryContainer : c.inkDim.withOpacity(0.5),
           ),

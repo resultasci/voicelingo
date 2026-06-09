@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icon/app_icon.png" alt="VoiceLingo logo" width="120">
+</p>
+
 # VoiceLingo 🎙️
 
 > Türk kullanıcılar için tasarlanmış, **AI destekli sesli İngilizce öğrenme** uygulaması.
@@ -24,6 +28,7 @@
 | 🏆 **Oyunlaştırma** | XP & otomatik seviye (DB trigger), günlük seri (streak) + dondurma, rozetler, günlük questler. |
 | 📈 **İlerleme analizi** | 90 günlük aktivite heatmap'i, mastery dökümü (kelime/gramer/ders), en sık yapılan hatalar. |
 | 🌐 **Offline & çoklu dil** | Hive tabanlı read-through cache, bağlantı durumu banner'ı, TR + EN tam yerelleştirme. |
+| 🎨 **COSMOS tasarım sistemi** | Kod-çizimi marka logosu (konuşma balonu + ses dalgası), neon cyan/violet tema (koyu + açık), yumuşak sayfa/tab geçiş animasyonları, cihaz katmanına duyarlı performans (blur/yıldız/animasyon bütçesi). |
 
 ---
 
@@ -92,10 +97,10 @@ Kullanıcı verisinin güvenli silinmesi (doğrudan tablo silme + `auth.users` C
 
 ## 🗄️ Veritabanı (Supabase / Postgres)
 
-- **30 migration** — şema, RLS, rate-limit ledger, oyunlaştırma, ders yolu, gramer/sözlük, senaryolar, analiz view/RPC'leri ve bütünlük kısıtları.
+- **33 migration** — şema, RLS, rate-limit ledger, oyunlaştırma, ders yolu, gramer/sözlük, senaryolar, analiz view/RPC'leri ve bütünlük kısıtları.
 - **Güvenlik:** kullanıcıya ait tüm tablolarda RLS + `FORCE ROW LEVEL SECURITY`; `SECURITY DEFINER` fonksiyonlarda `search_path` sabitlenmiş.
 - **Bütünlük:** XP/level/skor/durum alanlarında 13 `CHECK` kısıtı (hepsi doğrulanmış), FK ve sık sorgulanan kolonlarda index'ler.
-- **Atomik mantık RPC'lerde:** `complete_lesson`, `add_xp`, badge/quest ilerleme, `incr_api_usage`, analiz RPC'leri.
+- **Atomik mantık RPC'lerde:** `complete_lesson`, `add_xp`, badge/quest ilerleme, `incr_api_usage`, analiz RPC'leri; tek round-trip batch RPC'ler (`add_words_batch`, `commit_word_reviews`, `append_message`).
 
 ---
 
@@ -126,7 +131,7 @@ lib/
 supabase/
 ├── functions/ai-proxy/      # Gemini proxy + rate limit
 ├── functions/account-admin/ # Hesap silme
-└── migrations/              # 30 migration
+└── migrations/              # 33 migration
 ```
 
 ---

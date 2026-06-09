@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
 import '../../../core/audio/audio_permission_service.dart';
+import '../../../core/widgets/brand_logo.dart';
 import '../../../features/conversation/services/characters_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
@@ -218,9 +220,7 @@ class _ProgressBar extends StatelessWidget {
               height: 4,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(2),
-                color: active
-                    ? c.primaryContainer
-                    : c.inkDim.withOpacity(0.15),
+                color: active ? c.primaryContainer : c.inkDim.withOpacity(0.15),
                 boxShadow: active
                     ? [
                         BoxShadow(
@@ -251,25 +251,7 @@ class _WelcomePage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                c.primaryContainer,
-                c.secondaryContainer,
-              ]),
-              boxShadow: [
-                BoxShadow(
-                  color: c.primaryContainer.withOpacity(0.5),
-                  blurRadius: 30,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 56),
-          ),
+          const BrandLogo(size: 120),
           const SizedBox(height: 32),
           Text(
             l.onb_welcomeTitle,
@@ -556,9 +538,7 @@ class _OptionTile extends StatelessWidget {
               : c.bgCard.withOpacity(0.5),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected
-                ? c.primaryContainer
-                : c.inkDim.withOpacity(0.2),
+            color: selected ? c.primaryContainer : c.inkDim.withOpacity(0.2),
             width: selected ? 2 : 1,
           ),
         ),
@@ -612,9 +592,8 @@ class _CharacterPage extends StatelessWidget {
               itemBuilder: (_, i) {
                 final character = AICharacters.all[i];
                 final selected = character.id == selectedId;
-                final borderColor = selected
-                    ? c.primaryContainer
-                    : c.inkDim.withOpacity(0.2);
+                final borderColor =
+                    selected ? c.primaryContainer : c.inkDim.withOpacity(0.2);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: InkWell(
@@ -631,19 +610,10 @@ class _CharacterPage extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(colors: [
-                                c.primaryContainer,
-                                c.secondaryContainer,
-                              ]),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(character.avatarEmoji,
-                                style: const TextStyle(fontSize: 26)),
+                          CharacterAvatar(
+                            character: character,
+                            size: 52,
+                            selected: selected,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -730,9 +700,7 @@ class _IconOptionTile extends StatelessWidget {
               : c.bgCard.withOpacity(0.5),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected
-                ? c.primaryContainer
-                : c.inkDim.withOpacity(0.2),
+            color: selected ? c.primaryContainer : c.inkDim.withOpacity(0.2),
             width: selected ? 2 : 1,
           ),
         ),

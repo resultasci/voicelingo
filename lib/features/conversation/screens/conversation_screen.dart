@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ai/ai_character.dart';
+import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
 import '../../../core/audio/amplitude_history.dart';
 import '../../../core/audio/audio_recorder_service.dart';
@@ -22,6 +24,7 @@ import '../../gamification/models/daily_quest.dart';
 import '../../gamification/providers/gamification_providers.dart';
 import '../../scenarios/screens/scenario_picker_screen.dart';
 import '../services/characters_service.dart';
+import 'character_picker_screen.dart';
 import '../services/streaming_tts_buffer.dart';
 import 'conversation_history_screen.dart';
 
@@ -42,6 +45,10 @@ class _Message {
   bool isError;
   bool persisted = false;
   String? remoteId;
+
+  /// Used to run the entrance animation only for freshly added bubbles —
+  /// items re-entering the viewport on scroll render statically.
+  final DateTime createdAt = DateTime.now();
 
   _Message({
     required this.isUser,
@@ -117,6 +124,24 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     }
     await _initTts();
     await _ensureConversation();
+  }
+
+  /// Header avatar tap → character picker. On return, hot-swap the active
+  /// character (voice + system prompt) without resetting the conversation.
+  Future<void> _openCharacterPicker() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CharacterPickerScreen()),
+    );
+    if (!mounted) return;
+    try {
+      final picked = await ref.read(charactersServiceProvider).getSelected();
+      if (!mounted || picked.id == _character.id) return;
+      setState(() => _character = picked);
+      await _tts.setLanguage(picked.ttsLocale);
+      await _tts.setPitch(picked.ttsPitch);
+    } catch (_) {
+      // Keep the current character on failure.
+    }
   }
 
   StreamingTtsBuffer? _activeBuffer;
@@ -264,6 +289,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   Future<void> _toggleMic() async {
+    HapticFeedback.lightImpact();
     if (_status == _ConvStatus.listening) {
       await _stopListening();
     } else if (_status == _ConvStatus.ready) {
@@ -476,6 +502,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         'p_xp_earned': 5,
         'p_timezone_offset': tzStr,
       });
+      // XP/streak just changed server-side — drop the cached profile so the
+      // dashboard HUD reflects it on next read instead of after the 6h TTL.
+      await bustProfileCache();
+      if (mounted) ref.invalidate(profileProvider);
     } catch (_) {}
     try {
       final quests = ref.read(dailyQuestsProvider).value ?? const [];
@@ -550,37 +580,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       );
       if (!mounted) return;
 
-      // XP for an AI exchange — best-effort.
-      try {
-        final tzo = DateTime.now().timeZoneOffset.inHours;
-        final sign = tzo >= 0 ? '+' : '-';
-        final tzStr = '$sign${tzo.abs().toString().padLeft(2, '0')}:00';
-        await Supabase.instance.client.rpc('log_practice_session', params: {
-          'p_mode': 'conversation',
-          'p_words_practiced': 0,
-          'p_avg_score': 5.0,
-          'p_xp_earned': 5,
-          'p_timezone_offset': tzStr,
-        });
-      } catch (_) {}
-
-      // Faz 5: Daily quest progress — conversation_turns hedefini artır.
-      // Best-effort: quest yoksa veya zaten tamamsa sessizce geç.
-      try {
-        final quests = ref.read(dailyQuestsProvider).value ?? const [];
-        final target = quests.where(
-            (q) => q.type == QuestType.conversationTurns && !q.isCompleted);
-        if (target.isNotEmpty) {
-          final svc = ref.read(dailyQuestsServiceProvider);
-          await svc.updateProgress(questId: target.first.id, delta: 1);
-          ref.invalidate(dailyQuestsProvider);
-        }
-      } catch (_) {}
-
       final msg = _addMessage(isUser: false, text: aiResponse);
       _persistMessage(msg);
       _speakMessage(aiResponse);
       setState(() => _status = _ConvStatus.playing);
+
+      // XP + daily quest — best-effort, never delays rendering the reply.
+      unawaited(_logTurnSideEffects());
     } catch (e) {
       if (!mounted) return;
       final l = AppL10n.of(context);
@@ -665,26 +671,37 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     final convId = _conversationId;
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (convId == null || userId == null) return;
+    final role = msg.isUser ? 'user' : 'assistant';
     try {
-      final row = await Supabase.instance.client
-          .from('messages')
-          .insert({
-            'conversation_id': convId,
-            'user_id': userId,
-            'role': msg.isUser ? 'user' : 'assistant',
-            'content': msg.text,
-          })
-          .select()
-          .single();
+      // Single round-trip: insert + bump conversations.updated_at in one RPC.
+      final id = await Supabase.instance.client.rpc('append_message', params: {
+        'p_conversation_id': convId,
+        'p_role': role,
+        'p_content': msg.text,
+      });
       msg.persisted = true;
-      msg.remoteId = row['id'] as String?;
-      // Bump the conversation's updated_at for nice ordering in history.
-      await Supabase.instance.client
-          .from('conversations')
-          .update({'updated_at': DateTime.now().toUtc().toIso8601String()}).eq(
-              'id', convId);
+      msg.remoteId = id as String?;
     } catch (_) {
-      // Persistence is best-effort.
+      // Fallback: legacy 2-step path (e.g. RPC not deployed yet).
+      try {
+        final row = await Supabase.instance.client
+            .from('messages')
+            .insert({
+              'conversation_id': convId,
+              'user_id': userId,
+              'role': role,
+              'content': msg.text,
+            })
+            .select()
+            .single();
+        msg.persisted = true;
+        msg.remoteId = row['id'] as String?;
+        await Supabase.instance.client.from('conversations').update({
+          'updated_at': DateTime.now().toUtc().toIso8601String()
+        }).eq('id', convId);
+      } catch (_) {
+        // Persistence is best-effort.
+      }
     }
   }
 
@@ -800,8 +817,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             Semantics(
               label: l.common_back,
               child: IconButton(
-                icon: Icon(Icons.arrow_back,
-                    color: c.primaryContainer, size: 22),
+                icon:
+                    Icon(Icons.arrow_back, color: c.primaryContainer, size: 22),
                 padding: const EdgeInsets.all(6),
                 constraints: tightConstraints,
                 visualDensity: compactBtn,
@@ -811,15 +828,47 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             const SizedBox(width: 4),
           ],
           Expanded(
-            child: Text(
-              widget.scenario?.title ?? l.conv_practiceMode,
-              style: AppText.title(18, color: c.primary, weight: FontWeight.w600)
-                  .copyWith(
-                shadows: neonGlow(c.primary, blur: 8, opacity: 0.3),
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: widget.scenario != null
+                ? Text(
+                    widget.scenario!.title,
+                    style: AppText.title(18,
+                            color: c.primary, weight: FontWeight.w600)
+                        .copyWith(
+                      shadows: neonGlow(c.primary, blur: 8, opacity: 0.3),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : Semantics(
+                    label: l.conv_practiceMode,
+                    button: true,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(99),
+                      onTap: _openCharacterPicker,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CharacterAvatar(character: _character, size: 30),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              _character.displayName,
+                              style: AppText.title(17,
+                                      color: c.primary, weight: FontWeight.w600)
+                                  .copyWith(
+                                shadows:
+                                    neonGlow(c.primary, blur: 8, opacity: 0.3),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(Icons.expand_more, color: c.inkDim, size: 16),
+                        ],
+                      ),
+                    ),
+                  ),
           ),
           _SpeedToggle(
             rate: _ttsRate,
@@ -842,7 +891,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               tooltip: _handsFreeMode
                   ? l.conv_handsFreeOnTip
                   : l.conv_handsFreeOffTip,
-              onPressed: () => setState(() => _handsFreeMode = !_handsFreeMode),
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                setState(() => _handsFreeMode = !_handsFreeMode);
+              },
             ),
           ),
           Semantics(
@@ -865,8 +917,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             Semantics(
               label: l.conv_newChat,
               child: IconButton(
-                icon: Icon(Icons.add_comment_outlined,
-                    color: c.inkDim, size: 20),
+                icon:
+                    Icon(Icons.add_comment_outlined, color: c.inkDim, size: 20),
                 padding: const EdgeInsets.all(6),
                 constraints: tightConstraints,
                 visualDensity: compactBtn,
@@ -888,14 +940,24 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             ),
           ),
           const SizedBox(width: 2),
-          NeonChip(
-            text: _statusLabel(l),
-            color: _statusColor(c),
-            icon: _status == _ConvStatus.connecting
-                ? Icons.sync
-                : _status == _ConvStatus.listening
-                    ? Icons.fiber_manual_record
-                    : null,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, anim) => FadeTransition(
+              opacity: anim,
+              child: ScaleTransition(scale: anim, child: child),
+            ),
+            child: NeonChip(
+              key: ValueKey(_status),
+              text: _statusLabel(l),
+              color: _statusColor(c),
+              icon: _status == _ConvStatus.connecting
+                  ? Icons.sync
+                  : _status == _ConvStatus.listening
+                      ? Icons.fiber_manual_record
+                      : null,
+            ),
           ),
         ],
       ),
@@ -931,16 +993,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: c.primaryContainer.withOpacity(0.18),
-              border: Border.all(color: c.primaryContainer.withOpacity(0.5)),
-            ),
-            child: Icon(Icons.smart_toy, color: c.primaryContainer, size: 16),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: CharacterAvatar(character: _character, size: 32),
           ),
           const SizedBox(width: 10),
           Container(
@@ -954,14 +1009,14 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                 bottomRight: Radius.circular(18),
               ),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildBlinkingDot(0),
-                const SizedBox(width: 4),
-                _buildBlinkingDot(1),
-                const SizedBox(width: 4),
-                _buildBlinkingDot(2),
+                _BlinkingDot(index: 0),
+                SizedBox(width: 4),
+                _BlinkingDot(index: 1),
+                SizedBox(width: 4),
+                _BlinkingDot(index: 2),
               ],
             ),
           ),
@@ -970,34 +1025,34 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     );
   }
 
-  Widget _buildBlinkingDot(int index) {
-    // Basit bir scale & opacity animasyonu için Shimmer eklenebilir veya hazır Lottie.
-    // Şimdilik flutter_riverpod bağlamında basit bir shimmer widget dönelim.
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 600 + (index * 200)),
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: (value < 0.5 ? value * 2 : 2 - (value * 2)).clamp(0.2, 1.0),
-          child: Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: context.c.primaryContainer,
-              shape: BoxShape.circle,
-            ),
-          ),
-        );
-      },
-      onEnd: () => setState(() {}),
-    );
+  /// Long-press anywhere on a bubble → copy its text.
+  void _copyMessage(_Message msg) {
+    Clipboard.setData(ClipboardData(text: msg.text));
+    HapticFeedback.selectionClick();
+    final l = AppL10n.of(context);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(l.conv_copied),
+        duration: const Duration(seconds: 1),
+      ));
+  }
+
+  /// Speaker button under AI bubbles — re-listen to any past reply.
+  Future<void> _replayMessage(_Message msg) async {
+    if (_status == _ConvStatus.listening || _status == _ConvStatus.thinking) {
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() => _status = _ConvStatus.playing);
+    await _speakMessage(msg.text);
   }
 
   Widget _buildBubble(_Message msg) {
     final l = AppL10n.of(context);
     final c = context.c;
     final isUser = msg.isUser;
-    return Padding(
+    final bubble = Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment:
@@ -1009,18 +1064,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (!isUser) ...[
-                Container(
-                  width: 32,
-                  height: 32,
-                  margin: const EdgeInsets.only(top: 4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: c.primaryContainer.withOpacity(0.18),
-                    border:
-                        Border.all(color: c.primaryContainer.withOpacity(0.5)),
-                  ),
-                  child: Icon(Icons.smart_toy,
-                      color: c.primaryContainer, size: 16),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: CharacterAvatar(character: _character, size: 32),
                 ),
                 const SizedBox(width: 10),
               ],
@@ -1028,42 +1074,44 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width * 0.72),
-                  child: isUser
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: c.primaryContainer.withOpacity(0.10),
-                            border: Border.all(
-                                color: c.primaryContainer.withOpacity(0.4)),
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(18),
-                              topRight: Radius.circular(4),
-                              bottomLeft: Radius.circular(18),
-                              bottomRight: Radius.circular(18),
+                  child: GestureDetector(
+                    onLongPress: () => _copyMessage(msg),
+                    child: isUser
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: c.primaryContainer.withOpacity(0.10),
+                              border: Border.all(
+                                  color: c.primaryContainer.withOpacity(0.4)),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(18),
+                                topRight: Radius.circular(4),
+                                bottomLeft: Radius.circular(18),
+                                bottomRight: Radius.circular(18),
+                              ),
+                            ),
+                            child: Text(
+                              msg.text,
+                              style: AppText.ink(14,
+                                  color: c.primary, weight: FontWeight.w500),
+                            ),
+                          )
+                        : GlassPanel(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            radius: 18,
+                            borderColor:
+                                msg.isError ? c.error.withOpacity(0.5) : null,
+                            child: Text(
+                              msg.text,
+                              style: AppText.ink(
+                                14,
+                                color: msg.isError ? c.error : c.ink,
+                              ),
                             ),
                           ),
-                          child: Text(
-                            msg.text,
-                            style: AppText.ink(14,
-                                color: c.primary, weight: FontWeight.w500),
-                          ),
-                        )
-                      : GlassPanel(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          radius: 18,
-                          borderColor: msg.isError
-                              ? c.error.withOpacity(0.5)
-                              : null,
-                          child: Text(
-                            msg.text,
-                            style: AppText.ink(
-                              14,
-                              color: msg.isError ? c.error : c.ink,
-                            ),
-                          ),
-                        ),
+                  ),
                 ),
               ),
               if (isUser) ...[
@@ -1089,6 +1137,23 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               padding: const EdgeInsets.only(top: 6, right: 42),
               child: _FeedbackPill(evaluation: msg.evaluation!),
             ),
+          if (!isUser && !msg.isError)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 42),
+              child: Semantics(
+                label: l.conv_replay,
+                button: true,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(99),
+                  onTap: () => _replayMessage(msg),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(Icons.volume_up_outlined,
+                        color: c.inkDim, size: 18),
+                  ),
+                ),
+              ),
+            ),
           if (msg.isError)
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 42),
@@ -1106,6 +1171,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         ],
       ),
     );
+
+    // Entrance animation only for freshly appended bubbles; recycled items
+    // (scrolling back up) and reduce-motion users get a static render.
+    final isFresh =
+        DateTime.now().difference(msg.createdAt).inMilliseconds < 600;
+    if (!isFresh || reduceMotion(context)) return bubble;
+    return _BubbleEntrance(fromRight: isUser, child: bubble);
   }
 
   Widget _buildEmptyState({required bool isBusy}) {
@@ -1124,39 +1196,48 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         children: [
           const SizedBox(height: 8),
           Center(
-            child: Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: c.primaryContainer.withOpacity(0.12),
-                border:
-                    Border.all(color: c.primaryContainer.withOpacity(0.45)),
-                boxShadow: [
-                  BoxShadow(
-                    color: c.primaryContainer.withOpacity(0.25),
-                    blurRadius: 22,
-                  ),
-                ],
-              ),
-              child: isBusy
-                  ? Padding(
+            child: isBusy
+                ? Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: c.primaryContainer.withOpacity(0.12),
+                      border: Border.all(
+                          color: c.primaryContainer.withOpacity(0.45)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: c.primaryContainer.withOpacity(0.25),
+                          blurRadius: 22,
+                        ),
+                      ],
+                    ),
+                    child: Padding(
                       padding: const EdgeInsets.all(22),
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: c.primaryContainer,
                       ),
-                    )
-                  : Icon(Icons.smart_toy_outlined,
-                      color: c.primaryContainer, size: 34),
-            ),
+                    ),
+                  )
+                : Semantics(
+                    label: l.conv_changeCoach,
+                    button: true,
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: _openCharacterPicker,
+                      child: CharacterAvatar(character: _character, size: 84),
+                    ),
+                  ),
           ),
           const SizedBox(height: 18),
           Center(
             child: Text(
-              widget.scenario?.title ?? l.conv_aiPracticeMode,
-              style: AppText.title(22, color: c.primary, weight: FontWeight.w600)
-                  .copyWith(
+              widget.scenario?.title ??
+                  (isBusy ? l.conv_aiPracticeMode : _character.displayName),
+              style:
+                  AppText.title(22, color: c.primary, weight: FontWeight.w600)
+                      .copyWith(
                 shadows: neonGlow(c.primary, blur: 8, opacity: 0.3),
               ),
               textAlign: TextAlign.center,
@@ -1276,17 +1357,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           ),
           child: Row(
             children: [
-              IconButton(
-                onPressed: null,
-                icon: Icon(Icons.keyboard_outlined, color: c.inkDim, size: 22),
-              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: TextField(
                   controller: _textCtrl,
                   style: AppText.ink(14, color: c.ink),
                   cursorColor: c.primaryContainer,
                   textInputAction: TextInputAction.send,
-                  onChanged: (_) => setState(() {}),
                   onSubmitted: (_) => _sendText(),
                   decoration: InputDecoration(
                     isDense: true,
@@ -1315,30 +1392,38 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     ),
                   ),
                 ),
-              if (_textCtrl.text.isNotEmpty)
-                Semantics(
-                  label: l.conv_sendMessage,
-                  button: true,
-                  child: IconButton(
-                    onPressed: _sendText,
-                    icon: Icon(Icons.send, color: c.primaryContainer, size: 22),
-                  ),
-                )
-              else
-                Semantics(
-                  label: _status == _ConvStatus.listening
-                      ? l.conv_stopRecording
-                      : l.conv_startRecording,
-                  button: true,
-                  child: AnimatedBuilder(
-                    animation: _pulse,
-                    builder: (_, __) => _MicButton(
-                      status: _status,
-                      pulse: _pulse.value,
-                      onTap: _canToggleMic ? _toggleMic : null,
+              // Per-keystroke updates only swap this trailing button — listening
+              // to the controller here avoids rebuilding the whole screen.
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _textCtrl,
+                builder: (context, value, _) {
+                  if (value.text.isNotEmpty) {
+                    return Semantics(
+                      label: l.conv_sendMessage,
+                      button: true,
+                      child: IconButton(
+                        onPressed: _sendText,
+                        icon: Icon(Icons.send,
+                            color: c.primaryContainer, size: 22),
+                      ),
+                    );
+                  }
+                  return Semantics(
+                    label: _status == _ConvStatus.listening
+                        ? l.conv_stopRecording
+                        : l.conv_startRecording,
+                    button: true,
+                    child: AnimatedBuilder(
+                      animation: _pulse,
+                      builder: (_, __) => _MicButton(
+                        status: _status,
+                        pulse: _pulse.value,
+                        onTap: _canToggleMic ? _toggleMic : null,
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -1550,15 +1635,15 @@ class _ScenarioTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.primaryContainer.withOpacity(0.15),
-                border:
-                    Border.all(color: c.primaryContainer.withOpacity(0.4)),
+                border: Border.all(color: c.primaryContainer.withOpacity(0.4)),
               ),
               child: Icon(scenario.icon, color: c.primaryContainer, size: 18),
             ),
             const SizedBox(height: 10),
             Text(
               scenario.title,
-              style: AppText.title(14, color: c.primary, weight: FontWeight.w700),
+              style:
+                  AppText.title(14, color: c.primary, weight: FontWeight.w700),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1600,8 +1685,7 @@ class _AllScenariosTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.tertiaryFixedDim.withOpacity(0.15),
-                border:
-                    Border.all(color: c.tertiaryFixedDim.withOpacity(0.4)),
+                border: Border.all(color: c.tertiaryFixedDim.withOpacity(0.4)),
               ),
               child: Icon(Icons.grid_view_rounded,
                   color: c.tertiaryFixedDim, size: 18),
@@ -1614,6 +1698,95 @@ class _AllScenariosTile extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One-shot entrance for chat bubbles: fade + slide-up + a tiny horizontal
+/// push from the sender's side. Owns its controller so the animation runs
+/// exactly once per insertion and survives parent rebuilds mid-flight.
+class _BubbleEntrance extends StatefulWidget {
+  final Widget child;
+  final bool fromRight;
+  const _BubbleEntrance({required this.child, required this.fromRight});
+
+  @override
+  State<_BubbleEntrance> createState() => _BubbleEntranceState();
+}
+
+class _BubbleEntranceState extends State<_BubbleEntrance>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 280),
+  )..forward();
+  late final CurvedAnimation _t =
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
+
+  @override
+  void dispose() {
+    _t.dispose();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dx = widget.fromRight ? 0.06 : -0.06;
+    return FadeTransition(
+      opacity: _t,
+      child: SlideTransition(
+        position: _t.drive(
+          Tween(begin: Offset(dx, 0.25), end: Offset.zero),
+        ),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Self-animating "AI is thinking" dot. Owns its controller so the blink loop
+/// repaints only this 6×6 dot — the previous TweenAnimationBuilder+onEnd
+/// approach rebuilt the entire conversation screen every cycle.
+class _BlinkingDot extends StatefulWidget {
+  final int index;
+  const _BlinkingDot({required this.index});
+
+  @override
+  State<_BlinkingDot> createState() => _BlinkingDotState();
+}
+
+class _BlinkingDotState extends State<_BlinkingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 600 + (widget.index * 200)),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _ctrl.drive(Tween(begin: 0.2, end: 1.0)),
+      child: Container(
+        width: 6,
+        height: 6,
+        decoration: BoxDecoration(
+          color: context.c.primaryContainer,
+          shape: BoxShape.circle,
         ),
       ),
     );

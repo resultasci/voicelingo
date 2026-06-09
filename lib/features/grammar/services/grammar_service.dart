@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/storage/cached_repository.dart';
 import '../../../core/storage/hive_boxes.dart';
+import '../../../providers/profile_provider.dart';
 import '../models/grammar_topic.dart';
 
 /// Gramer konuları + kullanıcı progress'i için Supabase repository.
@@ -116,6 +117,8 @@ class GrammarService {
         xpReward > 0) {
       try {
         await _db.rpc('add_xp', params: {'p_amount': xpReward});
+        // XP değişti — eski profil Hive'dan servis edilmesin.
+        await bustProfileCache();
       } catch (_) {
         // Eski schema'da add_xp olmayabilir — best effort.
       }

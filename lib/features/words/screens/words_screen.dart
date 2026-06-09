@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/ai/gemini_service.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -53,9 +54,17 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
 
   Future<void> _speak(String text) async {
     try {
+      final cleanText = text
+          .replaceAll(RegExp(r'\(.*?\)'), '')
+          .replaceAll(RegExp(r'\[.*?\]'), '')
+          .replaceAll(RegExp(r"[^a-zA-Z0-9\s'\-]"),
+              '') // Sadece harf, sayı, boşluk, tırnak ve tire
+          .trim();
+      if (cleanText.isEmpty) return;
+
       await _tts.setLanguage('en-US');
       await _tts.setSpeechRate(0.5);
-      await _tts.speak(text);
+      await _tts.speak(cleanText);
     } catch (_) {
       // Speaker is best-effort; silent failure is fine.
     }
@@ -197,6 +206,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                           'Kullanıcı arayüzden yeni kelime eklemeyi denedi: $w',
                           tag: 'WordsScreen');
                       await ref.read(wordsProvider.notifier).addWord(w, t);
+                      _speak(w); // Eklenen kelimeyi hemen sesli oku
                     } on DuplicateWordException {
                       AppLogger.warning(
                           'Arayüzde kelime eklendi ama zaten vardı, uyarı gösteriliyor: $w',
@@ -228,7 +238,165 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      wCtrl.dispose();
+      tCtrl.dispose();
+    });
+  }
+
+  void _showGenerate() {
+    final l = AppL10n.of(context);
+    final topicCtrl = TextEditingController();
+    int count = 10;
+    bool loading = false;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      isDismissible: true,
+      builder: (ctx) {
+        final c = ctx.c;
+        // (controller disposed via whenComplete below)
+        return StatefulBuilder(
+          builder: (ctx, setSheet) {
+            Future<void> run() async {
+              final topic = topicCtrl.text.trim();
+              if (topic.isEmpty || loading) return;
+              setSheet(() => loading = true);
+              try {
+                final added = await ref
+                    .read(wordsProvider.notifier)
+                    .generateAndAddWords(topic, count);
+                if (!ctx.mounted) return;
+                Navigator.pop(ctx);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      added > 0 ? l.words_genAdded(added) : l.words_genNone,
+                      style: AppText.ink(13,
+                          color: added > 0
+                              ? context.c.primaryContainer
+                              : context.c.warn),
+                    ),
+                  ),
+                );
+              } catch (e, st) {
+                AppLogger.error('Kelime üretimi başarısız', e, st);
+                if (!ctx.mounted) return;
+                setSheet(() => loading = false);
+                final msg = e is AiException ? e.message : l.words_genFailed;
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(
+                    content:
+                        Text(msg, style: AppText.ink(13, color: ctx.c.error)),
+                  ),
+                );
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: GlassPanel(
+                padding: const EdgeInsets.all(24),
+                glowColor: c.primaryContainer,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 3,
+                        margin: const EdgeInsets.only(bottom: 18),
+                        decoration: BoxDecoration(
+                          color: c.rule,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Icon(Icons.auto_awesome,
+                            color: c.primaryContainer, size: 18),
+                        const SizedBox(width: 8),
+                        SectionLabel(l.words_genTitle,
+                            color: c.primaryContainer),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      l.words_genSubtitle,
+                      style: AppText.body(13, color: c.inkMuted),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(l.words_genTopicLabel,
+                        style: AppText.label(10,
+                            color: c.inkMuted, weight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    NeonField(
+                      controller: topicCtrl,
+                      autofocus: true,
+                      hint: l.words_genTopicHint,
+                    ),
+                    const SizedBox(height: 20),
+                    Text(l.words_genCount,
+                        style: AppText.label(10,
+                            color: c.inkMuted, weight: FontWeight.w600)),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      children: [5, 10, 15, 20].map((n) {
+                        final sel = n == count;
+                        return InkWell(
+                          onTap:
+                              loading ? null : () => setSheet(() => count = n),
+                          borderRadius: BorderRadius.circular(99),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: sel
+                                  ? c.primaryContainer.withOpacity(0.10)
+                                  : c.bgCard.withOpacity(0.5),
+                              border: Border.all(
+                                color: sel
+                                    ? c.primaryContainer
+                                    : c.rule.withOpacity(0.6),
+                              ),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              '$n',
+                              style: AppText.label(12,
+                                  color: sel ? c.primaryContainer : c.inkMuted,
+                                  weight: FontWeight.w700),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 22),
+                    NeonButton(
+                      label: l.words_genButton,
+                      icon: Icons.auto_awesome,
+                      loading: loading,
+                      onTap: run,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).whenComplete(topicCtrl.dispose);
   }
 
   List<Word> _applyFilter(List<Word> all) {
@@ -331,7 +499,10 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
           children: [
-            _Header(count: words.length, onAdd: _showAdd),
+            _Header(
+                count: words.length,
+                onAdd: _showAdd,
+                onGenerate: _showGenerate),
             const SizedBox(height: 22),
             _SearchBar(controller: _searchCtrl),
             const SizedBox(height: 18),
@@ -342,7 +513,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
             ),
             const SizedBox(height: 22),
             if (words.isEmpty)
-              _EmptyState(onAdd: _showAdd)
+              _EmptyState(onAdd: _showAdd, onGenerate: _showGenerate)
             else if (filtered.isEmpty)
               _NoResults(query: _query)
             else
@@ -391,7 +562,12 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
 class _Header extends StatelessWidget {
   final int count;
   final VoidCallback onAdd;
-  const _Header({required this.count, required this.onAdd});
+  final VoidCallback onGenerate;
+  const _Header({
+    required this.count,
+    required this.onAdd,
+    required this.onGenerate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -405,13 +581,37 @@ class _Header extends StatelessWidget {
             Expanded(
               child: Text(
                 l.words_libraryTitle,
-                style: AppText.hero(28, color: c.primary, weight: FontWeight.w700)
-                    .copyWith(
+                style:
+                    AppText.hero(28, color: c.primary, weight: FontWeight.w700)
+                        .copyWith(
                   shadows: neonGlow(c.primary, blur: 12, opacity: 0.25),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
+            // AI generate — secondary (outlined) so the primary "+" stays the
+            // visual anchor while the AI flow is one tap away even when full.
+            Material(
+              color: c.primaryContainer.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: onGenerate,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                        Border.all(color: c.primaryContainer.withOpacity(0.5)),
+                  ),
+                  child: Icon(Icons.auto_awesome,
+                      color: c.primaryContainer, size: 20),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
             Material(
               color: c.primaryContainer,
               borderRadius: BorderRadius.circular(12),
@@ -510,9 +710,7 @@ class _FilterChips extends StatelessWidget {
                     ? c.primaryContainer.withOpacity(0.10)
                     : c.bgCard.withOpacity(0.5),
                 border: Border.all(
-                  color: isSel
-                      ? c.primaryContainer
-                      : c.rule.withOpacity(0.6),
+                  color: isSel ? c.primaryContainer : c.rule.withOpacity(0.6),
                 ),
                 borderRadius: BorderRadius.circular(99),
                 boxShadow: isSel
@@ -564,15 +762,69 @@ class _WordGrid extends StatelessWidget {
           ),
           const SizedBox(height: 14),
         ],
-        ...words.map((w) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+        ...words.indexed.map((entry) {
+          final (index, w) = entry;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _StaggeredItem(
+              index: index,
               child: _WordCard(
                 word: w,
                 onDelete: () => onDelete(w.id),
                 onSpeak: () => onSpeak(w.word),
               ),
-            )),
+            ),
+          );
+        }),
       ],
+    );
+  }
+}
+
+/// Wraps a list item in a brief fade + slide-up entrance, staggered by [index]
+/// so cards cascade in. No-op (renders [child] directly) when motion is reduced.
+class _StaggeredItem extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _StaggeredItem({required this.index, required this.child});
+
+  @override
+  State<_StaggeredItem> createState() => _StaggeredItemState();
+}
+
+class _StaggeredItemState extends State<_StaggeredItem> {
+  bool _shown = false;
+  bool _decided = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_decided) return;
+    _decided = true;
+    if (reduceMotion(context)) {
+      _shown = true; // skip animation entirely
+      return;
+    }
+    // Cap the cascade so far-down items don't wait too long.
+    final delayMs = 40 * widget.index.clamp(0, 8);
+    Future.delayed(Duration(milliseconds: delayMs), () {
+      if (mounted) setState(() => _shown = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (reduceMotion(context)) return widget.child;
+    return AnimatedSlide(
+      offset: _shown ? Offset.zero : const Offset(0, 0.08),
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+      child: AnimatedOpacity(
+        opacity: _shown ? 1 : 0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+        child: widget.child,
+      ),
     );
   }
 }
@@ -698,114 +950,164 @@ class _WordCard extends StatelessWidget {
         child: GlassPanel(
           padding: EdgeInsets.zero,
           glowColor: s.color,
-          child: Stack(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
             clipBehavior: Clip.hardEdge,
-            children: [
-              Positioned(
-                top: -30,
-                right: -30,
-                child: Container(
-                  width: 110,
-                  height: 110,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Status accent sliver flush to the top edge.
+                Container(
+                  height: 3,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: s.color.withOpacity(0.15),
+                    gradient: LinearGradient(
+                      colors: [s.color, s.color.withOpacity(0)],
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      word.word,
-                                      style: AppText.title(22,
-                                          color: c.primary,
-                                          weight: FontWeight.w600),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Semantics(
-                                    label: l.words_pronounce,
-                                    button: true,
-                                    child: InkWell(
-                                      onTap: onSpeak,
-                                      borderRadius: BorderRadius.circular(99),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(2),
-                                        child: Icon(Icons.volume_up,
-                                            color: c.primaryContainer,
-                                            size: 18),
-                                      ),
-                                    ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Circular mastery ring with the status icon at its
+                          // center — replaces the old flat bottom progress bar.
+                          _ProgressRing(
+                            progress: _progress,
+                            color: s.color,
+                            track: c.surfaceHighest,
+                            icon: s.icon,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  word.word,
+                                  style: AppText.title(22,
+                                      color: c.primary,
+                                      weight: FontWeight.w600),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (word.ipa != null &&
+                                    word.ipa!.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    word.ipa!,
+                                    style: AppText.code(11, color: c.inkDim),
                                   ),
                                 ],
-                              ),
-                              if (word.ipa != null && word.ipa!.isNotEmpty) ...[
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 4),
                                 Text(
-                                  word.ipa!,
-                                  style: AppText.code(11, color: c.inkDim),
+                                  _intervalText(l),
+                                  style: AppText.label(10,
+                                      color: c.primaryContainer,
+                                      weight: FontWeight.w600),
                                 ),
                               ],
-                              const SizedBox(height: 4),
-                              Text(
-                                _intervalText(l),
-                                style: AppText.label(10,
-                                    color: c.primaryContainer,
-                                    weight: FontWeight.w600),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                        NeonChip(
-                          text: s.label,
-                          icon: s.icon,
-                          color: s.color,
+                          const SizedBox(width: 10),
+                          // Prominent circular pronounce button.
+                          Semantics(
+                            label: l.words_pronounce,
+                            button: true,
+                            child: Material(
+                              color: c.primaryContainer.withOpacity(0.12),
+                              shape: const CircleBorder(),
+                              clipBehavior: Clip.antiAlias,
+                              child: InkWell(
+                                onTap: onSpeak,
+                                child: SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: Icon(Icons.volume_up,
+                                      color: c.primaryContainer, size: 18),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              word.translation,
+                              style: AppText.ink(15, color: c.ink),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          NeonChip(
+                            text: s.label,
+                            icon: s.icon,
+                            color: s.color,
+                          ),
+                        ],
+                      ),
+                      if (word.exampleSentence != null &&
+                          word.exampleSentence!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          word.exampleSentence!,
+                          style: AppText.body(12, color: c.inkMuted)
+                              .copyWith(fontStyle: FontStyle.italic),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      word.translation,
-                      style: AppText.ink(15, color: c.ink),
-                    ),
-                    if (word.exampleSentence != null &&
-                        word.exampleSentence!.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        word.exampleSentence!,
-                        style: AppText.body(12, color: c.inkMuted)
-                            .copyWith(fontStyle: FontStyle.italic),
-                      ),
                     ],
-                    const SizedBox(height: 14),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(99),
-                      child: LinearProgressIndicator(
-                        value: _progress,
-                        minHeight: 4,
-                        backgroundColor: c.surfaceHighest,
-                        valueColor: AlwaysStoppedAnimation(s.color),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Small circular mastery indicator: a status-colored ring over a faint track,
+/// with the status icon centered. Reused only by [_WordCard].
+class _ProgressRing extends StatelessWidget {
+  final double progress;
+  final Color color;
+  final Color track;
+  final IconData? icon;
+  const _ProgressRing({
+    required this.progress,
+    required this.color,
+    required this.track,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 4,
+              backgroundColor: track,
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+          if (icon != null) Icon(icon, color: color, size: 18),
+        ],
       ),
     );
   }
@@ -814,7 +1116,8 @@ class _WordCard extends StatelessWidget {
 // =============================================================================
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAdd;
-  const _EmptyState({required this.onAdd});
+  final VoidCallback onGenerate;
+  const _EmptyState({required this.onAdd, required this.onGenerate});
 
   @override
   Widget build(BuildContext context) {
@@ -824,6 +1127,7 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.only(top: 48),
       child: GlassPanel(
         padding: const EdgeInsets.all(28),
+        glowColor: c.primaryContainer,
         child: Column(
           children: [
             Container(
@@ -832,11 +1136,10 @@ class _EmptyState extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.primaryContainer.withOpacity(0.10),
-                border:
-                    Border.all(color: c.primaryContainer.withOpacity(0.3)),
+                border: Border.all(color: c.primaryContainer.withOpacity(0.3)),
               ),
               child:
-                  Icon(Icons.menu_book, color: c.primaryContainer, size: 30),
+                  Icon(Icons.auto_awesome, color: c.primaryContainer, size: 30),
             ),
             const SizedBox(height: 18),
             Text(l.words_emptyTitle,
@@ -849,7 +1152,14 @@ class _EmptyState extends StatelessWidget {
               style: AppText.body(13, color: c.inkMuted),
             ),
             const SizedBox(height: 22),
+            // Hero CTA: AI generation is the primary path.
             NeonButton(
+              label: l.words_generateCta,
+              icon: Icons.auto_awesome,
+              onTap: onGenerate,
+            ),
+            const SizedBox(height: 12),
+            GhostButton(
               label: l.words_addFirst,
               icon: Icons.add,
               onTap: onAdd,
@@ -1073,8 +1383,7 @@ class _ReviewView extends StatelessWidget {
                         style: AppText.hero(40,
                                 color: c.primary, weight: FontWeight.w700)
                             .copyWith(
-                          shadows:
-                              neonGlow(c.primary, blur: 14, opacity: 0.4),
+                          shadows: neonGlow(c.primary, blur: 14, opacity: 0.4),
                         ),
                       ),
                       const SizedBox(height: 26),
