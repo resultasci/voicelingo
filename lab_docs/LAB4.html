@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>LAB 4 — Wireframe Çizimleri</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Wireframe'e özel düşük-detay (low-fidelity) stil */
+  .wf-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 18px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .wf-item { width: 250px; page-break-inside: avoid; text-align: center; }
+  .wf-item .cap {
+    font-size: 9pt; color: #14233a; margin-top: 4px; font-weight: 600;
+  }
+  .wf-item .cap .sub { display:block; font-weight: 400; color:#5a6a7a; font-size: 8pt; }
+  svg { display: block; margin: 0 auto; }
+  .legend {
+    font-size: 8.6pt; color:#4a5a6a; border:1px solid #d3dde7; border-radius:6px;
+    padding:8px 12px; margin:10px 0 4px; background:#f8fbfd;
+  }
+  .legend b{color:#14233a;}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <span class="lab-tag">LAB 4 — Hafta 3</span>
+  <h1>Wireframe ve Ekran Akışları</h1>
+  <p class="subtitle">VoiceLingo — Yapay Zekâ Destekli Sesli İngilizce Öğrenme Uygulaması</p>
+  <div class="meta">
+    <span><b>Öğrenci:</b> Resul Taşçı</span>
+    <span><b>Numara:</b> 235541074</span>
+    <span><b>Ders:</b> Fonksiyonel Programlama — Laboratuvar</span>
+  </div>
+</div>
+
+<div class="note">
+  <b>Föy kuralı:</b> Wireframe'ler basit çizim şeklindedir; renk/font/estetik önemsizdir. Her ekranda <b>ekran adı</b> ve
+  <b>temel bileşenler</b> (buton, liste, form alanı vb.) yer alır. Zorunlu ekranlar bulunur: <b>liste/ana ekran</b>,
+  <b>veri ekleme ekranı</b> ve <b>detay/güncelleme ekranı</b>. Akışlar oklarla gösterilir ve çizimler LAB 3
+  senaryolarıyla uyumludur. Bu doküman; ekranların <b>metinsel tanımını (4.1)</b>, <b>görsel wireframe çizimlerini (4.2)</b>
+  ve <b>ekran akış diyagramını (4.3)</b> birlikte içerir.
+</div>
+
+<h2>4.1 Ekran Listesi ve Bileşenleri</h2>
+
+<h4>Ekran 1 — Ana Ekran (Gösterge Paneli)</h4>
+<p>Kullanıcının uygulamayı açınca karşılaştığı liste/özet ekranı; diğer tüm ekranlara buradan ulaşılır.</p>
+<ul>
+  <li>Karşılama başlığı ve kullanıcının güncel seviyesi/puanı.</li>
+  <li>Günlük seri (streak) göstergesi ve günlük görev özeti.</li>
+  <li>Hızlı eylem kartları: konuşma pratiği, ders yolu, kelimeler, gramer, senaryolar.</li>
+  <li>İlerleme ve ayarlar ekranlarına geçiş düğmeleri.</li>
+</ul>
+
+<h4>Ekran 2 — Senaryo Seçim Ekranı (Liste)</h4>
+<ul>
+  <li>Hazır senaryoların kart listesi (kafe, iş görüşmesi, doktor vb.).</li>
+  <li>"Yapay zekâ ile senaryo oluştur" ve "tüm senaryolar" kısayolları.</li>
+  <li>Her kartta senaryo adı, kısa açıklama ve başlat düğmesi.</li>
+</ul>
+
+<h4>Ekran 3 — Sesli Konuşma Ekranı (Veri/İçerik Üretme)</h4>
+<p>Senaryo veya karakter seçiminden sonra açılan, asıl pratiğin yapıldığı ekran.</p>
+<ul>
+  <li>Konuşma balonları listesi (kullanıcı ve öğrenme arkadaşının mesajları).</li>
+  <li>Büyük mikrofon (kayıt) düğmesi ve eller serbest mod anahtarı.</li>
+  <li>Her kullanıcı cevabı için puan, düzeltme önerisi ve açıklama rozeti.</li>
+  <li>Seçili karakter/senaryo başlığı ve geri dönüş düğmesi.</li>
+</ul>
+
+<h4>Ekran 4 — Karakter Seçim Ekranı</h4>
+<ul>
+  <li>Öğrenme arkadaşı kartları (ad, kişilik, aksan).</li>
+  <li>Her kart için sesli tanıtım önizleme düğmesi.</li>
+  <li>Seç ve konuşmayı başlat düğmesi.</li>
+</ul>
+
+<h4>Ekran 5 — Kelime Listesi Ekranı (Liste)</h4>
+<ul>
+  <li>Eklenmiş kelimelerin listesi (kelime + anlam + tekrar durumu).</li>
+  <li>"Yeni kelime ekle" düğmesi ve konuya göre üretme seçeneği.</li>
+  <li>Flashcard (tekrar) moduna giriş düğmesi.</li>
+</ul>
+
+<h4>Ekran 6 — Kelime Ekleme / Detay Ekranı (Veri Ekleme + Detay)</h4>
+<ul>
+  <li>Kelime giriş alanı (ekleme için).</li>
+  <li>Detayda: okunuş (IPA), örnek cümle, eş/zıt anlam ve sesli okuma düğmesi.</li>
+  <li>Kaydet / listeye dön düğmesi.</li>
+</ul>
+
+<h4>Ekran 7 — Senaryo Oluşturma Ekranı (Veri Ekleme)</h4>
+<ul>
+  <li>Serbest metin tarif alanı, kategori ve zorluk seçimi.</li>
+  <li>"Oluştur" düğmesi ve üretilen senaryo önizleme kartı.</li>
+  <li>"Yeniden oluştur" ve "kaydet & başlat" düğmeleri.</li>
+</ul>
+
+<h4>Ekran 8 — İlerleme Ekranı (Detay/Özet)</h4>
+<ul>
+  <li>90 günlük etkinlik haritası.</li>
+  <li>Kelime / gramer / ders ustalık çubukları.</li>
+  <li>En sık yapılan hataların listesi.</li>
+</ul>
+
+<div class="note" style="background:#fff7ed;border-left-color:#b5562a;">
+  Uygulamada bunların yanı sıra <b>giriş/kayıt, onboarding, ders yolu, gramer, profil ve ayarlar</b> ekranları da
+  bulunmaktadır; yukarıda LAB 3 senaryolarıyla doğrudan ilişkili ana ekranlar listelenmiştir.
+</div>
+<h2 class="page-break">4.2 Wireframe Çizimleri</h2>
+<p>Aşağıda, 4.1'de listelenen sekiz ekranın düşük detaylı (low-fidelity) taslak çizimleri yer alır.</p>
+
+<div class="legend">
+  <b>Gösterim:</b> Kesik çizgili kutu = metin/etiket alanı &nbsp;·&nbsp; Düz kutu = buton &nbsp;·&nbsp;
+  Yatay çizgiler = liste öğeleri &nbsp;·&nbsp; ⬭ = giriş/form alanı &nbsp;·&nbsp; ◉ = mikrofon/eylem düğmesi.
+</div>
+
+<div class="wf-grid">
+
+  <!-- ===== 1. ANA EKRAN (LİSTE) ===== -->
+  <div class="wf-item">
+    <svg viewBox="0 0 220 400" width="220" height="400">
+      <rect x="6" y="6" width="208" height="388" rx="22" fill="#fff" stroke="#1f3a5f" stroke-width="2.5"/>
+      <rect x="14" y="14" width="192" height="372" rx="14" fill="#fbfdff" stroke="#c7d4e0"/>
+      <!-- status bar -->
+      <line x1="90" y1="22" x2="130" y2="22" stroke="#9aa7b4" stroke-width="3" stroke-linecap="round"/>
+      <!-- header -->
+      <text x="26" y="50" font-size="12" font-weight="700" fill="#14233a">Merhaba 👋</text>
+      <rect x="150" y="40" width="48" height="16" rx="8" fill="none" stroke="#1f3a5f" stroke-dasharray="3 2"/>
+      <text x="158" y="52" font-size="8" fill="#1f3a5f">A2 · 320XP</text>
+      <!-- streak -->
+      <rect x="26" y="64" width="168" height="30" rx="8" fill="#eef4fb" stroke="#bcd"/>
+      <text x="36" y="83" font-size="9" fill="#14233a">🔥 Seri: 5 gün · Günlük görev 2/3</text>
+      <!-- action cards 2x3 -->
+      <rect x="26" y="104" width="80" height="46" rx="8" fill="none" stroke="#1f3a5f"/>
+      <text x="40" y="131" font-size="9" fill="#14233a">Konuşma</text>
+      <rect x="114" y="104" width="80" height="46" rx="8" fill="none" stroke="#1f3a5f"/>
+      <text x="130" y="131" font-size="9" fill="#14233a">Senaryo</text>
+      <rect x="26" y="158" width="80" height="46" rx="8" fill="none" stroke="#1f3a5f"/>
+      <text x="40" y="185" font-size="9" fill="#14233a">Kelimeler</text>
+      <rect x="114" y="158" width="80" height="46" rx="8" fill="none" stroke="#1f3a5f"/>
+      <text x="138" y="185" font-size="9" fill="#14233a">Gramer</text>
+      <rect x="26" y="212" width="80" height="46" rx="8" fill="none" stroke="#1f3a5f"/>
+      <text x="44" y="239" font-size="9" fill="#14233a">Ders</text>
+      <rect x="114" y="212" width="80" height="46" rx="8" fill="none" stroke="#1f3a5f"/>
+      <text x="128" y="239" font-size="9" fill="#14233a">İlerleme</text>
+      <!-- bottom nav -->
+      <rect x="14" y="352" width="192" height="34" rx="0" fill="#f0f5fa"/>
+      <circle cx="50" cy="369" r="5" fill="none" stroke="#1f3a5f"/>
+      <circle cx="110" cy="369" r="5" fill="none" stroke="#1f3a5f"/>
+      <circle cx="170" cy="369" r="5" fill="none" stroke="#1f3a5f"/>
+    </svg>
+    <div class="cap">1 · Ana Ekran (Liste)
+      <span class="sub">başlık · seri/görev · hızlı eylem kartları · alt menü</span></div>
+  </div>
+
+  <!-- ===== 2. SENARYO SEÇİM (LİSTE) ===== -->
+  <div class="wf-item">
+    <svg viewBox="0 0 220 400" width="220" height="400">
+      <rect x="6" y="6" width="208" height="388" rx="22" fill="#fff" stroke="#1f3a5f" stroke-width="2.5"/>
+      <rect x="14" y="14" width="192" height="372" rx="14" fill="#fbfdff" stroke="#c7d4e0"/>
+      <line x1="90" y1="22" x2="130" y2="22" stroke="#9aa7b4" stroke-width="3" stroke-linecap="round"/>
+      <text x="26" y="48" font-size="8" fill="#1f3a5f">&#8592; Geri</text>
+      <text x="80" y="48" font-size="12" font-weight="700" fill="#14233a">Senaryolar</text>
+      <!-- top shortcut buttons -->
+      <rect x="26" y="58" width="80" height="22" rx="6" fill="#1f3a5f"/>
+      <text x="34" y="73" font-size="8" fill="#fff">+ AI ile oluştur</text>
+      <rect x="114" y="58" width="80" height="22" rx="6" fill="none" stroke="#1f3a5f"/>
+      <text x="124" y="73" font-size="8" fill="#1f3a5f">Tüm senaryolar</text>
+      <!-- scenario cards -->
+      <g stroke="#1f3a5f" fill="none">
+        <rect x="26" y="90" width="168" height="44" rx="8"/>
+        <rect x="26" y="142" width="168" height="44" rx="8"/>
+        <rect x="26" y="194" width="168" height="44" rx="8"/>
+        <rect x="26" y="246" width="168" height="44" rx="8"/>
+      </g>
+      <text x="36" y="108" font-size="9" font-weight="600" fill="#14233a">☕ Kafede Sipariş</text>
+      <text x="36" y="124" font-size="7.5" fill="#5a6a7a">Başlat &#9654;</text>
+      <text x="36" y="160" font-size="9" font-weight="600" fill="#14233a">💼 İş Görüşmesi</text>
+      <text x="36" y="176" font-size="7.5" fill="#5a6a7a">Başlat &#9654;</text>
+      <text x="36" y="212" font-size="9" font-weight="600" fill="#14233a">🩺 Doktor</text>
+      <text x="36" y="228" font-size="7.5" fill="#5a6a7a">Başlat &#9654;</text>
+      <text x="36" y="264" font-size="9" font-weight="600" fill="#14233a">✈ Havalimanı</text>
+      <text x="36" y="280" font-size="7.5" fill="#5a6a7a">Başlat &#9654;</text>
+    </svg>
+    <div class="cap">2 · Senaryo Seçim (Liste)
+      <span class="sub">kısayol butonları · senaryo kart listesi · başlat</span></div>
+  </div>
+
+  <!-- ===== 3. SESLİ KONUŞMA (İÇERİK ÜRETME) ===== -->
+  <div class="wf-item">
+    <svg viewBox="0 0 220 400" width="220" height="400">
+      <rect x="6" y="6" width="208" height="388" rx="22" fill="#fff" stroke="#1f3a5f" stroke-width="2.5"/>
+      <rect x="14" y="14" width="192" height="372" rx="14" fill="#fbfdff" stroke="#c7d4e0"/>
+      <line x1="90" y1="22" x2="130" y2="22" stroke="#9aa7b4" stroke-width="3" stroke-linecap="round"/>
+      <text x="26" y="48" font-size="8" fill="#1f3a5f">&#8592;</text>
+      <text x="44" y="48" font-size="11" font-weight="700" fill="#14233a">Lily · Kafe</text>
+      <!-- handsfree toggle -->
+      <rect x="158" y="38" width="36" height="16" rx="8" fill="none" stroke="#1f3a5f"/>
+      <circle cx="166" cy="46" r="5" fill="#1f3a5f"/>
+      <text x="160" y="64" font-size="6.5" fill="#5a6a7a">eller serbest</text>
+      <!-- chat bubbles: assistant left -->
+      <rect x="26" y="74" width="120" height="34" rx="10" fill="#eef4fb" stroke="#bcd"/>
+      <text x="34" y="88" font-size="8" fill="#14233a">Hi! What can I get</text>
+      <text x="34" y="100" font-size="8" fill="#14233a">you today?</text>
+      <!-- user right -->
+      <rect x="74" y="116" width="120" height="30" rx="10" fill="#1f3a5f"/>
+      <text x="82" y="135" font-size="8" fill="#fff">A coffee, please.</text>
+      <!-- eval badge under user msg -->
+      <rect x="74" y="150" width="120" height="20" rx="6" fill="none" stroke="#2e7d32" stroke-dasharray="3 2"/>
+      <text x="80" y="164" font-size="7" fill="#2e7d32">✔ 85 · "a coffee" → ok</text>
+      <!-- assistant -->
+      <rect x="26" y="178" width="130" height="30" rx="10" fill="#eef4fb" stroke="#bcd"/>
+      <text x="34" y="197" font-size="8" fill="#14233a">Sure! Anything else?</text>
+      <!-- big mic button -->
+      <circle cx="110" cy="320" r="34" fill="#1f3a5f"/>
+      <text x="98" y="328" font-size="22" fill="#fff">◉</text>
+      <text x="84" y="366" font-size="8" fill="#5a6a7a">Konuşmak için bas</text>
+    </svg>
+    <div class="cap">3 · Sesli Konuşma (İçerik)
+      <span class="sub">konuşma balonları · puan/öneri rozeti · ◉ mikrofon · eller serbest</span></div>
+  </div>
+
+  <!-- ===== 4. KARAKTER SEÇİM ===== -->
+  <div class="wf-item">
+    <svg viewBox="0 0 220 400" width="220" height="400">
+      <rect x="6" y="6" width="208" height="388" rx="22" fill="#fff" stroke="#1f3a5f" stroke-width="2.5"/>
+      <rect x="14" y="14" width="192" height="372" rx="14" fill="#fbfdff" stroke="#c7d4e0"/>
+      <line x1="90" y1="22" x2="130" y2="22" stroke="#9aa7b4" stroke-width="3" stroke-linecap="round"/>
+      <text x="26" y="48" font-size="8" fill="#1f3a5f">&#8592;</text>
+      <text x="56" y="48" font-size="11" font-weight="700" fill="#14233a">Koçunu Seç</text>
+      <!-- character cards with avatar circle + play -->
+      <g>
+        <rect x="26" y="62" width="168" height="60" rx="10" fill="none" stroke="#1f3a5f"/>
+        <circle cx="52" cy="92" r="16" fill="#eef4fb" stroke="#bcd"/>
+        <text x="74" y="86" font-size="9" font-weight="600" fill="#14233a">Lily · 22</text>
+        <text x="74" y="100" font-size="7.5" fill="#5a6a7a">Amerikan · samimi</text>
+        <circle cx="178" cy="92" r="9" fill="none" stroke="#1f3a5f"/>
+        <text x="174" y="96" font-size="9" fill="#1f3a5f">&#9654;</text>
+      </g>
+      <g>
+        <rect x="26" y="130" width="168" height="60" rx="10" fill="none" stroke="#1f3a5f"/>
+        <circle cx="52" cy="160" r="16" fill="#eef4fb" stroke="#bcd"/>
+        <text x="74" y="154" font-size="9" font-weight="600" fill="#14233a">Mr. James · 45</text>
+        <text x="74" y="168" font-size="7.5" fill="#5a6a7a">İngiliz · resmî</text>
+        <circle cx="178" cy="160" r="9" fill="none" stroke="#1f3a5f"/>
+        <text x="174" y="164" font-size="9" fill="#1f3a5f">&#9654;</text>
+      </g>
+      <g>
+        <rect x="26" y="198" width="168" height="60" rx="10" fill="none" stroke="#1f3a5f"/>
+        <circle cx="52" cy="228" r="16" fill="#eef4fb" stroke="#bcd"/>
+        <text x="74" y="222" font-size="9" font-weight="600" fill="#14233a">Kai · 28</text>
+        <text x="74" y="236" font-size="7.5" fill="#5a6a7a">Avustralyalı · gezgin</text>
+        <circle cx="178" cy="228" r="9" fill="none" stroke="#1f3a5f"/>
+        <text x="174" y="232" font-size="9" fill="#1f3a5f">&#9654;</text>
+      </g>
+      <!-- select & start -->
+      <rect x="26" y="344" width="168" height="30" rx="8" fill="#1f3a5f"/>
+      <text x="58" y="363" font-size="10" fill="#fff">Seç &amp; Başlat</text>
+    </svg>
+    <div class="cap">4 · Karakter Seçim
+      <span class="sub">koç kartları (avatar/aksan) · ▶ sesli önizleme · seç &amp; başlat</span></div>
+  </div>
+
+  <!-- ===== 5. KELİME LİSTESİ (LİSTE) ===== -->
+  <div class="wf-item">
+    <svg viewBox="0 0 220 400" width="220" height="400">
+      <rect x="6" y="6" width="208" height="388" rx="22" fill="#fff" stroke="#1f3a5f" stroke-width="2.5"/>
+      <rect x="14" y="14" width="192" height="372" rx="14" fill="#fbfdff" stroke="#c7d4e0"/>
+      <line x1="90" y1="22" x2="130" y2="22" stroke="#9aa7b4" stroke-width="3" stroke-linecap="round"/>
+      <text x="26" y="48" font-size="8" fill="#1f3a5f">&#8592;</text>
+      <text x="50" y="48" font-size="11" font-weight="700" fill="#14233a">Kelimelerim</text>
+      <!-- flashcard entry -->
+      <rect x="118" y="58" width="76" height="22" rx="6" fill="none" stroke="#1f3a5f"/>
+      <text x="126" y="73" font-size="8" fill="#1f3a5f">Tekrar (kart)</text>
+      <!-- word list rows -->
+      <g stroke="#dbe4ec">
+        <line x1="26" y1="98" x2="194" y2="98"/>
+        <line x1="26" y1="128" x2="194" y2="128"/>
+        <line x1="26" y1="158" x2="194" y2="158"/>
+        <line x1="26" y1="188" x2="194" y2="188"/>
+        <line x1="26" y1="218" x2="194" y2="218"/>
+      </g>
+      <text x="30" y="92" font-size="9" fill="#14233a">improve — geliştirmek · ⏰ bugün</text>
+      <text x="30" y="122" font-size="9" fill="#14233a">although — rağmen · ⏰ 2 gün</text>
+      <text x="30" y="152" font-size="9" fill="#14233a">venue — mekan · ✔</text>
+      <text x="30" y="182" font-size="9" fill="#14233a">commute — gidip gelmek</text>
+      <text x="30" y="212" font-size="9" fill="#14233a">grateful — minnettar</text>
+      <!-- FAB add -->
+      <circle cx="170" cy="344" r="20" fill="#1f3a5f"/>
+      <text x="162" y="351" font-size="20" fill="#fff">+</text>
+      <text x="118" y="378" font-size="7.5" fill="#5a6a7a">yeni kelime ekle</text>
+    </svg>
+    <div class="cap">5 · Kelime Listesi (Liste)
+      <span class="sub">kelime+anlam+tekrar durumu listesi · tekrar modu · (+) ekle</span></div>
+  </div>
+
+  <!-- ===== 6. KELİME EKLEME / DETAY (VERİ EKLEME + DETAY) ===== -->
+  <div class="wf-item">
+    <svg viewBox="0 0 220 400" width="220" height="400">
+      <rect x="6" y="6" width="208" height="388" rx="22" fill="#fff" stroke="#1f3a5f" stroke-width="2.5"/>
+      <rect x="14" y="14" width="192" height="372" rx="14" fill="#fbfdff" stroke="#c7d4e0"/>
+      <line x1="90" y1="22" x2="130" y2="22" stroke="#9aa7b4" stroke-width="3" stroke-linecap="round"/>
+      <text x="26" y="48" font-size="8" fill="#1f3a5f">&#8592;</text>
+      <text x="48" y="48" font-size="11" font-weight="700" fill="#14233a">Kelime Detayı</text>
+      <!-- input field (ekleme) -->
+      <text x="26" y="68" font-size="7.5" fill="#5a6a7a">Kelime gir (ekleme)</text>
+      <rect x="26" y="72" width="140" height="22" rx="6" fill="#fff" stroke="#1f3a5f"/>
+      <text x="32" y="87" font-size="9" fill="#9aa7b4">improve…</text>
+      <rect x="170" y="72" width="24" height="22" rx="6" fill="#1f3a5f"/>
+      <text x="178" y="88" font-size="11" fill="#fff">↵</text>
+      <!-- word header + speaker -->
+      <text x="26" y="118" font-size="13" font-weight="700" fill="#14233a">improve</text>
+      <circle cx="120" cy="113" r="9" fill="none" stroke="#1f3a5f"/>
+      <text x="115" y="117" font-size="10" fill="#1f3a5f">🔊</text>
+      <text x="26" y="134" font-size="8.5" fill="#5a6a7a">/ɪmˈpruːv/ · geliştirmek</text>
+      <!-- example -->
+      <rect x="26" y="144" width="168" height="30" rx="6" fill="none" stroke="#1f3a5f" stroke-dasharray="3 2"/>
+      <text x="32" y="156" font-size="7.5" fill="#14233a">"I want to improve my</text>
+      <text x="32" y="167" font-size="7.5" fill="#14233a">English." 🔊</text>
+      <!-- synonyms chips -->
+      <text x="26" y="192" font-size="8" fill="#5a6a7a">Eş anlam</text>
+      <rect x="26" y="196" width="42" height="18" rx="9" fill="none" stroke="#1f3a5f"/>
+      <text x="32" y="208" font-size="7.5" fill="#14233a">enhance</text>
+      <rect x="74" y="196" width="40" height="18" rx="9" fill="none" stroke="#1f3a5f"/>
+      <text x="80" y="208" font-size="7.5" fill="#14233a">better</text>
+      <!-- save -->
+      <rect x="26" y="344" width="168" height="30" rx="8" fill="#1f3a5f"/>
+      <text x="64" y="363" font-size="10" fill="#fff">Kaydet / Dön</text>
+    </svg>
+    <div class="cap">6 · Kelime Ekleme / Detay
+      <span class="sub">⬭ giriş alanı · IPA+örnek+🔊 · eş/zıt anlam chip · kaydet</span></div>
+  </div>
+
+  <!-- ===== 7. SENARYO OLUŞTURMA (VERİ EKLEME) ===== -->
+  <div class="wf-item">
+    <svg viewBox="0 0 220 400" width="220" height="400">
+      <rect x="6" y="6" width="208" height="388" rx="22" fill="#fff" stroke="#1f3a5f" stroke-width="2.5"/>
+      <rect x="14" y="14" width="192" height="372" rx="14" fill="#fbfdff" stroke="#c7d4e0"/>
+      <line x1="90" y1="22" x2="130" y2="22" stroke="#9aa7b4" stroke-width="3" stroke-linecap="round"/>
+      <text x="26" y="48" font-size="8" fill="#1f3a5f">&#8592;</text>
+      <text x="42" y="48" font-size="11" font-weight="700" fill="#14233a">Senaryo Oluştur</text>
+      <!-- desc textarea -->
+      <text x="26" y="66" font-size="7.5" fill="#5a6a7a">Ne pratiği yapmak istersin?</text>
+      <rect x="26" y="70" width="168" height="48" rx="6" fill="#fff" stroke="#1f3a5f"/>
+      <text x="32" y="86" font-size="8" fill="#9aa7b4">Otelde oda değiştirme…</text>
+      <!-- category chips -->
+      <rect x="26" y="126" width="40" height="18" rx="9" fill="#1f3a5f"/>
+      <text x="34" y="138" font-size="7.5" fill="#fff">Seyahat</text>
+      <rect x="72" y="126" width="32" height="18" rx="9" fill="none" stroke="#1f3a5f"/>
+      <text x="78" y="138" font-size="7.5" fill="#14233a">İş</text>
+      <rect x="110" y="126" width="40" height="18" rx="9" fill="none" stroke="#1f3a5f"/>
+      <text x="116" y="138" font-size="7.5" fill="#14233a">Günlük</text>
+      <!-- difficulty -->
+      <text x="26" y="160" font-size="7.5" fill="#5a6a7a">Zorluk: A1 [A2] B1</text>
+      <!-- generate -->
+      <rect x="26" y="168" width="168" height="24" rx="6" fill="#1f3a5f"/>
+      <text x="76" y="184" font-size="9" fill="#fff">⚙ Oluştur</text>
+      <!-- preview card -->
+      <rect x="26" y="200" width="168" height="96" rx="8" fill="#eef4fb" stroke="#1f3a5f" stroke-dasharray="3 2"/>
+      <text x="32" y="216" font-size="8" font-weight="600" fill="#14233a">Önizleme</text>
+      <text x="32" y="230" font-size="7.5" fill="#14233a">Rol: resepsiyon görevlisi</text>
+      <text x="32" y="243" font-size="7.5" fill="#14233a">Hedef: oda değişikliği iste</text>
+      <text x="32" y="256" font-size="7.5" fill="#14233a">Başlangıç: "How can I help?"</text>
+      <rect x="32" y="266" width="36" height="14" rx="7" fill="none" stroke="#1f3a5f"/>
+      <text x="36" y="276" font-size="6.5" fill="#14233a">polite</text>
+      <!-- save & regenerate -->
+      <rect x="26" y="344" width="80" height="30" rx="8" fill="none" stroke="#1f3a5f"/>
+      <text x="36" y="363" font-size="8.5" fill="#1f3a5f">↻ Yeniden</text>
+      <rect x="114" y="344" width="80" height="30" rx="8" fill="#1f3a5f"/>
+      <text x="122" y="363" font-size="8.5" fill="#fff">Kaydet &amp; Başlat</text>
+    </svg>
+    <div class="cap">7 · Senaryo Oluşturma (Veri Ekleme)
+      <span class="sub">⬭ tarif · kategori/zorluk · oluştur · önizleme · kaydet/yeniden</span></div>
+  </div>
+
+  <!-- ===== 8. İLERLEME (DETAY/ÖZET) ===== -->
+  <div class="wf-item">
+    <svg viewBox="0 0 220 400" width="220" height="400">
+      <rect x="6" y="6" width="208" height="388" rx="22" fill="#fff" stroke="#1f3a5f" stroke-width="2.5"/>
+      <rect x="14" y="14" width="192" height="372" rx="14" fill="#fbfdff" stroke="#c7d4e0"/>
+      <line x1="90" y1="22" x2="130" y2="22" stroke="#9aa7b4" stroke-width="3" stroke-linecap="round"/>
+      <text x="26" y="48" font-size="8" fill="#1f3a5f">&#8592;</text>
+      <text x="52" y="48" font-size="11" font-weight="700" fill="#14233a">İlerleme</text>
+      <!-- heatmap grid -->
+      <text x="26" y="68" font-size="7.5" fill="#5a6a7a">Son 90 gün etkinlik</text>
+      <g>
+        <!-- 7 rows x 13 cols small squares -->
+        <!-- generate via repeated rects -->
+        <!-- row helper: y from 74 step 11; x from 26 step 12.5 -->
+        <g fill="#dbe7f3" stroke="#fff" stroke-width="0.5">
+          <rect x="26" y="74" width="9" height="9"/><rect x="38" y="74" width="9" height="9" fill="#9ec7ea"/><rect x="50" y="74" width="9" height="9"/><rect x="62" y="74" width="9" height="9" fill="#4a90d9"/><rect x="74" y="74" width="9" height="9" fill="#9ec7ea"/><rect x="86" y="74" width="9" height="9"/><rect x="98" y="74" width="9" height="9" fill="#1f3a5f"/><rect x="110" y="74" width="9" height="9" fill="#9ec7ea"/><rect x="122" y="74" width="9" height="9"/><rect x="134" y="74" width="9" height="9" fill="#4a90d9"/><rect x="146" y="74" width="9" height="9"/><rect x="158" y="74" width="9" height="9" fill="#9ec7ea"/><rect x="170" y="74" width="9" height="9" fill="#1f3a5f"/>
+          <rect x="26" y="86" width="9" height="9" fill="#4a90d9"/><rect x="38" y="86" width="9" height="9"/><rect x="50" y="86" width="9" height="9" fill="#1f3a5f"/><rect x="62" y="86" width="9" height="9" fill="#9ec7ea"/><rect x="74" y="86" width="9" height="9"/><rect x="86" y="86" width="9" height="9" fill="#4a90d9"/><rect x="98" y="86" width="9" height="9"/><rect x="110" y="86" width="9" height="9" fill="#9ec7ea"/><rect x="122" y="86" width="9" height="9" fill="#1f3a5f"/><rect x="134" y="86" width="9" height="9"/><rect x="146" y="86" width="9" height="9" fill="#9ec7ea"/><rect x="158" y="86" width="9" height="9"/><rect x="170" y="86" width="9" height="9" fill="#4a90d9"/>
+          <rect x="26" y="98" width="9" height="9"/><rect x="38" y="98" width="9" height="9" fill="#1f3a5f"/><rect x="50" y="98" width="9" height="9" fill="#9ec7ea"/><rect x="62" y="98" width="9" height="9"/><rect x="74" y="98" width="9" height="9" fill="#4a90d9"/><rect x="86" y="98" width="9" height="9" fill="#9ec7ea"/><rect x="98" y="98" width="9" height="9"/><rect x="110" y="98" width="9" height="9" fill="#1f3a5f"/><rect x="122" y="98" width="9" height="9"/><rect x="134" y="98" width="9" height="9" fill="#9ec7ea"/><rect x="146" y="98" width="9" height="9" fill="#4a90d9"/><rect x="158" y="98" width="9" height="9"/><rect x="170" y="98" width="9" height="9" fill="#9ec7ea"/>
+          <rect x="26" y="110" width="9" height="9" fill="#9ec7ea"/><rect x="38" y="110" width="9" height="9"/><rect x="50" y="110" width="9" height="9" fill="#4a90d9"/><rect x="62" y="110" width="9" height="9" fill="#1f3a5f"/><rect x="74" y="110" width="9" height="9"/><rect x="86" y="110" width="9" height="9" fill="#9ec7ea"/><rect x="98" y="110" width="9" height="9" fill="#4a90d9"/><rect x="110" y="110" width="9" height="9"/><rect x="122" y="110" width="9" height="9" fill="#9ec7ea"/><rect x="134" y="110" width="9" height="9" fill="#1f3a5f"/><rect x="146" y="110" width="9" height="9"/><rect x="158" y="110" width="9" height="9" fill="#4a90d9"/><rect x="170" y="110" width="9" height="9"/>
+        </g>
+      </g>
+      <!-- mastery bars -->
+      <text x="26" y="146" font-size="8" fill="#14233a">Kelime</text>
+      <rect x="80" y="139" width="114" height="9" rx="4" fill="#e3ebf3"/><rect x="80" y="139" width="78" height="9" rx="4" fill="#1f3a5f"/>
+      <text x="26" y="164" font-size="8" fill="#14233a">Gramer</text>
+      <rect x="80" y="157" width="114" height="9" rx="4" fill="#e3ebf3"/><rect x="80" y="157" width="52" height="9" rx="4" fill="#1f3a5f"/>
+      <text x="26" y="182" font-size="8" fill="#14233a">Ders</text>
+      <rect x="80" y="175" width="114" height="9" rx="4" fill="#e3ebf3"/><rect x="80" y="175" width="40" height="9" rx="4" fill="#1f3a5f"/>
+      <!-- top errors -->
+      <text x="26" y="208" font-size="8" font-weight="600" fill="#14233a">En sık hatalar</text>
+      <g stroke="#dbe4ec">
+        <line x1="26" y1="218" x2="194" y2="218"/>
+        <line x1="26" y1="236" x2="194" y2="236"/>
+        <line x1="26" y1="254" x2="194" y2="254"/>
+      </g>
+      <text x="30" y="232" font-size="8" fill="#14233a">a/an karışıklığı · 7×</text>
+      <text x="30" y="250" font-size="8" fill="#14233a">geçmiş zaman -ed · 5×</text>
+      <text x="30" y="268" font-size="8" fill="#14233a">edat (in/on/at) · 4×</text>
+    </svg>
+    <div class="cap">8 · İlerleme (Detay/Özet)
+      <span class="sub">90 gün heatmap · ustalık çubukları · en sık hatalar listesi</span></div>
+  </div>
+
+</div>
+<!-- ================= AKIŞ SAYFASI ================= -->
+<h2 class="page-break">4.3 Ekran Akış Diyagramı (Oklarla)</h2>
+<p>Her ok, LAB 3'teki bir senaryo adımına karşılık gelir. Numaralar yukarıdaki ekranlardır.</p>
+
+<svg viewBox="0 0 720 560" width="100%" style="max-width:720px;border:1px solid #d3dde7;border-radius:8px;background:#fcfdfe">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#1f3a5f"/>
+    </marker>
+  </defs>
+  <style>
+    .box{ fill:#eef4fb; stroke:#1f3a5f; stroke-width:1.6; }
+    .box-main{ fill:#1f3a5f; }
+    .bt{ font:600 12px "Segoe UI",sans-serif; fill:#14233a; }
+    .bt-w{ font:600 12px "Segoe UI",sans-serif; fill:#fff; }
+    .num{ font:700 11px "Segoe UI",sans-serif; fill:#1f3a5f; }
+    .num-w{ font:700 11px "Segoe UI",sans-serif; fill:#fff; }
+    .edge{ stroke:#1f3a5f; stroke-width:1.6; fill:none; }
+    .lbl{ font:italic 9px "Segoe UI",sans-serif; fill:#5a6a7a; }
+  </style>
+
+  <!-- ANA EKRAN (top center) -->
+  <rect class="box box-main" x="290" y="20" width="150" height="44" rx="9"/>
+  <text class="num-w" x="300" y="38">[1]</text>
+  <text class="bt-w" x="324" y="48">ANA EKRAN (Liste)</text>
+
+  <!-- four branches row -->
+  <!-- 2 Senaryo -->
+  <rect class="box" x="30" y="150" width="150" height="40" rx="9"/>
+  <text class="num" x="40" y="167">[2]</text><text class="bt" x="64" y="175">Senaryo Seçim</text>
+  <!-- 4 Karakter -->
+  <rect class="box" x="200" y="150" width="150" height="40" rx="9"/>
+  <text class="num" x="210" y="167">[4]</text><text class="bt" x="234" y="175">Karakter Seçim</text>
+  <!-- 5 Kelime -->
+  <rect class="box" x="380" y="150" width="150" height="40" rx="9"/>
+  <text class="num" x="390" y="167">[5]</text><text class="bt" x="414" y="175">Kelime Listesi</text>
+  <!-- 8 İlerleme -->
+  <rect class="box" x="550" y="150" width="140" height="40" rx="9"/>
+  <text class="num" x="560" y="167">[8]</text><text class="bt" x="584" y="175">İlerleme</text>
+
+  <!-- arrows from ANA to four -->
+  <path class="edge" d="M310,64 C250,100 150,110 105,148" marker-end="url(#arrow)"/>
+  <text class="lbl" x="120" y="108">"Senaryolar" (S1)</text>
+  <path class="edge" d="M345,64 C320,100 290,120 275,148" marker-end="url(#arrow)"/>
+  <text class="lbl" x="285" y="120">"Karakter" (S2)</text>
+  <path class="edge" d="M390,64 C420,100 445,120 455,148" marker-end="url(#arrow)"/>
+  <text class="lbl" x="430" y="110">"Kelimeler" (S3)</text>
+  <path class="edge" d="M420,64 C520,100 590,115 618,148" marker-end="url(#arrow)"/>
+  <text class="lbl" x="560" y="108">"İlerleme" (S5)</text>
+
+  <!-- 7 Senaryo Oluştur (under 2) -->
+  <rect class="box" x="30" y="250" width="150" height="40" rx="9"/>
+  <text class="num" x="40" y="267">[7]</text><text class="bt" x="64" y="275">Senaryo Oluştur</text>
+  <path class="edge" d="M105,190 L105,248" marker-end="url(#arrow)"/>
+  <text class="lbl" x="110" y="222">"AI ile oluştur" (S4)</text>
+
+  <!-- 6 Kelime Ekle/Detay (under 5) -->
+  <rect class="box" x="380" y="250" width="150" height="40" rx="9"/>
+  <text class="num" x="390" y="267">[6]</text><text class="bt" x="414" y="275">Kelime Ekle/Detay</text>
+  <path class="edge" d="M455,190 L455,248" marker-end="url(#arrow)"/>
+  <text class="lbl" x="460" y="222">"+ ekle" (S3, A1-2)</text>
+  <!-- back to list -->
+  <path class="edge" d="M530,270 C580,270 580,200 532,176" marker-end="url(#arrow)"/>
+  <text class="lbl" x="545" y="240">"kaydet" → liste</text>
+
+  <!-- 3 KONUŞMA (center, big) -->
+  <rect class="box box-main" x="240" y="380" width="250" height="56" rx="10"/>
+  <text class="num-w" x="252" y="402">[3]</text>
+  <text class="bt-w" x="278" y="404">SESLİ KONUŞMA EKRANI</text>
+  <text class="bt-w" x="278" y="422" style="font-weight:400;font-size:10px">mikrofon → cevap → puan/öneri</text>
+
+  <!-- arrows into konuşma -->
+  <path class="edge" d="M105,290 C105,360 200,370 250,392" marker-end="url(#arrow)"/>
+  <text class="lbl" x="120" y="345">"kaydet &amp; başlat"</text>
+  <path class="edge" d="M275,190 C280,300 300,350 320,376" marker-end="url(#arrow)"/>
+  <text class="lbl" x="300" y="300">"seç &amp; başlat" (S2)</text>
+  <path class="edge" d="M105,176 C40,260 40,420 238,418" marker-end="url(#arrow)"/>
+  <text class="lbl" x="40" y="360">"senaryo seç" (S1,A1)</text>
+
+  <!-- back to ANA from konuşma -->
+  <path class="edge" d="M490,408 C620,408 600,80 442,52" marker-end="url(#arrow)"/>
+  <text class="lbl" x="600" y="300">"bitir" → puan</text>
+
+  <!-- bottom note -->
+  <text x="240" y="470" style="font:11px 'Segoe UI';fill:#5a6a7a">Konuşma bitince kullanıcı Ana Ekran'a döner ve kazanılan puanı görür.</text>
+
+  <!-- legend of mandatory screens -->
+  <rect x="240" y="490" width="250" height="50" rx="6" fill="#f6f9fc" stroke="#d3dde7"/>
+  <text x="252" y="506" style="font:600 9px 'Segoe UI';fill:#14233a">Zorunlu ekranlar:</text>
+  <text x="252" y="520" style="font:9px 'Segoe UI';fill:#3a4a5a">Liste/Ana → [1][2][5]  ·  Veri ekleme → [6][7]</text>
+  <text x="252" y="532" style="font:9px 'Segoe UI';fill:#3a4a5a">Detay/Güncelleme → [6][8]  ·  İçerik üretme → [3]</text>
+</svg>
+
+<p style="margin-top:12px;">
+  <b>Özet:</b> Kullanıcı her zaman <b>Ana Ekran [1]</b>'den başlar. Senaryo [2] / karakter [4] seçimi veya yeni senaryo
+  oluşturma [7], asıl içeriğin üretildiği <b>Sesli Konuşma [3]</b> ekranına yönlendirir. Kelime tarafında liste [5] →
+  ekleme/detay [6] → kaydet → tekrar liste akışı işler. Pratik bitince kullanıcı ana ekrana döner; bu da LAB 3'teki
+  günlük takip senaryosunu (S5, [8] İlerleme) tamamlar. Diyagramda kullanılmayan/gereksiz ekran yoktur.
+</p>
+
+<div class="footer">VoiceLingo · LAB 4 — Wireframe ve Ekran Akışları (Metin + Çizim) · Fonksiyonel Programlama Laboratuvarı</div>
+</body></html>

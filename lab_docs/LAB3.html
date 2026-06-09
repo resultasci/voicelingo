@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>LAB 3 — VoiceLingo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="cover">
+  <span class="lab-tag">LAB 3 — Hafta 2</span>
+  <h1>Kullanıcı Senaryoları (Use Case)</h1>
+  <p class="subtitle">VoiceLingo — Yapay Zekâ Destekli Sesli İngilizce Öğrenme Uygulaması</p>
+  <div class="meta">
+    <span><b>Öğrenci:</b> Resul Taşçı</span>
+    <span><b>Numara:</b> 235541074</span>
+    <span><b>Ders:</b> Fonksiyonel Programlama — Laboratuvar</span>
+  </div>
+</div>
+
+<div class="note">
+  <b>Föy kuralı:</b> En az 3 senaryo, kullanıcı bakış açısıyla ve metin hâlinde yazılır. Teknik terim/teknoloji ismi
+  kullanılmaz; her senaryo en çok 6–8 adımdır ve LAB 2'deki konuşma pratiği problemiyle doğrudan ilişkilidir.
+</div>
+
+<div class="card">
+  <div class="card-title">Senaryo 1 — Senaryolu Sesli Konuşma Pratiği</div>
+  <div class="row"><span class="k">Kullanıcı:</span> Konuşma pratiği yapmak isteyen orta seviye bir öğrenen.</div>
+  <div class="row"><span class="k">Amaç:</span> Gerçek bir duruma (örneğin kafede sipariş verme) benzer bir ortamda sesli konuşarak pratik yapmak ve geri bildirim almak.</div>
+  <div class="row"><span class="k">Adımlar:</span></div>
+  <ol>
+    <li>Kullanıcı uygulamayı açar ve hazır senaryolar arasından "Kafede Sipariş" senaryosunu seçer.</li>
+    <li>Öğrenme arkadaşı, senaryoya uygun bir cümleyle konuşmayı başlatır.</li>
+    <li>Kullanıcı mikrofon düğmesine basıp İngilizce cevabını sesli söyler.</li>
+    <li>Uygulama söyleneni yazıya döker, anlamlı bir cevap verir ve cümleye puan ile düzeltme önerisi gösterir.</li>
+    <li>Kullanıcı, önerilen düzeltmeyi okuyup bir sonraki cevabını verir.</li>
+    <li>Konuşma hedefe ulaşınca kullanıcı oturumu bitirir ve kazandığı puanı görür.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <div class="card-title">Senaryo 2 — Konuşma Karakteri Seçerek Pratik</div>
+  <div class="row"><span class="k">Kullanıcı:</span> Farklı aksan ve konuşma stillerine alışmak isteyen bir öğrenen.</div>
+  <div class="row"><span class="k">Amaç:</span> Kişiliği ve aksanı farklı bir öğrenme arkadaşıyla konuşarak çeşitli konuşma biçimlerine alışmak.</div>
+  <div class="row"><span class="k">Adımlar:</span></div>
+  <ol>
+    <li>Kullanıcı, öğrenme arkadaşı seçim ekranını açar.</li>
+    <li>Karakter kartlarını inceler ve kısa sesli tanıtımları dinler.</li>
+    <li>Beğendiği karakteri (örneğin resmî konuşan bir öğretmen) seçer.</li>
+    <li>Seçilen karakterle yeni bir konuşma başlatır ve sesli olarak sohbet eder.</li>
+    <li>Karakterin sesi, üslubu ve geri bildirimi seçime göre değişir.</li>
+    <li>Kullanıcı dilediğinde başka bir karaktere geçerek yeni bir konuşma başlatabilir.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <div class="card-title">Senaryo 3 — Kelime Ekleme ve Tekrar Etme</div>
+  <div class="row"><span class="k">Kullanıcı:</span> Kelime dağarcığını genişletmek isteyen bir öğrenen.</div>
+  <div class="row"><span class="k">Amaç:</span> Yeni öğrendiği bir kelimeyi kaydetmek, anlamını/örneğini görmek ve daha sonra tekrar ederek pekiştirmek.</div>
+  <div class="row"><span class="k">Adımlar:</span></div>
+  <ol>
+    <li>Kullanıcı kelime listesi ekranını açar ve "yeni kelime ekle" der.</li>
+    <li>Öğrenmek istediği İngilizce kelimeyi girer.</li>
+    <li>Uygulama kelimenin anlamını, okunuşunu ve örnek cümlesini gösterir; kelime listeye eklenir.</li>
+    <li>Kullanıcı kelimenin sesli okunuşunu dinler.</li>
+    <li>İlerleyen günlerde uygulama, tekrar zamanı gelen kelimeleri kart şeklinde sunar.</li>
+    <li>Kullanıcı kartı çevirip kendini test eder ve "biliyorum / tekrar çalış" seçeneğiyle sonucu işaretler.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <div class="card-title">Senaryo 4 — Kendi Senaryosunu Oluşturma</div>
+  <div class="row"><span class="k">Kullanıcı:</span> Belirli bir duruma özel hazırlanmak isteyen bir öğrenen.</div>
+  <div class="row"><span class="k">Amaç:</span> Kendi tarif ettiği bir konu için (örneğin "otelde oda değiştirme") özel bir konuşma senaryosu üretip pratik yapmak.</div>
+  <div class="row"><span class="k">Adımlar:</span></div>
+  <ol>
+    <li>Kullanıcı senaryo oluşturma ekranını açar.</li>
+    <li>Pratik yapmak istediği durumu kendi cümleleriyle yazar ve zorluk düzeyini seçer.</li>
+    <li>Uygulama bu tarife uygun bir senaryo (rol, hedefler, başlangıç cümlesi) oluşturup önizleme gösterir.</li>
+    <li>Kullanıcı önizlemeyi beğenirse senaryoyu kaydeder; beğenmezse yeniden ürettirir.</li>
+    <li>Kaydedilen senaryoyla sesli konuşma pratiğine başlar.</li>
+    <li>Oluşturduğu senaryoya daha sonra senaryo galerisinden tekrar ulaşabilir.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <div class="card-title">Senaryo 5 — Günlük Pratik ve İlerleme Takibi</div>
+  <div class="row"><span class="k">Kullanıcı:</span> Düzenli çalışıp ilerlemesini görmek isteyen bir öğrenen.</div>
+  <div class="row"><span class="k">Amaç:</span> Günlük pratik alışkanlığını sürdürmek, kazanımları ve eksikleri tek bir yerde takip etmek.</div>
+  <div class="row"><span class="k">Adımlar:</span></div>
+  <ol>
+    <li>Kullanıcı uygulamayı açar ve ana ekranda günlük serisini (üst üste pratik yaptığı gün sayısı) görür.</li>
+    <li>Günlük görevleri ve önerilen pratiği tamamlamak için bir etkinlik seçer.</li>
+    <li>Pratiği bitirince kazandığı puanları ve varsa yeni rozetini görür.</li>
+    <li>İlerleme ekranını açarak son günlerdeki etkinlik haritasını inceler.</li>
+    <li>Kelime, dilbilgisi ve derslerdeki ustalık oranlarını ve en sık yaptığı hataları görür.</li>
+    <li>Eksik olduğu alana yönelerek bir sonraki pratiğini planlar.</li>
+  </ol>
+</div>
+
+<div class="footer">VoiceLingo · LAB 3 — Kullanıcı Senaryoları · Fonksiyonel Programlama Laboratuvarı</div>
+
+</body>
+</html>

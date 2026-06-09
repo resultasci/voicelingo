@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>LAB 6 — VoiceLingo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="cover">
+  <span class="lab-tag">LAB 6 — Hafta 5</span>
+  <h1>Yazılım Mimarisi ve Veri Akışı</h1>
+  <p class="subtitle">VoiceLingo — Yapay Zekâ Destekli Sesli İngilizce Öğrenme Uygulaması</p>
+  <div class="meta">
+    <span><b>Öğrenci:</b> Resul Taşçı</span>
+    <span><b>Numara:</b> 235541074</span>
+    <span><b>Ders:</b> Fonksiyonel Programlama — Laboratuvar</span>
+  </div>
+</div>
+
+<div class="note">
+  <b>Föy kuralı:</b> Son planlama aşaması. Kod yazılmaz, diyagramlar basittir; amaç UML değil yapıyı netleştirmektir.
+  Katmanlı yapı + bileşenler + veri akışı (oklarla) verilir. UI, İş Mantığı ve Veri Kaynağı üç bileşeni zorunludur;
+  LAB 4 ve LAB 5 ile tutarlıdır.
+</div>
+
+<h2>6.1 Mimari Bileşenler</h2>
+
+<h4>Kullanıcı Arayüzü (Sunum / Ekranlar)</h4>
+<p>LAB 4'te tanımlanan ekranlardan oluşur:</p>
+<ul>
+  <li>Ana ekran, sesli konuşma ekranı, senaryo seçim/oluşturma ekranları, karakter seçimi,</li>
+  <li>kelime listesi ve kelime ekleme/detay ekranı, ders yolu, gramer, ilerleme ve ayarlar ekranları.</li>
+  <li>Görevi yalnızca <b>görüntülemek ve kullanıcı eylemlerini almaktır</b>; iş kuralı içermez.</li>
+</ul>
+
+<h4>İş Mantığı (Uygulama Kuralları)</h4>
+<p>Ekranlar ile veri kaynağı arasındaki tüm kuralları yürüten katman:</p>
+<ul>
+  <li><b>Durum yönetimi (Riverpod sağlayıcıları)</b> — ekranların ihtiyaç duyduğu veriyi hazırlar ve günceller.</li>
+  <li><b>Servisler</b> — konuşma turu işleme, kelime ekleme/zenginleştirme, senaryo üretimi, dilbilgisi sınav puanlama,
+      ders tamamlama, oyunlaştırma (puan/seri/rozet) kuralları.</li>
+  <li>Ekleme/güncelleme/silme, doğrulama, aralıklı tekrar (kelime tekrar zamanı) ve puan/seri hesabı burada yapılır.</li>
+</ul>
+
+<h4>Veri Kaynağı</h4>
+<p>LAB 5'teki seçimle tutarlı olarak:</p>
+<ul>
+  <li><b>Bulut:</b> Supabase — kimlik doğrulama, PostgreSQL veritabanı ve sunucu işlevleri (Edge Functions).</li>
+  <li><b>Yapay zekâ:</b> <code>ai-proxy</code> sunucu işlevi aracılığıyla Google Gemini (anahtar istemciye verilmez).</li>
+  <li><b>Yerel:</b> Hive önbelleği ve güvenli ayar saklama (çevrimdışı görüntüleme, hızlı erişim).</li>
+</ul>
+
+<h2>6.2 Katmanlı Yapı</h2>
+
+<div class="layer">
+  <div class="lname">SUNUM KATMANI — Arayüz / Ekranlar</div>
+  <div class="ldesc">LAB 4 ekranları: ana ekran, sesli konuşma, senaryo, kelime, ders, ilerleme…</div>
+</div>
+<div class="layer-arrow">▲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼</div>
+<div class="layer">
+  <div class="lname">İŞ MANTIĞI KATMANI — Uygulama Kuralları</div>
+  <div class="ldesc">Riverpod sağlayıcıları + servisler: konuşma turu, kelime/senaryo/ders kuralları, puan & seri & rozet</div>
+</div>
+<div class="layer-arrow">▲&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼</div>
+<div class="layer">
+  <div class="lname">VERİ KATMANI — Veri Kaynağı</div>
+  <div class="ldesc">Supabase (Auth + PostgreSQL + Edge Functions) · ai-proxy → Gemini · yerel Hive önbelleği</div>
+</div>
+
+<p style="margin-top:12px;">
+  Katmanlar tek yönlü bağımlıdır: <b>Sunum yalnızca İş Mantığı'nı, İş Mantığı yalnızca Veri Katmanı'nı tanır.</b>
+  Ekranlar veri kaynağına doğrudan erişmez; bu da kuralların tek yerde toplanmasını ve test edilebilirliği sağlar.
+</p>
+
+<h2 class="page-break">6.3 Veri Akışı</h2>
+<p>Örnek: Kullanıcının sesli bir cevap verip değerlendirme aldığı akış (Senaryo 1/2).</p>
+
+<div class="diagram">
+KULLANICI  (mikrofon düğmesine basar, sesli cevap verir)
+   │  (1) ses kaydı
+   ▼
+SUNUM KATMANI  (Sesli Konuşma Ekranı)
+   │  (2) "bu turu işle" isteği + ses dosyası
+   ▼
+İŞ MANTIĞI KATMANI  ──(3) seçili karakter + seviye + senaryo kuralını hazırla──┐
+   │  (4) tek istek (ses + bağlam)                                              │
+   ▼                                                                           │
+VERİ KATMANI                                                                   │
+   │  (4a) ai-proxy: kimlik doğrula → kota kontrol → Gemini'ye gönder          │
+   │  (4b) Gemini: yazıya çevir + cevap üret + puanla  (tek round-trip)        │
+   │  (4c) konuşma & mesaj kaydını PostgreSQL'e yaz                            │
+   │  (5) transcript + AI cevabı + puan/öneri/açıklama                         │
+   ▼                                                                           │
+İŞ MANTIĞI KATMANI ──(6) cevabı sesli oku, puanı/seriyi & günlük görevi güncelle┘
+   │  (7) güncellenmiş konuşma + kazanımlar
+   ▼
+SUNUM KATMANI  (ekrana balon + puan rozeti basar)
+   │  (8) sonucu göster
+   ▼
+KULLANICI  (cevabı duyar, düzeltme önerisini görür)
+</div>
+
+<p>
+  Aynı tek yönlü akış, diğer işlemler için de geçerlidir. Örneğin <b>kelime ekleme</b>: kullanıcı kelimeyi girer (Sunum)
+  → iş mantığı doğrular ve gerekirse yapay zekâ ile zenginleştirir → veri katmanına yazılır → güncel liste ekrana döner.
+  Çevrimdışıyken iş mantığı önce yerel önbelleği (Hive) kullanır; bağlantı gelince bulutla eşitlenir.
+</p>
+
+<h2>6.4 Tutarlılık Özeti</h2>
+<table>
+  <tr><th>Bileşen</th><th>LAB Karşılığı</th><th>Projedeki Gerçek Karşılık</th></tr>
+  <tr><td>UI / Ekranlar</td><td>LAB 4 ekranları</td><td>Sunum katmanındaki tüm ekran dosyaları</td></tr>
+  <tr><td>İş Mantığı</td><td>Uygulama kuralları</td><td>Riverpod sağlayıcıları + servis sınıfları</td></tr>
+  <tr><td>Veri Kaynağı</td><td>LAB 5 veri seçimi</td><td>Supabase + ai-proxy/Gemini + Hive önbelleği</td></tr>
+</table>
+
+<div class="footer">VoiceLingo · LAB 6 — Yazılım Mimarisi ve Veri Akışı · Fonksiyonel Programlama Laboratuvarı</div>
+
+</body>
+</html>

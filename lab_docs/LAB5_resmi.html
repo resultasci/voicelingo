@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>LAB 5 — Teknoloji Seçimi ve Gerekçelendirme</title>
+<link rel="stylesheet" href="foy_style.css">
+</head>
+<body>
+
+<div class="doc-header">
+  <div class="lab">LAB 5 — Teknoloji Seçimi ve Gerekçelendirme</div>
+  <div class="title">VoiceLingo</div>
+  <div class="course">Fonksiyonel Programlama — Laboratuvar</div>
+</div>
+<div class="id-line">
+  <span><b>Öğrenci:</b> Resul Taşçı</span>
+  <span><b>Numara:</b> 235541074</span>
+  <span><b>Hafta:</b> 5</span>
+</div>
+
+<p>
+  Bu doküman, LAB 2–LAB 4'te yapılan çalışmalar dikkate alınarak uygulamanın geliştirileceği teknolojileri gerekçeli
+  ve savunulabilir biçimde belirler. Seçimler "bildiğim teknolojiyi kullandım" değil, "probleme uygun teknoloji
+  seçtim" yaklaşımıyla yapılmıştır.
+</p>
+
+<h1>1. Mobil Geliştirme Teknolojisi</h1>
+<p><b>Seçim:</b> Cross-platform — Flutter (Dart dili).</p>
+<p>
+  Uygulama, tek bir kod tabanından hem Android hem iOS için derlenecek şekilde Flutter ile geliştirilmiştir. Tek
+  geliştirici ve sınırlı süreyle iki platforma birden ulaşmak gerektiğinden çapraz platform bir çatı doğal tercihtir.
+  Flutter'ın kendi render motoru; ses dalga formu, animasyonlu rozet ve özel arayüz bileşenleri gibi yoğun görsel
+  öğelerde tutarlı sonuç verir.
+</p>
+
+<h1>2. Veri Kaynağı</h1>
+<p><b>Seçim:</b> Bulut tabanlı veritabanı — Supabase (kimlik doğrulama + PostgreSQL + sunucu işlevleri).</p>
+<p>
+  Kullanıcı hesapları, ilerleme, kelimeler, konuşma geçmişi ve ders içerikleri bulutta PostgreSQL üzerinde tutulur.
+  Böylece kullanıcı verisi cihazdan bağımsız korunur ve satır düzeyi güvenlik (RLS) ile her kullanıcı yalnızca kendi
+  verisine erişir. Hassas işlemler sunucu tarafındaki işlevlerde çalışır. Cihazda ise hızlı erişim ve çevrimdışı
+  görüntüleme için yerel bir önbellek (Hive) kullanılır.
+</p>
+
+<h1>3. Ek Araçlar ve Kütüphaneler</h1>
+<table>
+  <tr><th>Alan</th><th>Teknoloji</th><th>Görevi</th></tr>
+  <tr><td>Yapay zekâ</td><td>Google Gemini (gemini-2.5-flash, çok kipli)</td><td>Sesten yazıya çevirme, koç cevabı ve değerlendirmeyi tek istekte üretir.</td></tr>
+  <tr><td>Durum yönetimi</td><td>Riverpod</td><td>Uygulama genelinde durum ve bağımlılık yönetimi.</td></tr>
+  <tr><td>Yönlendirme</td><td>go_router</td><td>Ekranlar arası gezinme ve derin bağlantılar.</td></tr>
+  <tr><td>Ses</td><td>record (Opus), flutter_tts</td><td>Mikrofon kaydı ve metni sesli okuma.</td></tr>
+  <tr><td>Yerel depolama</td><td>hive, shared_preferences, flutter_secure_storage</td><td>Önbellek, ayarlar ve güvenli anahtar saklama.</td></tr>
+  <tr><td>Ağ</td><td>dio</td><td>Sunucu işlevlerine HTTP istekleri.</td></tr>
+  <tr><td>Arayüz / görsel</td><td>fl_chart, lottie, confetti, shimmer, flutter_svg</td><td>Grafik, animasyon ve görsel zenginleştirme.</td></tr>
+  <tr><td>Bildirim</td><td>flutter_local_notifications, timezone</td><td>Günlük pratik hatırlatmaları.</td></tr>
+  <tr><td>İzleme</td><td>Sentry</td><td>Çalışma zamanı hatalarının uzaktan izlenmesi.</td></tr>
+  <tr><td>Yerelleştirme</td><td>flutter_localizations, intl</td><td>Türkçe / İngilizce arayüz.</td></tr>
+</table>
+
+<h1>4. Gerekçelendirme</h1>
+
+<h2>4.1 Problemin Yapısı</h2>
+<p>
+  Problem (sesli konuşma pratiği ve anlık geri bildirim) doğrudan yoğun bir yapay zekâ ihtiyacı doğurur. Çok kipli
+  Gemini modeli; ses kaydını yazıya çevirme, anlamlı cevap üretme ve cümleyi puanlama adımlarını tek bir istekte
+  birleştirerek hem gecikmeyi hem maliyeti düşürür. Bu, anlık geri bildirim hedefiyle birebir örtüşür.
+</p>
+
+<h2>4.2 Kullanıcı Sayısı Beklentisi</h2>
+<p>
+  Bireysel öğrenenlere yönelik, başlangıçta küçük ama büyümeye açık bir kullanıcı kitlesi beklenir. Supabase, yönetilen
+  bir altyapı sunarak sunucu yönetimi yükü olmadan ölçeklenmeye imkân verir. Yapay zekâ çağrıları için kullanıcı başına
+  günlük kota uygulanması, kullanıcı sayısı arttığında maliyetin kontrol altında tutulmasını sağlar.
+</p>
+
+<h2>4.3 Geliştirme Süresi</h2>
+<p>
+  Tek geliştirici ve sınırlı süre koşulunda; Flutter'ın tek kod tabanıyla iki platforma çıkması, Supabase'in hazır
+  kimlik doğrulama/veritabanı/sunucu işlevi sunması ve Riverpod ile go_router gibi olgun kütüphanelerin tekrarlı
+  işleri azaltması, geliştirme süresini belirgin biçimde kısaltmıştır.
+</p>
+
+<h2>4.4 Güvenlik</h2>
+<p>
+  Yapay zekâ sağlayıcısının gizli anahtarı hiçbir zaman istemciye konulmaz; tüm yapay zekâ trafiği, kimlik doğrulayan
+  ve kota uygulayan sunucu tarafı bir proxy işlevinden geçer. Bu, anahtar sızıntısı ve kötüye kullanım riskini ortadan
+  kaldırır.
+</p>
+
+</body>
+</html>

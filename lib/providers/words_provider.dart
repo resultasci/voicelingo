@@ -221,7 +221,6 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         .map((w) => w.word.trim().toLowerCase())
         .toSet();
     final seen = <String>{};
-    final today = DateTime.now().toIso8601String().split('T')[0];
     final fresh = generated.where((g) {
       final k = g.en.trim().toLowerCase();
       if (k.isEmpty || existing.contains(k) || !seen.add(k)) return false;
@@ -229,27 +228,17 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     }).toList();
     if (fresh.isEmpty) return 0;
 
-    // Per-row insert (a 23505 on a partial duplicate skips only that row), but
-    // fired in parallel — sequential awaits cost N round-trips of latency.
-    final results = await Future.wait(fresh.map((g) async {
-      try {
-        final row = await _db
-            .from('words')
-            .insert({
-              'user_id': userId,
-              'word': g.en.trim(),
-              'translation': g.tr.trim(),
-              'next_review': today,
-            })
-            .select('id')
-            .single();
-        return (id: row['id'] as String, word: g.en.trim());
-      } on PostgrestException catch (e) {
-        if (e.code == '23505') return null; // partial dup — keep going
-        rethrow;
-      }
-    }));
-    final inserted = results.whereType<({String id, String word})>().toList();
+    // Tek round-trip: RPC server tarafında ON CONFLICT DO NOTHING ile insert
+    // eder, yalnız gerçekten eklenen satırları döndürür (partial dup'lar düşer).
+    final rows = await _db.rpc('add_words_batch', params: {
+      'p_words': [
+        for (final g in fresh) {'word': g.en.trim(), 'translation': g.tr.trim()},
+      ],
+    });
+    final inserted = (rows as List)
+        .whereType<Map>()
+        .map((r) => (id: r['id'] as String, word: r['word'] as String))
+        .toList();
 
     _cache = null;
     await load(forceRefresh: true);
@@ -312,15 +301,16 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         'next_review': updatedWord.nextReview.toIso8601String().split('T')[0],
       }).eq('id', word.id);
 
-      // Update cache
-      if (_cache != null) {
-        final index = _cache!.indexWhere((w) => w.id == word.id);
-        if (index != -1) {
-          _cache![index] = updatedWord;
-        }
+      // Update cache; _cache yoksa mevcut state'i ezme ([] ile silme riski).
+      final current = _cache ?? state.value;
+      if (current != null) {
+        final next = [...current];
+        final index = next.indexWhere((w) => w.id == word.id);
+        if (index != -1) next[index] = updatedWord;
+        _cache = next;
+        state = AsyncValue.data(next);
+        _scheduleDailyReminderFor(next);
       }
-      state = AsyncValue.data(_cache ?? []);
-      _scheduleDailyReminderFor(_cache ?? []);
     } catch (e) {
       // Best-effort
     }
@@ -335,22 +325,27 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     if (results.isEmpty) return;
     final words = state.value ?? [];
 
-    final updates = <Future<void>>[];
+    // Tek round-trip: tüm review güncellemeleri tek RPC ile commit edilir
+    // (eskiden kelime başına ayrı UPDATE atılıyordu).
+    final payload = <Map<String, dynamic>>[];
     for (final r in results) {
       final w = words.where((x) => x.id == r.wordId).firstOrNull;
       if (w == null) continue;
       final updated = w.reviewed(r.quality);
-      updates.add(_db.from('words').update({
+      payload.add({
+        'id': r.wordId,
         'ease_factor': updated.easeFactor,
         'interval_days': updated.intervalDays,
         'repetitions': updated.repetitions,
         'next_review': updated.nextReview.toIso8601String().split('T')[0],
-      }).eq('id', r.wordId));
+      });
       // Schedule per-word reminder fire-and-forget; not awaited to keep latency low.
       _scheduleNextReviewNotification(updated);
     }
 
-    await Future.wait(updates);
+    if (payload.isNotEmpty) {
+      await _db.rpc('commit_word_reviews', params: {'p_reviews': payload});
+    }
 
     // Aggregate XP into a single RPC call — quality-weighted per CLAUDE.md.
     final aggregateXp = results.fold<int>(0, (acc, r) {

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>LAB 5 — VoiceLingo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="cover">
+  <span class="lab-tag">LAB 5 — Hafta 4</span>
+  <h1>Teknoloji Seçimi ve Gerekçelendirme</h1>
+  <p class="subtitle">VoiceLingo — Yapay Zekâ Destekli Sesli İngilizce Öğrenme Uygulaması</p>
+  <div class="meta">
+    <span><b>Öğrenci:</b> Resul Taşçı</span>
+    <span><b>Numara:</b> 235541074</span>
+    <span><b>Ders:</b> Fonksiyonel Programlama — Laboratuvar</span>
+  </div>
+</div>
+
+<div class="note">
+  <b>Föy kuralı:</b> Bu aşamada teknoloji isimleri serbesttir. Her seçim için kısa ve mantıklı bir gerekçe verilir;
+  problem yapısı, beklenen kullanıcı sayısı ve geliştirme süresi göz önünde bulundurulur. Aşağıdaki teknolojiler
+  projenin gerçek kaynak kodundan tespit edilmiştir.
+</div>
+
+<h2>5.1 Mobil Geliştirme Teknolojisi</h2>
+<p><b>Seçim: Flutter (Dart dili).</b></p>
+<p>
+  Uygulama tek bir kod tabanından hem Android hem iOS için derlenecek şekilde Flutter ile geliştirilmiştir.
+  Tek geliştirici ve sınırlı süreyle iki platforma birden ulaşmak gerektiğinden, çapraz platform bir çatı doğal
+  tercihtir. Flutter'ın kendi render motoru, ses dalga formu, animasyonlu rozet/konfeti ve özel "COSMOS" arayüz
+  gibi yoğun görsel bileşenlerde tutarlı bir sonuç sağlar.
+</p>
+
+<h2>5.2 Veri Kaynağı</h2>
+<p><b>Seçim: Supabase (bulut) — kimlik doğrulama + PostgreSQL veritabanı + sunucu işlevleri (Edge Functions).</b></p>
+<p>
+  Kullanıcı hesapları, ilerleme, kelimeler, konuşma geçmişi ve ders içerikleri bulutta PostgreSQL üzerinde tutulur.
+  Böylece kullanıcı verisi cihazdan bağımsız korunur ve satır düzeyi güvenlik (RLS) ile her kullanıcı yalnızca kendi
+  verisine erişir. Hassas işlemler (yapay zekâ çağrıları, kota uygulaması) sunucu tarafındaki Edge Function'larda
+  çalışır. Cihazda ise hızlı erişim ve çevrimdışı görüntüleme için <b>Hive</b> tabanlı yerel önbellek ve ayar saklama
+  kullanılır.
+</p>
+
+<h2>5.3 Ek Araçlar ve Kütüphaneler</h2>
+<table>
+  <tr><th>Alan</th><th>Teknoloji</th><th>Görevi</th></tr>
+  <tr><td>Yapay zekâ</td><td>Google Gemini (<code>gemini-2.5-flash</code>, çok kipli)</td><td>Sesten yazıya çevirme, koç cevabı ve değerlendirmeyi tek istekte üretir.</td></tr>
+  <tr><td>Durum yönetimi</td><td>Riverpod</td><td>Uygulama genelinde durum ve bağımlılık yönetimi.</td></tr>
+  <tr><td>Yönlendirme</td><td>go_router</td><td>Ekranlar arası gezinme ve derin bağlantılar.</td></tr>
+  <tr><td>Ses</td><td>record (Opus) · flutter_tts</td><td>Mikrofon kaydı ve metni sesli okuma.</td></tr>
+  <tr><td>Yerel depolama</td><td>hive · shared_preferences · flutter_secure_storage</td><td>Önbellek, ayarlar ve güvenli anahtar saklama.</td></tr>
+  <tr><td>Ağ</td><td>dio</td><td>Sunucu işlevlerine HTTP istekleri.</td></tr>
+  <tr><td>Arayüz/görsel</td><td>fl_chart · lottie · confetti · shimmer · flutter_svg</td><td>Grafik, animasyon ve görsel zenginleştirme.</td></tr>
+  <tr><td>Bildirim</td><td>flutter_local_notifications · timezone</td><td>Günlük pratik hatırlatmaları.</td></tr>
+  <tr><td>İzleme/hata</td><td>Sentry</td><td>Çalışma zamanı hatalarının uzaktan izlenmesi.</td></tr>
+  <tr><td>Yerelleştirme</td><td>flutter_localizations · intl (ARB)</td><td>Türkçe / İngilizce arayüz.</td></tr>
+</table>
+
+<h2>5.4 Gerekçelendirme</h2>
+
+<h4>Problem yapısına uygunluk</h4>
+<p>
+  Problem (sesli konuşma pratiği + anlık geri bildirim) doğrudan yoğun bir yapay zekâ ihtiyacı doğurur. Çok kipli
+  Gemini modeli; ses kaydını yazıya çevirme, anlamlı cevap üretme ve cümleyi puanlama adımlarını <b>tek bir istekte</b>
+  birleştirerek hem gecikmeyi hem maliyeti düşürür. Bu, anlık geri bildirim hedefiyle birebir örtüşür.
+</p>
+
+<h4>Beklenen kullanıcı sayısı ve ölçeklenebilirlik</h4>
+<p>
+  Bireysel öğrenenlere yönelik, başlangıçta küçük ama büyümeye açık bir kullanıcı kitlesi beklenir. Supabase, yönetilen
+  bir altyapı sunarak sunucu yönetimi yükü olmadan ölçeklenmeye imkân verir. Yapay zekâ çağrıları için kullanıcı başına
+  <b>günlük kota</b> uygulanması, kullanıcı sayısı arttığında maliyetin kontrol altında tutulmasını sağlar.
+</p>
+
+<h4>Geliştirme süresi</h4>
+<p>
+  Tek geliştirici ve sınırlı süre koşulunda; Flutter'ın tek kod tabanıyla iki platforma çıkması, Supabase'in hazır
+  kimlik doğrulama/veritabanı/sunucu işlevi sunması ve Riverpod ile go_router gibi olgun kütüphanelerin tekrarlı işleri
+  azaltması, geliştirme süresini belirgin biçimde kısaltmıştır. Seçimlerin tamamı "bildiğim teknolojiyi kullandım"
+  değil, "probleme ve kısıtlara en uygun teknolojiyi seçtim" yaklaşımıyla yapılmıştır.
+</p>
+
+<h4>Güvenlik notu</h4>
+<p>
+  Yapay zekâ sağlayıcısının gizli anahtarı hiçbir zaman istemciye konulmaz; tüm yapay zekâ trafiği, kimlik doğrulayan ve
+  kota uygulayan sunucu tarafı bir proxy işlevinden (<code>ai-proxy</code>) geçer. Bu, anahtar sızıntısı ve kötüye
+  kullanım riskini ortadan kaldırır.
+</p>
+
+<div class="footer">VoiceLingo · LAB 5 — Teknoloji Seçimi ve Gerekçelendirme · Fonksiyonel Programlama Laboratuvarı</div>
+
+</body>
+</html>
