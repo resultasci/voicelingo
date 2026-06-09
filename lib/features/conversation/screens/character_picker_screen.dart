@@ -118,8 +118,7 @@ class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
                         selected: _selectedId == character.id,
                         playing: _previewingId == character.id,
                         locale: locale,
-                        onTap: () =>
-                            setState(() => _selectedId = character.id),
+                        onTap: () => setState(() => _selectedId = character.id),
                         onPreview: () => _preview(character),
                       ),
                     );

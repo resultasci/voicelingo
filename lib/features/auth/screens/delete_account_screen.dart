@@ -314,8 +314,8 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                 child: Icon(Icons.circle, size: 5, color: context.c.error),
               ),
               Expanded(
-                child: Text(text,
-                    style: AppText.ink(13.5, color: context.c.ink)),
+                child:
+                    Text(text, style: AppText.ink(13.5, color: context.c.ink)),
               ),
             ],
           ),
@@ -348,9 +348,9 @@ class _TopBar extends StatelessWidget {
             child: Center(
               child: Text(
                 AppL10n.of(context).del_title,
-                style: AppText.label(13,
-                        color: c.error, weight: FontWeight.w700)
-                    .copyWith(
+                style:
+                    AppText.label(13, color: c.error, weight: FontWeight.w700)
+                        .copyWith(
                   shadows: neonGlow(c.error, blur: 12, opacity: 0.8),
                 ),
               ),
@@ -406,8 +406,7 @@ class _Checkbox extends StatelessWidget {
       decoration: BoxDecoration(
         color: value ? c.error.withOpacity(0.85) : Colors.transparent,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-            color: value ? c.error : c.inkDim, width: 1.5),
+        border: Border.all(color: value ? c.error : c.inkDim, width: 1.5),
       ),
       child:
           value ? const Icon(Icons.check, size: 14, color: Colors.white) : null,

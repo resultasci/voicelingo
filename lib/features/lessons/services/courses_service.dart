@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/storage/cached_repository.dart';
 import '../../../core/storage/hive_boxes.dart';
+import '../../../providers/profile_provider.dart';
 import '../models/course.dart';
 
 /// Course / Unit / Lesson + progress için repository.
@@ -186,6 +187,8 @@ class CoursesService {
     if (res['ok'] != true) {
       return LessonCompletionResult(ok: false, error: res['error'] as String?);
     }
+    // XP/streak DB tarafında değişti — profil cache'i taze veri çeksin.
+    await bustProfileCache();
     return LessonCompletionResult(
       ok: true,
       status: res['status'] as String?,

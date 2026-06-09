@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/storage/hive_boxes.dart';
+
 class AuthService {
   final _supabase = Supabase.instance.client;
 
@@ -25,6 +27,12 @@ class AuthService {
 
   Future<void> signOut() async {
     await _supabase.auth.signOut();
+    // Kullanıcıya özel offline cache'ler bir sonraki hesaba sızmasın.
+    try {
+      await HiveBoxes.clearUserData();
+    } catch (_) {
+      // Cache temizliği best-effort; çıkışı asla engellemesin.
+    }
   }
 
   Future<void> sendPasswordResetEmail(String email) async {

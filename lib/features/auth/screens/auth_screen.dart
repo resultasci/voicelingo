@@ -293,9 +293,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             style: AppText.body(13, color: c.inkMuted),
             children: [
               TextSpan(
-                  text: _isLogin
-                      ? l.auth_toggleToSignup
-                      : l.auth_toggleToLogin),
+                  text:
+                      _isLogin ? l.auth_toggleToSignup : l.auth_toggleToLogin),
               TextSpan(
                 text: _isLogin ? l.auth_signUpShort : l.auth_signInShort,
                 style: AppText.ink(13,

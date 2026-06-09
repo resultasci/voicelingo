@@ -476,6 +476,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         'p_xp_earned': 5,
         'p_timezone_offset': tzStr,
       });
+      // XP/streak just changed server-side — drop the cached profile so the
+      // dashboard HUD reflects it on next read instead of after the 6h TTL.
+      await bustProfileCache();
+      if (mounted) ref.invalidate(profileProvider);
     } catch (_) {}
     try {
       final quests = ref.read(dailyQuestsProvider).value ?? const [];
@@ -550,37 +554,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       );
       if (!mounted) return;
 
-      // XP for an AI exchange — best-effort.
-      try {
-        final tzo = DateTime.now().timeZoneOffset.inHours;
-        final sign = tzo >= 0 ? '+' : '-';
-        final tzStr = '$sign${tzo.abs().toString().padLeft(2, '0')}:00';
-        await Supabase.instance.client.rpc('log_practice_session', params: {
-          'p_mode': 'conversation',
-          'p_words_practiced': 0,
-          'p_avg_score': 5.0,
-          'p_xp_earned': 5,
-          'p_timezone_offset': tzStr,
-        });
-      } catch (_) {}
-
-      // Faz 5: Daily quest progress — conversation_turns hedefini artır.
-      // Best-effort: quest yoksa veya zaten tamamsa sessizce geç.
-      try {
-        final quests = ref.read(dailyQuestsProvider).value ?? const [];
-        final target = quests.where(
-            (q) => q.type == QuestType.conversationTurns && !q.isCompleted);
-        if (target.isNotEmpty) {
-          final svc = ref.read(dailyQuestsServiceProvider);
-          await svc.updateProgress(questId: target.first.id, delta: 1);
-          ref.invalidate(dailyQuestsProvider);
-        }
-      } catch (_) {}
-
       final msg = _addMessage(isUser: false, text: aiResponse);
       _persistMessage(msg);
       _speakMessage(aiResponse);
       setState(() => _status = _ConvStatus.playing);
+
+      // XP + daily quest — best-effort, never delays rendering the reply.
+      unawaited(_logTurnSideEffects());
     } catch (e) {
       if (!mounted) return;
       final l = AppL10n.of(context);
@@ -800,8 +780,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             Semantics(
               label: l.common_back,
               child: IconButton(
-                icon: Icon(Icons.arrow_back,
-                    color: c.primaryContainer, size: 22),
+                icon:
+                    Icon(Icons.arrow_back, color: c.primaryContainer, size: 22),
                 padding: const EdgeInsets.all(6),
                 constraints: tightConstraints,
                 visualDensity: compactBtn,
@@ -813,8 +793,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           Expanded(
             child: Text(
               widget.scenario?.title ?? l.conv_practiceMode,
-              style: AppText.title(18, color: c.primary, weight: FontWeight.w600)
-                  .copyWith(
+              style:
+                  AppText.title(18, color: c.primary, weight: FontWeight.w600)
+                      .copyWith(
                 shadows: neonGlow(c.primary, blur: 8, opacity: 0.3),
               ),
               maxLines: 1,
@@ -865,8 +846,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             Semantics(
               label: l.conv_newChat,
               child: IconButton(
-                icon: Icon(Icons.add_comment_outlined,
-                    color: c.inkDim, size: 20),
+                icon:
+                    Icon(Icons.add_comment_outlined, color: c.inkDim, size: 20),
                 padding: const EdgeInsets.all(6),
                 constraints: tightConstraints,
                 visualDensity: compactBtn,
@@ -954,42 +935,19 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                 bottomRight: Radius.circular(18),
               ),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildBlinkingDot(0),
-                const SizedBox(width: 4),
-                _buildBlinkingDot(1),
-                const SizedBox(width: 4),
-                _buildBlinkingDot(2),
+                _BlinkingDot(index: 0),
+                SizedBox(width: 4),
+                _BlinkingDot(index: 1),
+                SizedBox(width: 4),
+                _BlinkingDot(index: 2),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBlinkingDot(int index) {
-    // Basit bir scale & opacity animasyonu için Shimmer eklenebilir veya hazır Lottie.
-    // Şimdilik flutter_riverpod bağlamında basit bir shimmer widget dönelim.
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 600 + (index * 200)),
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: (value < 0.5 ? value * 2 : 2 - (value * 2)).clamp(0.2, 1.0),
-          child: Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: context.c.primaryContainer,
-              shape: BoxShape.circle,
-            ),
-          ),
-        );
-      },
-      onEnd: () => setState(() {}),
     );
   }
 
@@ -1053,9 +1011,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
                           radius: 18,
-                          borderColor: msg.isError
-                              ? c.error.withOpacity(0.5)
-                              : null,
+                          borderColor:
+                              msg.isError ? c.error.withOpacity(0.5) : null,
                           child: Text(
                             msg.text,
                             style: AppText.ink(
@@ -1130,8 +1087,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.primaryContainer.withOpacity(0.12),
-                border:
-                    Border.all(color: c.primaryContainer.withOpacity(0.45)),
+                border: Border.all(color: c.primaryContainer.withOpacity(0.45)),
                 boxShadow: [
                   BoxShadow(
                     color: c.primaryContainer.withOpacity(0.25),
@@ -1155,8 +1111,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           Center(
             child: Text(
               widget.scenario?.title ?? l.conv_aiPracticeMode,
-              style: AppText.title(22, color: c.primary, weight: FontWeight.w600)
-                  .copyWith(
+              style:
+                  AppText.title(22, color: c.primary, weight: FontWeight.w600)
+                      .copyWith(
                 shadows: neonGlow(c.primary, blur: 8, opacity: 0.3),
               ),
               textAlign: TextAlign.center,
@@ -1286,7 +1243,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   style: AppText.ink(14, color: c.ink),
                   cursorColor: c.primaryContainer,
                   textInputAction: TextInputAction.send,
-                  onChanged: (_) => setState(() {}),
                   onSubmitted: (_) => _sendText(),
                   decoration: InputDecoration(
                     isDense: true,
@@ -1315,30 +1271,38 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     ),
                   ),
                 ),
-              if (_textCtrl.text.isNotEmpty)
-                Semantics(
-                  label: l.conv_sendMessage,
-                  button: true,
-                  child: IconButton(
-                    onPressed: _sendText,
-                    icon: Icon(Icons.send, color: c.primaryContainer, size: 22),
-                  ),
-                )
-              else
-                Semantics(
-                  label: _status == _ConvStatus.listening
-                      ? l.conv_stopRecording
-                      : l.conv_startRecording,
-                  button: true,
-                  child: AnimatedBuilder(
-                    animation: _pulse,
-                    builder: (_, __) => _MicButton(
-                      status: _status,
-                      pulse: _pulse.value,
-                      onTap: _canToggleMic ? _toggleMic : null,
+              // Per-keystroke updates only swap this trailing button — listening
+              // to the controller here avoids rebuilding the whole screen.
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _textCtrl,
+                builder: (context, value, _) {
+                  if (value.text.isNotEmpty) {
+                    return Semantics(
+                      label: l.conv_sendMessage,
+                      button: true,
+                      child: IconButton(
+                        onPressed: _sendText,
+                        icon: Icon(Icons.send,
+                            color: c.primaryContainer, size: 22),
+                      ),
+                    );
+                  }
+                  return Semantics(
+                    label: _status == _ConvStatus.listening
+                        ? l.conv_stopRecording
+                        : l.conv_startRecording,
+                    button: true,
+                    child: AnimatedBuilder(
+                      animation: _pulse,
+                      builder: (_, __) => _MicButton(
+                        status: _status,
+                        pulse: _pulse.value,
+                        onTap: _canToggleMic ? _toggleMic : null,
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -1550,15 +1514,15 @@ class _ScenarioTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.primaryContainer.withOpacity(0.15),
-                border:
-                    Border.all(color: c.primaryContainer.withOpacity(0.4)),
+                border: Border.all(color: c.primaryContainer.withOpacity(0.4)),
               ),
               child: Icon(scenario.icon, color: c.primaryContainer, size: 18),
             ),
             const SizedBox(height: 10),
             Text(
               scenario.title,
-              style: AppText.title(14, color: c.primary, weight: FontWeight.w700),
+              style:
+                  AppText.title(14, color: c.primary, weight: FontWeight.w700),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1600,8 +1564,7 @@ class _AllScenariosTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.tertiaryFixedDim.withOpacity(0.15),
-                border:
-                    Border.all(color: c.tertiaryFixedDim.withOpacity(0.4)),
+                border: Border.all(color: c.tertiaryFixedDim.withOpacity(0.4)),
               ),
               child: Icon(Icons.grid_view_rounded,
                   color: c.tertiaryFixedDim, size: 18),
@@ -1614,6 +1577,52 @@ class _AllScenariosTile extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Self-animating "AI is thinking" dot. Owns its controller so the blink loop
+/// repaints only this 6×6 dot — the previous TweenAnimationBuilder+onEnd
+/// approach rebuilt the entire conversation screen every cycle.
+class _BlinkingDot extends StatefulWidget {
+  final int index;
+  const _BlinkingDot({required this.index});
+
+  @override
+  State<_BlinkingDot> createState() => _BlinkingDotState();
+}
+
+class _BlinkingDotState extends State<_BlinkingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 600 + (widget.index * 200)),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _ctrl.drive(Tween(begin: 0.2, end: 1.0)),
+      child: Container(
+        width: 6,
+        height: 6,
+        decoration: BoxDecoration(
+          color: context.c.primaryContainer,
+          shape: BoxShape.circle,
         ),
       ),
     );

@@ -121,8 +121,7 @@ class _BadgeEarnedModalState extends State<BadgeEarnedModal> {
                       Text(
                         l.badge_unlocked,
                         style: AppText.label(11,
-                            color: c.primaryContainer,
-                            weight: FontWeight.w700),
+                            color: c.primaryContainer, weight: FontWeight.w700),
                       ),
                       const SizedBox(height: 8),
                       Text(

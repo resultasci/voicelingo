@@ -125,8 +125,8 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                               color: c.primaryContainer,
                               weight: FontWeight.w800)
                           .copyWith(
-                        shadows:
-                            neonGlow(c.primaryContainer, blur: 16, opacity: 0.6),
+                        shadows: neonGlow(c.primaryContainer,
+                            blur: 16, opacity: 0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),

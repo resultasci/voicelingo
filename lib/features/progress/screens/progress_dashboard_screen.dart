@@ -245,8 +245,8 @@ class _MasteryRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: AppText.title(14,
-                      color: c.ink, weight: FontWeight.w700),
+                  style:
+                      AppText.title(14, color: c.ink, weight: FontWeight.w700),
                 ),
               ),
               Text(

@@ -24,6 +24,7 @@ class DashboardScreen extends ConsumerWidget {
       color: context.c.primaryContainer,
       backgroundColor: context.c.bgCard,
       onRefresh: () async {
+        await bustProfileCache();
         ref.invalidate(profileProvider);
         await ref.read(wordsProvider.notifier).load(forceRefresh: true);
       },

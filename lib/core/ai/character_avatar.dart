@@ -35,7 +35,8 @@ class CharacterAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.c;
-    final (a, b) = _accents[character.id] ?? const (Color(0xFF00F2FF), Color(0xFF7318FF));
+    final (a, b) =
+        _accents[character.id] ?? const (Color(0xFF00F2FF), Color(0xFF7318FF));
     final isFemale = character.gender == 'female';
     final ringColor = selected ? c.primaryContainer : a;
 

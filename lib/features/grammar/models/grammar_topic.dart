@@ -40,10 +40,12 @@ class GrammarTopic {
         descriptionTr: map['description_tr'] as String?,
         descriptionEn: map['description_en'] as String?,
         examples: (map['examples'] as List? ?? const [])
-            .map((e) => TopicExample.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map((e) =>
+                TopicExample.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
         quiz: (map['quiz_questions'] as List? ?? const [])
-            .map((q) => QuizQuestion.fromJson(Map<String, dynamic>.from(q as Map)))
+            .map((q) =>
+                QuizQuestion.fromJson(Map<String, dynamic>.from(q as Map)))
             .toList(),
         xpReward: (map['xp_reward'] as num?)?.toInt() ?? 30,
       );

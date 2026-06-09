@@ -153,8 +153,7 @@ class _RequestPanel extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.primaryContainer.withOpacity(0.12),
-                border:
-                    Border.all(color: c.primaryContainer.withOpacity(0.5)),
+                border: Border.all(color: c.primaryContainer.withOpacity(0.5)),
                 boxShadow: [
                   BoxShadow(
                     color: c.primaryContainer.withOpacity(0.4),
@@ -162,7 +161,8 @@ class _RequestPanel extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(Icons.lock_reset, color: c.primaryContainer, size: 30),
+              child:
+                  Icon(Icons.lock_reset, color: c.primaryContainer, size: 30),
             ),
           ),
           const SizedBox(height: 22),
@@ -194,8 +194,7 @@ class _RequestPanel extends StatelessWidget {
                   Icon(Icons.error_outline, color: c.error, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(error!,
-                        style: AppText.ink(13, color: c.error)),
+                    child: Text(error!, style: AppText.ink(13, color: c.error)),
                   ),
                 ],
               ),

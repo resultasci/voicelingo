@@ -30,11 +30,28 @@ class DuplicateWordException extends AppException {
 class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   WordsNotifier(this._ref) : super(const AsyncValue.loading()) {
     load();
+    // Hesap değişiminde (signIn/signOut) bellekteki liste önceki kullanıcıya
+    // ait kalmasın — provider global olduğu için autoDispose ile çözülmüyor.
+    _authSub = _db.auth.onAuthStateChange.listen((change) {
+      final event = change.event;
+      if (event == AuthChangeEvent.signedIn ||
+          event == AuthChangeEvent.signedOut) {
+        _cache = null;
+        load(forceRefresh: true);
+      }
+    });
   }
 
   final Ref _ref;
   final _db = Supabase.instance.client;
   List<Word>? _cache;
+  StreamSubscription<AuthState>? _authSub;
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
 
   Future<void> load({bool forceRefresh = false}) async {
     try {
@@ -42,7 +59,6 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         state = AsyncValue.data(_cache!);
         return;
       }
-      state = const AsyncValue.loading();
       final userId = _db.auth.currentUser?.id;
       if (userId == null) {
         _cache = const [];
@@ -50,15 +66,22 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         return;
       }
 
-      // Offline ise Hive cache'ten oku — kullanıcı yenileme bekleyince empty
-      // göstermek yerine bilinen state'i göster.
+      // Stale-while-revalidate: Hive'da veri varsa spinner yerine onu hemen
+      // göster, ağ cevabı gelince üzerine yaz. Soğuk açılışta liste anında dolar.
+      final wordsCache = _ref.read(wordsCacheProvider);
+      final hiveCached = wordsCache.readAll();
+      if (hiveCached.isNotEmpty) {
+        state = AsyncValue.data(hiveCached);
+      } else {
+        state = const AsyncValue.loading();
+      }
+
+      // Offline ise ağ timeout'u beklemeden bilinen state'te kal.
       final connectivity = _ref.read(connectivityServiceProvider);
       final online = await connectivity.isOnline();
-      final wordsCache = _ref.read(wordsCacheProvider);
       if (!online) {
-        final cached = wordsCache.readAll();
-        _cache = cached;
-        state = AsyncValue.data(cached);
+        _cache = hiveCached;
+        state = AsyncValue.data(hiveCached);
         return;
       }
 
@@ -142,8 +165,12 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
           .select()
           .single();
 
-      _cache = null;
-      await load(forceRefresh: true);
+      // Insert zaten yeni satırı döndürüyor — tüm tabloyu yeniden çekmek yerine
+      // listenin başına ekle (created_at desc sıralamasıyla uyumlu).
+      final newWord = Word.fromMap(inserted);
+      _cache = [newWord, ...(_cache ?? state.value ?? const <Word>[])];
+      state = AsyncValue.data(_cache!);
+      unawaited(_ref.read(wordsCacheProvider).putAll(_cache!));
       AppLogger.info('Yeni kelime başarıyla eklendi: $trimmedWord',
           tag: 'WordsProvider');
 
@@ -202,23 +229,27 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     }).toList();
     if (fresh.isEmpty) return 0;
 
-    // Insert one-by-one so a 23505 on a partial duplicate skips only that row
-    // instead of rolling back the whole batch.
-    final inserted = <({String id, String word})>[];
-    for (final g in fresh) {
+    // Per-row insert (a 23505 on a partial duplicate skips only that row), but
+    // fired in parallel — sequential awaits cost N round-trips of latency.
+    final results = await Future.wait(fresh.map((g) async {
       try {
-        final row = await _db.from('words').insert({
-          'user_id': userId,
-          'word': g.en.trim(),
-          'translation': g.tr.trim(),
-          'next_review': today,
-        }).select('id').single();
-        inserted.add((id: row['id'] as String, word: g.en.trim()));
+        final row = await _db
+            .from('words')
+            .insert({
+              'user_id': userId,
+              'word': g.en.trim(),
+              'translation': g.tr.trim(),
+              'next_review': today,
+            })
+            .select('id')
+            .single();
+        return (id: row['id'] as String, word: g.en.trim());
       } on PostgrestException catch (e) {
-        if (e.code == '23505') continue; // partial dup — keep going
+        if (e.code == '23505') return null; // partial dup — keep going
         rethrow;
       }
-    }
+    }));
+    final inserted = results.whereType<({String id, String word})>().toList();
 
     _cache = null;
     await load(forceRefresh: true);
@@ -234,7 +265,8 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     for (final it in items.take(maxEnrich)) {
       // Update each word's DB row in place but DON'T reload per word — reloading
       // 10× back-to-back flickers the list to a spinner and wastes round-trips.
-      anyEnriched = await _writeEnrichment(id: it.id, word: it.word) || anyEnriched;
+      anyEnriched =
+          await _writeEnrichment(id: it.id, word: it.word) || anyEnriched;
       await Future.delayed(const Duration(milliseconds: 600)); // gentle pacing
     }
     if (anyEnriched) {
@@ -339,6 +371,9 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         'p_xp_earned': aggregateXp,
         'p_timezone_offset': tzStr,
       });
+      // XP/streak değişti — profil cache'ini düşür ki dashboard HUD güncellensin.
+      await bustProfileCache();
+      _ref.invalidate(profileProvider);
     } catch (_) {
       // XP is best-effort.
     }
@@ -363,8 +398,15 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
 
   Future<void> deleteWord(String wordId) async {
     await _db.from('words').delete().eq('id', wordId);
-    _cache = null;
-    await load(forceRefresh: true);
+    // Lokal listeden düş — tek silme için tüm tabloyu yeniden çekme.
+    final current = _cache ?? state.value;
+    if (current != null) {
+      _cache = current.where((w) => w.id != wordId).toList();
+      state = AsyncValue.data(_cache!);
+      unawaited(_ref.read(wordsCacheProvider).putAll(_cache!));
+    } else {
+      await load(forceRefresh: true);
+    }
   }
 }
 

@@ -55,4 +55,19 @@ class HiveBoxes {
       Hive.openBox<Map>(contentTree),
     ]);
   }
+
+  /// Kullanıcıya özel box'ları boşaltır. signOut'ta çağrılır — aynı cihazda
+  /// başka bir hesapla girilince önceki kullanıcının kelimeleri/profili
+  /// cache'ten servis edilmesin. Sistem içerik box'larına (characters,
+  /// grammarTopics, contentTree, dictionary) dokunulmaz; onlar kullanıcıdan
+  /// bağımsızdır.
+  static Future<void> clearUserData() async {
+    await Future.wait([
+      Hive.box<Map>(words).clear(),
+      Hive.box<Map>(conversations).clear(),
+      Hive.box<Map>(lessons).clear(),
+      Hive.box<Map>(pendingOps).clear(),
+      Hive.box<Map>(profiles).clear(),
+    ]);
+  }
 }

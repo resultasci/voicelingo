@@ -152,8 +152,8 @@ class _TopAppBar extends ConsumerWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: c.primaryContainer.withOpacity(0.12),
-                    border: Border.all(
-                        color: c.primaryContainer.withOpacity(0.4)),
+                    border:
+                        Border.all(color: c.primaryContainer.withOpacity(0.4)),
                   ),
                   alignment: Alignment.center,
                   child: Text(

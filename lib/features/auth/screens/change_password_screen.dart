@@ -254,8 +254,7 @@ class _TopBar extends StatelessWidget {
                 style: AppText.label(13,
                         color: c.primaryContainer, weight: FontWeight.w700)
                     .copyWith(
-                  shadows:
-                      neonGlow(c.primaryContainer, blur: 12, opacity: 0.8),
+                  shadows: neonGlow(c.primaryContainer, blur: 12, opacity: 0.8),
                 ),
               ),
             ),

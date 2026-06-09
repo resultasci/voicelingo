@@ -265,7 +265,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       inkDim: Color.lerp(inkDim, other.inkDim, t)!,
       rule: Color.lerp(rule, other.rule, t)!,
       primary: Color.lerp(primary, other.primary, t)!,
-      primaryContainer: Color.lerp(primaryContainer, other.primaryContainer, t)!,
+      primaryContainer:
+          Color.lerp(primaryContainer, other.primaryContainer, t)!,
       primaryFixed: Color.lerp(primaryFixed, other.primaryFixed, t)!,
       primaryFixedDim: Color.lerp(primaryFixedDim, other.primaryFixedDim, t)!,
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
@@ -273,8 +274,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
       secondaryContainer:
           Color.lerp(secondaryContainer, other.secondaryContainer, t)!,
       tertiary: Color.lerp(tertiary, other.tertiary, t)!,
-      tertiaryContainer: Color.lerp(tertiaryContainer, other.tertiaryContainer, t)!,
-      tertiaryFixedDim: Color.lerp(tertiaryFixedDim, other.tertiaryFixedDim, t)!,
+      tertiaryContainer:
+          Color.lerp(tertiaryContainer, other.tertiaryContainer, t)!,
+      tertiaryFixedDim:
+          Color.lerp(tertiaryFixedDim, other.tertiaryFixedDim, t)!,
       error: Color.lerp(error, other.error, t)!,
       errorContainer: Color.lerp(errorContainer, other.errorContainer, t)!,
       success: Color.lerp(success, other.success, t)!,
@@ -431,7 +434,8 @@ ThemeData buildLightAppTheme() {
       elevation: 0,
       surfaceTintColor: Colors.transparent,
       centerTitle: false,
-      titleTextStyle: AppText.label(11, color: AppPalette.light.primaryContainer),
+      titleTextStyle:
+          AppText.label(11, color: AppPalette.light.primaryContainer),
       iconTheme: const IconThemeData(color: Color(0xFF008CA6)),
     ),
     snackBarTheme: SnackBarThemeData(
@@ -516,7 +520,8 @@ class _CosmicBackgroundState extends State<CosmicBackground>
     final dark = palette.isDark;
     // Bloom tints: cyan top-left, violet bottom-right — softer in light mode.
     final cyanBloom = dark ? const Color(0x1400F2FF) : const Color(0x0F008CA6);
-    final violetBloom = dark ? const Color(0x147318FF) : const Color(0x0D6B26D9);
+    final violetBloom =
+        dark ? const Color(0x147318FF) : const Color(0x0D6B26D9);
     final fade = palette.bg.withOpacity(0);
 
     return Container(
@@ -814,8 +819,7 @@ class NeonButton extends StatelessWidget {
                       Text(
                         label.toUpperCase(),
                         style: AppText.label(12,
-                            color: onAccent,
-                            weight: FontWeight.w700),
+                            color: onAccent, weight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -866,8 +870,8 @@ class GhostButton extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               Text(label.toUpperCase(),
-                  style:
-                      AppText.label(11, color: accent, weight: FontWeight.w700)),
+                  style: AppText.label(11,
+                      color: accent, weight: FontWeight.w700)),
             ],
           ),
         ),
@@ -939,8 +943,7 @@ class NeonField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: palette.primaryContainer, width: 1.5),
+          borderSide: BorderSide(color: palette.primaryContainer, width: 1.5),
         ),
       ),
     );
@@ -953,8 +956,7 @@ class SectionLabel extends StatelessWidget {
   final Color? color;
   final bool withRule;
 
-  const SectionLabel(this.text,
-      {super.key, this.color, this.withRule = true});
+  const SectionLabel(this.text, {super.key, this.color, this.withRule = true});
 
   @override
   Widget build(BuildContext context) {

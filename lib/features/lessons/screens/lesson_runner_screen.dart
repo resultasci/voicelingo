@@ -466,9 +466,7 @@ class _QuizRunnerState extends ConsumerState<_QuizRunner> {
                           color: Colors.white, strokeWidth: 2),
                     )
                   : Text(
-                      _index == qs.length - 1
-                          ? l.common_finish
-                          : l.common_next,
+                      _index == qs.length - 1 ? l.common_finish : l.common_next,
                       style: AppText.label(13,
                           color: c.onPrimary, weight: FontWeight.w700),
                     ),
@@ -510,8 +508,8 @@ class _QuizRunnerState extends ConsumerState<_QuizRunner> {
                 ),
                 child: Text(
                   opt,
-                  style: AppText.title(15,
-                      color: c.ink, weight: FontWeight.w600),
+                  style:
+                      AppText.title(15, color: c.ink, weight: FontWeight.w600),
                 ),
               ),
             ),
@@ -656,8 +654,8 @@ class _CompletionDialog {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   l.lesson_scoreLabel(score),
-                  style: AppText.title(16,
-                      color: c.ink, weight: FontWeight.w700),
+                  style:
+                      AppText.title(16, color: c.ink, weight: FontWeight.w700),
                 ),
               ),
             if ((res.stars ?? 0) > 0)
