@@ -5,7 +5,7 @@ import '../core/widgets/connectivity_banner.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../providers/locale_provider.dart';
 import '../providers/theme_provider.dart';
-import '../router/app_router.dart';
+import 'router/app_router.dart';
 import '../theme/app_theme.dart';
 
 /// Kök widget. Bootstrap tamamlandıktan sonra `runApp(ProviderScope(...))`
