@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/brand_logo.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../controllers/auth_controller.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import 'forgot_password_screen.dart';
@@ -18,100 +19,75 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
-  bool _isLogin = true;
-  bool _loading = false;
   bool _obscurePass = true;
-  String? _error;
-  bool _showConfirmEmail = false;
 
-  static final _emailRegex = RegExp(r'^[\w\.\-]+@[\w\-]+\.\w{2,}$');
+  late final AuthController _auth = AuthController(
+    signIn: (email, password) =>
+        ref.read(authServiceProvider).signIn(email, password),
+    signUp: (email, password, {username}) => ref
+        .read(authServiceProvider)
+        .signUp(email, password, username: username),
+  );
+
+  bool get _isLogin => _auth.isLogin;
+
+  @override
+  void initState() {
+    super.initState();
+    _auth.addListener(_onAuthChanged);
+  }
+
+  void _onAuthChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
+    _auth.removeListener(_onAuthChanged);
+    _auth.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _nameCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit() => _auth.submit(
+        email: _emailCtrl.text,
+        password: _passCtrl.text,
+        name: _nameCtrl.text,
+      );
+
+  String _errorText(AuthError e) {
     final l = AppL10n.of(context);
-    final email = _emailCtrl.text.trim();
-    final pass = _passCtrl.text.trim();
-    final name = _nameCtrl.text.trim();
-
-    if (email.isEmpty || pass.isEmpty) {
-      setState(() => _error = l.auth_validation_fillAll);
-      return;
+    switch (e) {
+      case AuthError.emptyFields:
+        return l.auth_validation_fillAll;
+      case AuthError.emptyName:
+        return l.auth_err_enterName;
+      case AuthError.invalidEmail:
+        return l.auth_err_invalidEmail;
+      case AuthError.passwordTooShort:
+        return l.auth_err_passwordMin6;
+      case AuthError.invalidCredentials:
+        return l.auth_err_invalidCredentials;
+      case AuthError.emailNotConfirmed:
+        return l.auth_err_emailNotConfirmed;
+      case AuthError.alreadyRegistered:
+        return l.auth_err_alreadyRegistered;
+      case AuthError.network:
+        return l.auth_err_noInternet;
+      case AuthError.generic:
+        return l.auth_err_generic;
     }
-    if (!_isLogin && name.isEmpty) {
-      setState(() => _error = l.auth_err_enterName);
-      return;
-    }
-    if (!_emailRegex.hasMatch(email)) {
-      setState(() => _error = l.auth_err_invalidEmail);
-      return;
-    }
-    if (pass.length < 6) {
-      setState(() => _error = l.auth_err_passwordMin6);
-      return;
-    }
-
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    final auth = ref.read(authServiceProvider);
-    try {
-      if (_isLogin) {
-        await auth.signIn(email, pass);
-      } else {
-        await auth.signUp(email, pass, username: name);
-        if (mounted) setState(() => _showConfirmEmail = true);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _error = _humanize(e.toString()));
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  String _humanize(String raw) {
-    final l = AppL10n.of(context);
-    final s = raw.toLowerCase();
-    if (s.contains('invalid login') || s.contains('invalid credentials')) {
-      return l.auth_err_invalidCredentials;
-    }
-    if (s.contains('email') && s.contains('confirm')) {
-      return l.auth_err_emailNotConfirmed;
-    }
-    if (s.contains('email not confirmed')) {
-      return l.auth_err_emailNotConfirmed;
-    }
-    if (s.contains('user already') || s.contains('already registered')) {
-      return l.auth_err_alreadyRegistered;
-    }
-    if (s.contains('password') && s.contains('6')) {
-      return l.auth_err_passwordMin6;
-    }
-    if (s.contains('network') || s.contains('socket')) {
-      return l.auth_err_noInternet;
-    }
-    return l.auth_err_generic;
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.c;
-    if (_showConfirmEmail) {
+    if (_auth.confirmEmailPending) {
       return _ConfirmEmailScreen(
         email: _emailCtrl.text.trim(),
-        onBack: () => setState(() {
-          _showConfirmEmail = false;
-          _isLogin = true;
-        }),
+        onBack: _auth.dismissConfirmEmail,
       );
     }
 
@@ -196,8 +172,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               children: [
                 _buildBrand(),
                 const SizedBox(height: 28),
-                if (_error != null) ...[
-                  _ErrorBanner(message: _error!),
+                if (_auth.error != null) ...[
+                  _ErrorBanner(message: _errorText(_auth.error!)),
                   const SizedBox(height: 16),
                 ],
                 if (!_isLogin) ...[
@@ -268,7 +244,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 SizedBox(height: _isLogin ? 16 : 28),
                 NeonButton(
                   label: _isLogin ? l.auth_loginBtn : l.auth_signupBtn,
-                  loading: _loading,
+                  loading: _auth.submitting,
                   onTap: _submit,
                   height: 56,
                 ),
@@ -313,10 +289,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final c = context.c;
     return Center(
       child: TextButton(
-        onPressed: () => setState(() {
-          _isLogin = !_isLogin;
-          _error = null;
-        }),
+        onPressed: _auth.toggleMode,
         style: TextButton.styleFrom(
           foregroundColor: c.inkMuted,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

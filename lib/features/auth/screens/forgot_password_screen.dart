@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/app_exception.dart';
+import '../auth_validators.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -20,8 +21,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   bool _sent = false;
   String? _error;
 
-  static final _emailRegex = RegExp(r'^[\w\.\-]+@[\w\-]+\.\w{2,}$');
-
   @override
   void initState() {
     super.initState();
@@ -37,7 +36,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Future<void> _submit() async {
     final l = AppL10n.of(context);
     final email = _emailCtrl.text.trim();
-    if (email.isEmpty || !_emailRegex.hasMatch(email)) {
+    if (email.isEmpty || !authEmailRegex.hasMatch(email)) {
       setState(() => _error = l.auth_err_invalidEmail);
       return;
     }

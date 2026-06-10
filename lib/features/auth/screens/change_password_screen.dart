@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/app_exception.dart';
+import '../auth_validators.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -43,7 +44,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       setState(() => _error = l.auth_validation_fillAll);
       return;
     }
-    if (next.length < 6) {
+    if (next.length < authPasswordMinLength) {
       setState(() => _error = l.cp_newMin6);
       return;
     }
