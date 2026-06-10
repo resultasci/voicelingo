@@ -251,13 +251,21 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
 
   Future<void> _enrichBatch(List<({String id, String word})> items) async {
     const maxEnrich = 10;
+    const chunkSize = 3;
+    final queue = items.take(maxEnrich).toList();
     var anyEnriched = false;
-    for (final it in items.take(maxEnrich)) {
-      // Update each word's DB row in place but DON'T reload per word — reloading
-      // 10× back-to-back flickers the list to a spinner and wastes round-trips.
-      anyEnriched =
-          await _writeEnrichment(id: it.id, word: it.word) || anyEnriched;
-      await Future.delayed(const Duration(milliseconds: 600)); // gentle pacing
+    for (var i = 0; i < queue.length; i += chunkSize) {
+      // Update each word's DB row in place but DON'T reload per chunk — reloading
+      // back-to-back flickers the list to a spinner and wastes round-trips.
+      final results = await Future.wait([
+        for (final it in queue.skip(i).take(chunkSize))
+          _writeEnrichment(id: it.id, word: it.word),
+      ]);
+      anyEnriched = results.any((r) => r) || anyEnriched;
+      if (i + chunkSize < queue.length) {
+        await Future.delayed(
+            const Duration(milliseconds: 500)); // gentle pacing
+      }
     }
     if (anyEnriched) {
       _cache = null;

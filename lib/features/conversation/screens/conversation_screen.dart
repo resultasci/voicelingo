@@ -682,26 +682,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       msg.persisted = true;
       msg.remoteId = id as String?;
     } catch (_) {
-      // Fallback: legacy 2-step path (e.g. RPC not deployed yet).
-      try {
-        final row = await Supabase.instance.client
-            .from('messages')
-            .insert({
-              'conversation_id': convId,
-              'user_id': userId,
-              'role': role,
-              'content': msg.text,
-            })
-            .select()
-            .single();
-        msg.persisted = true;
-        msg.remoteId = row['id'] as String?;
-        await Supabase.instance.client.from('conversations').update({
-          'updated_at': DateTime.now().toUtc().toIso8601String()
-        }).eq('id', convId);
-      } catch (_) {
-        // Persistence is best-effort.
-      }
+      // Persistence is best-effort.
     }
   }
 
