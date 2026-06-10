@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../services/settings_service.dart';
+import '../core/services/settings_service.dart';
 
 /// Kullanıcı arayüz dili. SettingsService'te `interfaceLanguage` (tr/en)
 /// olarak saklanır; MaterialApp.locale'a bağlanır.

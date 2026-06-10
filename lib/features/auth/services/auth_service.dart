@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../core/storage/hive_boxes.dart';
+import '../../../core/storage/hive_boxes.dart';
 
 class AuthService {
   final _supabase = Supabase.instance.client;

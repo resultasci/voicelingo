@@ -11,7 +11,7 @@ import '../core/offline/words_cache.dart';
 import '../features/gamification/models/daily_quest.dart';
 import '../features/gamification/providers/gamification_providers.dart';
 import '../core/models/word.dart';
-import '../services/notification_service.dart';
+import '../core/services/notification_service.dart';
 import '../core/ai/gemini_service.dart';
 import 'profile_provider.dart';
 

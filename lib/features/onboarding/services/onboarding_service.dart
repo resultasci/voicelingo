@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../services/settings_service.dart';
+import '../../../core/services/settings_service.dart';
 
 /// Onboarding state'i + completion handler.
 ///

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
-import '../../services/settings_service.dart';
+import '../services/settings_service.dart';
 
 /// Uygulama genelinde tek FlutterTts sarmalayıcısı.
 ///

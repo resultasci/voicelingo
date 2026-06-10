@@ -5,8 +5,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../core/errors/app_exception.dart';
-import '../core/storage/hive_boxes.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../core/storage/hive_boxes.dart';
 
 class AccountService {
   final SupabaseClient _supabase = Supabase.instance.client;

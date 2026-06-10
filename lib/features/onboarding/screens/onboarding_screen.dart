@@ -9,7 +9,7 @@ import '../../../core/widgets/brand_logo.dart';
 import '../../../features/conversation/services/characters_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
-import '../../../services/notification_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../services/onboarding_service.dart';
 

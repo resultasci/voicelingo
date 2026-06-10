@@ -14,7 +14,7 @@ import '../../../core/audio/vad_detector.dart';
 import '../../../core/config/feature_flags.dart';
 import '../../../core/models/scenario.dart';
 import '../../../providers/profile_provider.dart';
-import '../../../services/settings_service.dart';
+import '../../../core/services/settings_service.dart';
 import '../../gamification/models/daily_quest.dart';
 import '../../gamification/providers/gamification_providers.dart';
 import '../models/conversation_message.dart';
