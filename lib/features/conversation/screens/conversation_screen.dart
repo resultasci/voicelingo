@@ -1,39 +1,28 @@
-import 'dart:async';
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
-import '../../../core/ai/ai_character.dart';
 import '../../../core/ai/character_avatar.dart';
-import '../../../core/ai/characters.dart';
-import '../../../core/audio/amplitude_history.dart';
-import '../../../core/audio/audio_recorder_service.dart';
-import '../../../core/audio/vad_detector.dart';
 import '../../../core/audio/waveform_painter.dart';
-import '../../../models/scenario.dart';
-import '../../../core/ai/gemini_service.dart';
-import '../../../core/config/feature_flags.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../providers/profile_provider.dart';
-import '../../../services/settings_service.dart';
+import '../../../models/scenario.dart';
 import '../../../theme/app_theme.dart';
-import '../../gamification/models/daily_quest.dart';
-import '../../gamification/providers/gamification_providers.dart';
 import '../../scenarios/screens/scenario_picker_screen.dart';
+import '../controllers/conversation_controller.dart';
 import '../models/conversation_message.dart';
-import '../services/characters_service.dart';
-import '../services/conversation_repository.dart';
 import '../widgets/bubble_entrance.dart';
 import '../widgets/feedback_pill.dart';
 import '../widgets/mic_button.dart';
 import '../widgets/scenario_strip.dart';
 import '../widgets/speed_toggle.dart';
 import 'character_picker_screen.dart';
-import '../services/streaming_tts_buffer.dart';
 import 'conversation_history_screen.dart';
 
+/// Konuşma ekranı — iş mantığı [ConversationController]'da; burada yalnızca
+/// görsel katman, animasyon yan etkileri (pulse, scroll), haptics ve
+/// navigation var. Üç bölge (header / mesajlar / input bar) ayrı
+/// ListenableBuilder'larla dinler; controller notify'ları Scaffold +
+/// CosmicBackground kabuğunu rebuild etmez.
 class ConversationScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
   final ScenarioModel? scenario;
@@ -49,58 +38,90 @@ class ConversationScreen extends ConsumerStatefulWidget {
 
 class _ConversationScreenState extends ConsumerState<ConversationScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late final AudioRecorderService _audioSvc;
-  late final FlutterTts _tts;
+  late final ConversationController _c;
   final ScrollController _scrollCtrl = ScrollController();
   final TextEditingController _textCtrl = TextEditingController();
   late final AnimationController _pulse;
-  final AmplitudeHistory _amplitudes = AmplitudeHistory();
-
-  VadDetector? _vad;
-  StreamSubscription<VadEvent>? _vadSub;
-  StreamSubscription<double>? _amplitudeSub;
-
-  ConvStatus _status = ConvStatus.idle;
-  String? _errorMsg;
-  final List<ConversationMessage> _messages = [];
-  bool _ttsInitialized = false;
-  String? _conversationId;
-  bool _conversationCreated = false;
-  String? _lastUserText;
-
-  double _ttsRate = SettingsService().ttsRate;
-
-  // Faz 5: AI karakter sistemi
-  AICharacter _character = AICharacters.defaultCharacter;
-  bool _handsFreeMode = false;
+  int _lastMsgCount = 0;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _audioSvc = ref.read(audioRecorderServiceProvider);
-    _tts = FlutterTts();
 
     _pulse = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
 
-    _loadCharacterThenInit();
+    _c = ConversationController(
+      read: ref.read,
+      invalidate: ref.invalidate,
+      scenario: widget.scenario,
+      // Embedded Practice tab is built inside HomeScreen's IndexedStack — it
+      // mounts even when the user is on a different tab, so we must not
+      // auto-speak there. Pushed instances are user-intentional, so we greet.
+      isEmbedded: !widget.showBackButton,
+      greetingText: () => mounted ? AppL10n.of(context).conv_greeting : '',
+      replyFailedText: () =>
+          mounted ? AppL10n.of(context).conv_replyFailed : '',
+      onReplyError: _showReplyError,
+    );
+    _c.addListener(_onControllerEvent);
+    _c.init();
   }
 
-  /// Init sırası: önce kullanıcının seçili karakterini yükle, sonra TTS'i
-  /// o karakterin sesiyle ayarla, sonra conversation row'unu yarat.
-  Future<void> _loadCharacterThenInit() async {
-    try {
-      final svc = ref.read(charactersServiceProvider);
-      final c = await svc.getSelected();
-      if (mounted) setState(() => _character = c);
-    } catch (_) {
-      // Varsayılan karakter zaten _character'da.
+  /// Controller bildirimlerinin UI yan etkileri: mic pulse animasyonu ve
+  /// yeni mesajda en alta kaydırma. Rebuild'ler ListenableBuilder'larda.
+  void _onControllerEvent() {
+    if (!mounted) return;
+    if (_c.status == ConvStatus.listening) {
+      if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
+    } else if (_pulse.isAnimating) {
+      _pulse.stop();
     }
-    await _initTts();
-    await _ensureConversation();
+    if (_c.messages.length > _lastMsgCount) {
+      Future.delayed(const Duration(milliseconds: 80), _scrollToBottom);
+    }
+    _lastMsgCount = _c.messages.length;
+  }
+
+  void _showReplyError(String detail) {
+    if (!mounted) return;
+    final l = AppL10n.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: context.c.bgCard,
+        content: Text(
+          l.conv_aiNoResponse(detail),
+          style: AppText.ink(13, color: context.c.error),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      if (_c.status == ConvStatus.playing ||
+          _c.status == ConvStatus.listening) {
+        _c.stopAudioAndCleanUp();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _c.removeListener(_onControllerEvent);
+    _c.dispose();
+    _pulse.dispose();
+    _scrollCtrl.dispose();
+    _textCtrl.dispose();
+    super.dispose();
   }
 
   /// Header avatar tap → character picker. On return, hot-swap the active
@@ -110,559 +131,38 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       MaterialPageRoute(builder: (_) => const CharacterPickerScreen()),
     );
     if (!mounted) return;
-    try {
-      final picked = await ref.read(charactersServiceProvider).getSelected();
-      if (!mounted || picked.id == _character.id) return;
-      setState(() => _character = picked);
-      await _tts.setLanguage(picked.ttsLocale);
-      await _tts.setPitch(picked.ttsPitch);
-    } catch (_) {
-      // Keep the current character on failure.
-    }
-  }
-
-  StreamingTtsBuffer? _activeBuffer;
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.hidden) {
-      if (_status == ConvStatus.playing || _status == ConvStatus.listening) {
-        _stopAudioAndCleanUp();
-      }
-    }
-  }
-
-  void _stopAudioAndCleanUp() {
-    _activeBuffer?.cancel();
-    _activeBuffer?.dispose();
-    _activeBuffer = null;
-    _tts.stop();
-    _audioSvc.cancel();
-    _tearDownVad();
-    _pulse.stop();
-    if (mounted) {
-      setState(() => _status = ConvStatus.ready);
-    }
-  }
-
-  Future<void> _initTts() async {
-    try {
-      // Faz 5: karaktere göre locale/pitch/rate. Kullanıcının ttsRate
-      // tercihi karakterin default rate'ini override eder (kullanıcı tercihi
-      // her zaman önde).
-      await _tts.setLanguage(_character.ttsLocale);
-      await _tts.setPitch(_character.ttsPitch);
-      await _tts.setSpeechRate(_ttsRate);
-
-      _tts.setCompletionHandler(() {
-        if (!mounted) return;
-        if (_status == ConvStatus.playing) {
-          setState(() => _status = ConvStatus.ready);
-          // Faz 5: hands-free mod → AI bittiğinde otomatik dinlemeye geç
-          if (_handsFreeMode) {
-            Future.delayed(const Duration(milliseconds: 250), () {
-              if (!mounted) return;
-              if (_status == ConvStatus.ready) _startListening();
-            });
-          }
-        }
-      });
-
-      _tts.setErrorHandler((msg) {
-        if (mounted) {
-          setState(() {
-            _status = ConvStatus.error;
-            _errorMsg = AppL10n.of(context).conv_errTts(msg);
-          });
-        }
-      });
-
-      if (!mounted) return;
-      setState(() => _ttsInitialized = true);
-      await _autoStart();
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _status = ConvStatus.error;
-          _errorMsg = AppL10n.of(context).conv_errTtsInit;
-        });
-      }
-    }
-  }
-
-  // Embedded Practice tab is built inside HomeScreen's IndexedStack — it mounts
-  // even when the user is on a different tab, so we must not auto-speak there
-  // (would blare audio while the user is on Dashboard). Pushed instances
-  // (scenario picker → ConversationScreen) are user-intentional, so we greet.
-  bool get _isEmbeddedTab => !widget.showBackButton;
-
-  Future<void> _autoStart() async {
-    if (!mounted || !_ttsInitialized) return;
-    setState(() => _status = ConvStatus.ready);
-
-    final scenario = widget.scenario;
-    if (scenario != null) {
-      _addMessage(isUser: false, text: scenario.openingLine);
-      await _speakMessage(scenario.openingLine);
-      return;
-    }
-
-    if (_isEmbeddedTab) return;
-
-    _addMessage(
-      isUser: false,
-      text: AppL10n.of(context).conv_greeting,
-    );
-    await _speakMessage(
-        'Hello! I am ready to practice English with you. Go ahead and speak!');
-  }
-
-  Future<void> _ensureConversation() async {
-    if (_conversationCreated) return;
-    final id =
-        await ref.read(conversationRepositoryProvider).createConversation(
-              scenarioId: widget.scenario?.id,
-              title: widget.scenario?.title,
-              characterId: _character.id,
-            );
-    if (id != null) {
-      _conversationId = id;
-      _conversationCreated = true;
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _tearDownVad();
-    _activeBuffer?.cancel();
-    _activeBuffer?.dispose();
-    _amplitudeSub?.cancel();
-    _amplitudes.dispose();
-    _tts.stop();
-    _pulse.dispose();
-    _scrollCtrl.dispose();
-    _textCtrl.dispose();
-    super.dispose();
-  }
-
-  void _tearDownVad() {
-    _vadSub?.cancel();
-    _vadSub = null;
-    _vad?.dispose();
-    _vad = null;
+    await _c.reloadCharacter();
   }
 
   Future<void> _toggleMic() async {
     HapticFeedback.lightImpact();
-    if (_status == ConvStatus.listening) {
-      await _stopListening();
-    } else if (_status == ConvStatus.ready) {
-      await _startListening();
-    }
-  }
-
-  Future<void> _startListening() async {
-    if (!await _audioSvc.hasPermission()) {
-      setState(() {
-        _status = ConvStatus.error;
-        _errorMsg = AppL10n.of(context).conv_errMicPermission;
-      });
-      return;
-    }
-
-    try {
-      await _tts.stop();
-      _amplitudes.clear();
-
-      // Hands-free açıkken VAD ile auto-stop; manuel mode'da sadece amplitude
-      // history (waveform) için stream'i dinleriz.
-      _tearDownVad();
-      final useVad = _handsFreeMode;
-      if (useVad) {
-        _vad = VadDetector();
-        _vadSub = _vad!.events.listen(_onVadEvent);
-      }
-
-      await _audioSvc.start(vad: _vad);
-
-      _amplitudeSub?.cancel();
-      _amplitudeSub = _audioSvc.amplitudeStream.listen(_amplitudes.addDb);
-
-      setState(() => _status = ConvStatus.listening);
-      _pulse.repeat(reverse: true);
-    } catch (e) {
-      _tearDownVad();
-      setState(() {
-        _status = ConvStatus.error;
-        _errorMsg = AppL10n.of(context).conv_errMicOpen('$e');
-      });
-    }
-  }
-
-  void _onVadEvent(VadEvent event) {
-    if (event == VadEvent.speechEnded || event == VadEvent.maxDurationReached) {
-      if (_status == ConvStatus.listening) _stopListening();
-    }
-  }
-
-  Future<void> _stopListening() async {
-    try {
-      _pulse.stop();
-      await _amplitudeSub?.cancel();
-      _amplitudeSub = null;
-      _tearDownVad();
-      final path = await _audioSvc.stop();
-
-      if (path != null && path.isNotEmpty) {
-        setState(() => _status = ConvStatus.thinking);
-        await _processAudio(path);
-      } else {
-        setState(() {
-          _status = ConvStatus.error;
-          _errorMsg = AppL10n.of(context).conv_errRecordFailed;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _status = ConvStatus.error;
-        _errorMsg = AppL10n.of(context).conv_errAudioProcess('$e');
-      });
-    }
-  }
-
-  Future<void> _processAudio(String filePath) async {
-    try {
-      final aiService = ref.read(geminiServiceProvider);
-      final profile = ref.read(profileProvider).value;
-      final flags = ref.read(resolvedFeatureFlagsProvider);
-
-      // Fast path: single Gemini multimodal call returns transcript + reply +
-      // evaluation together. Previous chain was 3 sequential round-trips (STT
-      // → chat → evaluate), often 4-6s total. /turn is ~2-3s.
-      if (flags.useTurnEndpoint) {
-        await _processAudioWithTurn(filePath, profile?.cefrLevel ?? 'A2');
-        return;
-      }
-
-      // Fallback: legacy 3-step flow, kept behind the flag so a bad /turn
-      // deployment can be rolled back from app_config without rebuild.
-      final lang = bcp47ForTargetLanguage(profile?.targetLanguage) ?? 'en';
-      final userText =
-          await aiService.transcribeAudio(filePath, targetLanguage: lang);
-
-      if (userText.isEmpty) {
-        setState(() {
-          _status = ConvStatus.error;
-          _errorMsg = AppL10n.of(context).conv_errNoSpeech;
-        });
-        return;
-      }
-
-      final userMsg = _addMessage(isUser: true, text: userText);
-      _lastUserText = userText;
-      _persistMessage(userMsg);
-
-      // Reply + evaluate in parallel — evaluation must never crash chat.
-      final replyFuture = _replyTo(userText);
-      _attachEvaluation(userMsg, userText);
-
-      await replyFuture;
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _status = ConvStatus.error;
-          _errorMsg = AppL10n.of(context).conv_errGeneric('$e');
-        });
-      }
-    } finally {
-      _deleteAudioFile(filePath);
-    }
-  }
-
-  /// Multimodal one-shot: audio + history + system → {transcript, reply, eval}.
-  /// Optimistic UI: pushes a "…" user message immediately, then replaces text
-  /// when the transcript field arrives so the screen never feels frozen.
-  Future<void> _processAudioWithTurn(String filePath, String cefr) async {
-    final aiService = ref.read(geminiServiceProvider);
-
-    // Optimistic placeholder so the user sees their bubble immediately.
-    final userMsg = _addMessage(isUser: true, text: '…');
-    setState(() => _status = ConvStatus.thinking);
-
-    final history = _messages
-        .where((m) =>
-            m != userMsg && m.text.isNotEmpty && !m.isError && m.text != '…')
-        .map((m) => {
-              'role': m.isUser ? 'user' : 'assistant',
-              'content': m.text,
-            })
-        .toList();
-
-    final systemPrompt = _character.renderSystemPrompt(
-      cefrLevel: cefr,
-      scenarioContext: widget.scenario?.systemPrompt,
-    );
-
-    try {
-      final turn = await aiService.turn(
-        filePath,
-        history: history,
-        systemPrompt: systemPrompt,
-        cefr: cefr,
-      );
-
-      if (!mounted) return;
-
-      // Surface transcript by patching the optimistic message in place.
-      if (turn.transcript.isNotEmpty) {
-        setState(() {
-          userMsg.text = turn.transcript;
-          if (turn.evaluation != null) userMsg.evaluation = turn.evaluation;
-        });
-        _lastUserText = turn.transcript;
-        _persistMessage(userMsg);
-        if (turn.evaluation != null) _patchEvaluation(userMsg);
-        _maybePerfectScore(turn.evaluation);
-      } else {
-        // STT returned nothing — drop the placeholder.
-        setState(() => _messages.remove(userMsg));
-        setState(() {
-          _status = ConvStatus.error;
-          _errorMsg = AppL10n.of(context).conv_errNoSpeech;
-        });
-        return;
-      }
-
-      // Render the AI reply and speak it.
-      if (turn.reply.isNotEmpty) {
-        final aiMsg = _addMessage(isUser: false, text: turn.reply);
-        _persistMessage(aiMsg);
-        _speakMessage(turn.reply);
-        setState(() => _status = ConvStatus.playing);
-      } else {
-        setState(() => _status = ConvStatus.ready);
-      }
-
-      // Daily quest + XP best-effort (same as legacy _replyTo).
-      _logTurnSideEffects();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _messages.remove(userMsg);
-        _status = ConvStatus.error;
-        _errorMsg = AppL10n.of(context).conv_errGeneric('$e');
-      });
-    }
-  }
-
-  Future<void> _logTurnSideEffects() async {
-    final logged =
-        await ref.read(conversationRepositoryProvider).logConversationTurn();
-    if (logged) {
-      // XP/streak just changed server-side — drop the cached profile so the
-      // dashboard HUD reflects it on next read instead of after the 6h TTL.
-      await bustProfileCache();
-      if (mounted) ref.invalidate(profileProvider);
-    }
-    await _bumpQuest(QuestType.conversationTurns);
-  }
-
-  /// Daily quest progress'ini best-effort artırır; tamamlanmada XP server'da
-  /// yazıldığı için profil cache'i düşürülür.
-  Future<void> _bumpQuest(QuestType type, {int delta = 1}) async {
-    try {
-      final svc = ref.read(dailyQuestsServiceProvider);
-      final updated = await svc.incrementByType(type, delta: delta);
-      if (updated == null || !mounted) return;
-      ref.invalidate(dailyQuestsProvider);
-      if (updated.isCompleted) {
-        await bustProfileCache();
-        if (mounted) ref.invalidate(profileProvider);
-      }
-    } catch (_) {}
-  }
-
-  /// Edge prompt rubriğine göre 90-100 bandı "already perfect" demektir.
-  void _maybePerfectScore(SpeechEvaluation? eval) {
-    if (eval == null || eval.score < 90) return;
-    unawaited(_bumpQuest(QuestType.perfectScore));
-  }
-
-  Future<void> _attachEvaluation(
-      ConversationMessage userMsg, String text) async {
-    try {
-      final aiService = ref.read(geminiServiceProvider);
-      final eval = await aiService.evaluateSpeech(text);
-      if (!mounted) return;
-      setState(() => userMsg.evaluation = eval);
-      // Backfill the persisted row with evaluation fields.
-      _patchEvaluation(userMsg);
-      _maybePerfectScore(eval);
-    } catch (_) {
-      // Evaluation is optional; never break the conversation flow.
-    }
-  }
-
-  Future<void> _deleteAudioFile(String path) async {
-    try {
-      final f = File(path);
-      if (await f.exists()) await f.delete();
-    } catch (_) {
-      // Cleanup is best-effort — never crash the app for a stale temp file.
-    }
+    await _c.toggleMic();
   }
 
   Future<void> _sendText() async {
     final text = _textCtrl.text.trim();
-    if (text.isEmpty || _status == ConvStatus.thinking) return;
+    if (text.isEmpty || _c.status == ConvStatus.thinking) return;
     _textCtrl.clear();
-    final userMsg = _addMessage(isUser: true, text: text);
-    _lastUserText = text;
-    _persistMessage(userMsg);
-    setState(() => _status = ConvStatus.thinking);
-    _attachEvaluation(userMsg, text);
-    await _replyTo(text);
+    await _c.sendText(text);
   }
 
-  Future<void> _replyTo(String _) async {
-    try {
-      final aiService = ref.read(geminiServiceProvider);
-      final messages = _messages
-          .where((msg) => msg.text.isNotEmpty && !msg.isError)
-          .map((msg) => {
-                'role': msg.isUser ? 'user' : 'assistant',
-                'content': msg.text,
-              })
-          .toList();
-
-      setState(() => _status = ConvStatus.thinking);
-
-      // Faz 5: AI karakter sistem prompt'u her zaman gönderilir.
-      // Senaryo varsa karakterin prompt'una ek bağlam olarak eklenir.
-      final cefr = ref.read(profileProvider).value?.cefrLevel ?? 'A2';
-      final systemPrompt = _character.renderSystemPrompt(
-        cefrLevel: cefr,
-        scenarioContext: widget.scenario?.systemPrompt,
-      );
-
-      final aiResponse = await aiService.chat(
-        messages,
-        systemPrompt: systemPrompt,
-      );
-      if (!mounted) return;
-
-      final msg = _addMessage(isUser: false, text: aiResponse);
-      _persistMessage(msg);
-      _speakMessage(aiResponse);
-      setState(() => _status = ConvStatus.playing);
-
-      // XP + daily quest — best-effort, never delays rendering the reply.
-      unawaited(_logTurnSideEffects());
-    } catch (e) {
-      if (!mounted) return;
-      final l = AppL10n.of(context);
-      _addMessage(
-        isUser: false,
-        text: l.conv_replyFailed,
-        isError: true,
-      );
-      setState(() => _status = ConvStatus.ready);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: context.c.bgCard,
-          content: Text(
-            l.conv_aiNoResponse('$e'),
-            style: AppText.ink(13, color: context.c.error),
-          ),
-        ),
-      );
-    }
+  /// Long-press anywhere on a bubble → copy its text.
+  void _copyMessage(ConversationMessage msg) {
+    Clipboard.setData(ClipboardData(text: msg.text));
+    HapticFeedback.selectionClick();
+    final l = AppL10n.of(context);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(l.conv_copied),
+        duration: const Duration(seconds: 1),
+      ));
   }
 
-  Future<void> _retryLastReply() async {
-    if (_lastUserText == null) return;
-    setState(() {
-      _messages.removeWhere((m) => m.isError);
-    });
-    setState(() => _status = ConvStatus.thinking);
-    await _replyTo(_lastUserText!);
-  }
-
-  Future<void> _speakMessage(String text) async {
-    try {
-      final flags = ref.read(resolvedFeatureFlagsProvider);
-
-      _activeBuffer?.cancel();
-      _activeBuffer?.dispose();
-
-      if (flags.useStreamingTts && text.length > 80) {
-        // Long reply → chunk into sentences. First sentence begins playback
-        // immediately while later sentences wait their turn in FlutterTts'
-        // internal queue. The buffer is created per-call (one-shot) so it
-        // doesn't outlive the message.
-        _activeBuffer = StreamingTtsBuffer(_tts);
-        await _activeBuffer!.add(text);
-        await _activeBuffer!.flush();
-        _activeBuffer?.dispose();
-        _activeBuffer = null;
-      } else {
-        await _tts.speak(text);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _status = ConvStatus.error;
-          _errorMsg = AppL10n.of(context).conv_errSpeak('$e');
-        });
-      }
-    }
-  }
-
-  Future<void> _setTtsRate(double rate) async {
-    setState(() => _ttsRate = rate);
-    await SettingsService().setTtsRate(rate);
-    try {
-      await _tts.setSpeechRate(rate);
-    } catch (_) {}
-  }
-
-  ConversationMessage _addMessage({
-    required bool isUser,
-    required String text,
-    bool isError = false,
-  }) {
-    final m = ConversationMessage(isUser: isUser, text: text, isError: isError);
-    setState(() => _messages.add(m));
-    Future.delayed(const Duration(milliseconds: 80), _scrollToBottom);
-    return m;
-  }
-
-  Future<void> _persistMessage(ConversationMessage msg) async {
-    if (msg.persisted) return;
-    final convId = _conversationId;
-    if (convId == null) return;
-    final id = await ref.read(conversationRepositoryProvider).appendMessage(
-          conversationId: convId,
-          role: msg.isUser ? 'user' : 'assistant',
-          content: msg.text,
-        );
-    if (id != null) {
-      msg.persisted = true;
-      msg.remoteId = id;
-    }
-  }
-
-  Future<void> _patchEvaluation(ConversationMessage msg) async {
-    final remoteId = msg.remoteId;
-    final eval = msg.evaluation;
-    if (remoteId == null || eval == null) return;
-    await ref
-        .read(conversationRepositoryProvider)
-        .patchEvaluation(remoteId, eval);
+  /// Speaker button under AI bubbles — re-listen to any past reply.
+  Future<void> _replayMessage(ConversationMessage msg) async {
+    HapticFeedback.selectionClick();
+    await _c.replayMessage(msg);
   }
 
   void _scrollToBottom() {
@@ -675,11 +175,24 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     }
   }
 
-  bool get _canToggleMic =>
-      _status == ConvStatus.ready || _status == ConvStatus.listening;
+  String _errorText(AppL10n l) {
+    final d = _c.errorDetail ?? '';
+    return switch (_c.errorCode) {
+      ConvError.micPermission => l.conv_errMicPermission,
+      ConvError.micOpen => l.conv_errMicOpen(d),
+      ConvError.recordFailed => l.conv_errRecordFailed,
+      ConvError.audioProcess => l.conv_errAudioProcess(d),
+      ConvError.noSpeech => l.conv_errNoSpeech,
+      ConvError.ttsInit => l.conv_errTtsInit,
+      ConvError.tts => l.conv_errTts(d),
+      ConvError.speak => l.conv_errSpeak(d),
+      ConvError.generic => l.conv_errGeneric(d),
+      null => l.conv_errUnknown,
+    };
+  }
 
   Color _statusColor(AppPalette c) {
-    switch (_status) {
+    switch (_c.status) {
       case ConvStatus.listening:
         return c.secondaryContainer;
       case ConvStatus.ready:
@@ -697,7 +210,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   String _statusLabel(AppL10n l) {
-    switch (_status) {
+    switch (_c.status) {
       case ConvStatus.idle:
       case ConvStatus.connecting:
         return l.conv_statusStarting;
@@ -723,11 +236,18 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             padding: const EdgeInsets.only(bottom: 110),
             child: Column(
               children: [
-                _buildHeader(),
+                ListenableBuilder(
+                  listenable: _c,
+                  builder: (_, __) => _buildHeader(),
+                ),
                 Expanded(
-                  child: _status == ConvStatus.error && _messages.isEmpty
-                      ? _buildError()
-                      : _buildMessages(),
+                  child: ListenableBuilder(
+                    listenable: _c,
+                    builder: (_, __) =>
+                        _c.status == ConvStatus.error && _c.messages.isEmpty
+                            ? _buildError()
+                            : _buildMessages(),
+                  ),
                 ),
               ],
             ),
@@ -737,7 +257,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           left: 16,
           right: 16,
           bottom: 16,
-          child: _buildInputBar(),
+          child: ListenableBuilder(
+            listenable: _c,
+            builder: (_, __) => _buildInputBar(),
+          ),
         ),
       ],
     );
@@ -794,11 +317,11 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CharacterAvatar(character: _character, size: 30),
+                          CharacterAvatar(character: _c.character, size: 30),
                           const SizedBox(width: 8),
                           Flexible(
                             child: Text(
-                              _character.displayName,
+                              _c.character.displayName,
                               style: AppText.title(17,
                                       color: c.primary, weight: FontWeight.w600)
                                   .copyWith(
@@ -817,29 +340,29 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   ),
           ),
           SpeedToggle(
-            rate: _ttsRate,
-            onChanged: _setTtsRate,
+            rate: _c.ttsRate,
+            onChanged: _c.setTtsRate,
           ),
           const SizedBox(width: 4),
-          // Faz 5: Hands-free toggle — AI cevap verince otomatik mikrofon
+          // Hands-free toggle — AI cevap verince otomatik mikrofon
           Semantics(
             label: l.conversation_handsfree,
             button: true,
             child: IconButton(
               icon: Icon(
-                _handsFreeMode ? Icons.hearing : Icons.hearing_disabled,
-                color: _handsFreeMode ? c.primaryContainer : c.inkDim,
+                _c.handsFreeMode ? Icons.hearing : Icons.hearing_disabled,
+                color: _c.handsFreeMode ? c.primaryContainer : c.inkDim,
                 size: 20,
               ),
               padding: const EdgeInsets.all(6),
               constraints: tightConstraints,
               visualDensity: compactBtn,
-              tooltip: _handsFreeMode
+              tooltip: _c.handsFreeMode
                   ? l.conv_handsFreeOnTip
                   : l.conv_handsFreeOffTip,
               onPressed: () {
                 HapticFeedback.selectionClick();
-                setState(() => _handsFreeMode = !_handsFreeMode);
+                _c.setHandsFree(!_c.handsFreeMode);
               },
             ),
           ),
@@ -859,7 +382,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               },
             ),
           ),
-          if (_messages.isNotEmpty)
+          if (_c.messages.isNotEmpty)
             Semantics(
               label: l.conv_newChat,
               child: IconButton(
@@ -868,7 +391,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                 padding: const EdgeInsets.all(6),
                 constraints: tightConstraints,
                 visualDensity: compactBtn,
-                onPressed: _resetConversation,
+                onPressed: _c.reset,
                 tooltip: l.conv_newChat,
               ),
             ),
@@ -895,12 +418,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               child: ScaleTransition(scale: anim, child: child),
             ),
             child: NeonChip(
-              key: ValueKey(_status),
+              key: ValueKey(_c.status),
               text: _statusLabel(l),
               color: _statusColor(c),
-              icon: _status == ConvStatus.connecting
+              icon: _c.status == ConvStatus.connecting
                   ? Icons.sync
-                  : _status == ConvStatus.listening
+                  : _c.status == ConvStatus.listening
                       ? Icons.fiber_manual_record
                       : null,
             ),
@@ -911,22 +434,23 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   Widget _buildMessages() {
-    if (_messages.isEmpty) {
-      final isBusy = _status == ConvStatus.idle ||
-          _status == ConvStatus.connecting ||
-          _status == ConvStatus.thinking;
+    if (_c.messages.isEmpty) {
+      final isBusy = _c.status == ConvStatus.idle ||
+          _c.status == ConvStatus.connecting ||
+          _c.status == ConvStatus.thinking;
       return _buildEmptyState(isBusy: isBusy);
     }
 
     return ListView.builder(
       controller: _scrollCtrl,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      itemCount: _messages.length + (_status == ConvStatus.thinking ? 1 : 0),
+      itemCount:
+          _c.messages.length + (_c.status == ConvStatus.thinking ? 1 : 0),
       itemBuilder: (context, i) {
-        if (i == _messages.length) {
+        if (i == _c.messages.length) {
           return _buildThinkingBubble();
         }
-        return _buildBubble(_messages[i]);
+        return _buildBubble(_c.messages[i]);
       },
     );
   }
@@ -941,7 +465,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: CharacterAvatar(character: _character, size: 32),
+            child: CharacterAvatar(character: _c.character, size: 32),
           ),
           const SizedBox(width: 10),
           Container(
@@ -971,29 +495,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     );
   }
 
-  /// Long-press anywhere on a bubble → copy its text.
-  void _copyMessage(ConversationMessage msg) {
-    Clipboard.setData(ClipboardData(text: msg.text));
-    HapticFeedback.selectionClick();
-    final l = AppL10n.of(context);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(l.conv_copied),
-        duration: const Duration(seconds: 1),
-      ));
-  }
-
-  /// Speaker button under AI bubbles — re-listen to any past reply.
-  Future<void> _replayMessage(ConversationMessage msg) async {
-    if (_status == ConvStatus.listening || _status == ConvStatus.thinking) {
-      return;
-    }
-    HapticFeedback.selectionClick();
-    setState(() => _status = ConvStatus.playing);
-    await _speakMessage(msg.text);
-  }
-
   Widget _buildBubble(ConversationMessage msg) {
     final l = AppL10n.of(context);
     final c = context.c;
@@ -1012,7 +513,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               if (!isUser) ...[
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: CharacterAvatar(character: _character, size: 32),
+                  child: CharacterAvatar(character: _c.character, size: 32),
                 ),
                 const SizedBox(width: 10),
               ],
@@ -1110,7 +611,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   label: l.conv_tryAgain,
                   icon: Icons.refresh,
                   color: c.error,
-                  onTap: _retryLastReply,
+                  onTap: _c.retryLastReply,
                 ),
               ),
             ),
@@ -1129,9 +630,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   Widget _buildEmptyState({required bool isBusy}) {
     final l = AppL10n.of(context);
     final c = context.c;
-    final hint = _status == ConvStatus.connecting
+    final hint = _c.status == ConvStatus.connecting
         ? l.conv_preparing
-        : _status == ConvStatus.thinking
+        : _c.status == ConvStatus.thinking
             ? l.conv_aiPreparing
             : l.conv_emptyHint;
 
@@ -1172,7 +673,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     child: InkWell(
                       customBorder: const CircleBorder(),
                       onTap: _openCharacterPicker,
-                      child: CharacterAvatar(character: _character, size: 84),
+                      child: CharacterAvatar(character: _c.character, size: 84),
                     ),
                   ),
           ),
@@ -1180,7 +681,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           Center(
             child: Text(
               widget.scenario?.title ??
-                  (isBusy ? l.conv_aiPracticeMode : _character.displayName),
+                  (isBusy ? l.conv_aiPracticeMode : _c.character.displayName),
               style:
                   AppText.title(22, color: c.primary, weight: FontWeight.w600)
                       .copyWith(
@@ -1206,7 +707,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             const SizedBox(height: 12),
             ScenarioStrip(
               onPick: (s) {
-                if (_isEmbeddedTab) {
+                if (!widget.showBackButton) {
                   Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => ConversationScreen(scenario: s)));
                 } else {
@@ -1225,19 +726,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     );
   }
 
-  Future<void> _resetConversation() async {
-    setState(() {
-      _messages.clear();
-      _status = ConvStatus.idle;
-      _errorMsg = null;
-      _conversationId = null;
-      _conversationCreated = false;
-      _lastUserText = null;
-    });
-    await _ensureConversation();
-    await _autoStart();
-  }
-
   Widget _buildError() {
     final l = AppL10n.of(context);
     final c = context.c;
@@ -1253,7 +741,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               Icon(Icons.error_outline, color: c.error, size: 32),
               const SizedBox(height: 12),
               Text(
-                _errorMsg ?? l.conv_errUnknown,
+                _errorText(l),
                 style: AppText.body(14, color: c.error),
                 textAlign: TextAlign.center,
               ),
@@ -1261,7 +749,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               GhostButton(
                 label: l.conv_restart,
                 icon: Icons.refresh,
-                onTap: _resetConversation,
+                onTap: _c.reset,
               ),
             ],
           ),
@@ -1273,7 +761,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   Widget _buildInputBar() {
     final l = AppL10n.of(context);
     final c = context.c;
-    final isListening = _status == ConvStatus.listening;
+    final isListening = _c.status == ConvStatus.listening;
     return ClipRRect(
       borderRadius: BorderRadius.circular(99),
       child: BackdropFilter(
@@ -1321,17 +809,17 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   ),
                 ),
               ),
-              if (_status == ConvStatus.listening)
+              if (isListening)
                 Expanded(
                   flex: 0,
                   child: SizedBox(
                     width: 80,
                     height: 32,
                     child: AnimatedBuilder(
-                      animation: _amplitudes,
+                      animation: _c.amplitudes,
                       builder: (_, __) => CustomPaint(
                         painter: WaveformPainter(
-                          amplitudes: _amplitudes.value,
+                          amplitudes: _c.amplitudes.value,
                           color: c.primaryContainer,
                         ),
                       ),
@@ -1355,16 +843,16 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     );
                   }
                   return Semantics(
-                    label: _status == ConvStatus.listening
+                    label: isListening
                         ? l.conv_stopRecording
                         : l.conv_startRecording,
                     button: true,
                     child: AnimatedBuilder(
                       animation: _pulse,
                       builder: (_, __) => MicButton(
-                        status: _status,
+                        status: _c.status,
                         pulse: _pulse.value,
-                        onTap: _canToggleMic ? _toggleMic : null,
+                        onTap: _c.canToggleMic ? _toggleMic : null,
                       ),
                     ),
                   );
