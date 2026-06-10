@@ -1897,12 +1897,6 @@ abstract class AppL10n {
   /// **'İlgili senaryoyu konuş. Minimum tur sayısı bu ders için sayılır.'**
   String get lesson_convBridge;
 
-  /// No description provided for @lesson_listenBridge.
-  ///
-  /// In tr, this message translates to:
-  /// **'Dinleme egzersizleri yakında. Şimdilik tamamlanmış sayılıyor.'**
-  String get lesson_listenBridge;
-
   /// No description provided for @lesson_openGrammar.
   ///
   /// In tr, this message translates to:
@@ -1915,17 +1909,47 @@ abstract class AppL10n {
   /// **'Sohbete Başla'**
   String get lesson_startConv;
 
-  /// No description provided for @lesson_markComplete.
-  ///
-  /// In tr, this message translates to:
-  /// **'Tamamlandı işaretle'**
-  String get lesson_markComplete;
-
   /// No description provided for @lesson_noVocab.
   ///
   /// In tr, this message translates to:
   /// **'Bu derste kelime yok.'**
   String get lesson_noVocab;
+
+  /// No description provided for @lesson_noListening.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu derste dinleme içeriği yok.'**
+  String get lesson_noListening;
+
+  /// No description provided for @lesson_listenPrompt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dinle ve duyduğunu yaz'**
+  String get lesson_listenPrompt;
+
+  /// No description provided for @lesson_typeWhatYouHeard.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyduğun cümleyi yaz…'**
+  String get lesson_typeWhatYouHeard;
+
+  /// No description provided for @lesson_listenCheck.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kontrol et'**
+  String get lesson_listenCheck;
+
+  /// No description provided for @lesson_listenCorrect.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğru!'**
+  String get lesson_listenCorrect;
+
+  /// No description provided for @lesson_listenWrong.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrusu:'**
+  String get lesson_listenWrong;
 
   /// No description provided for @lesson_tapToFlip.
   ///

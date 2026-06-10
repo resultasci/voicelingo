@@ -78,15 +78,7 @@ class LessonRunnerScreen extends ConsumerWidget {
           onAction: () => _openConversation(context, ref),
         );
       case LessonType.listening:
-        return _LandingCard(
-          lesson: lesson,
-          locale: locale,
-          icon: Icons.headphones_outlined,
-          color: c.success,
-          message: l.lesson_listenBridge,
-          actionLabel: l.lesson_markComplete,
-          onAction: () => _markCompleteAndPop(context, ref, score: 80),
-        );
+        return _ListeningRunner(lesson: lesson, locale: locale);
     }
   }
 
@@ -328,6 +320,236 @@ class _VocabRunnerState extends ConsumerState<_VocabRunner> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// LISTENING RUNNER — TTS cümleyi okur, kullanıcı duyduğunu yazar.
+// content['sentences']: [{"en": "...", "tr": "..."}] — skor doğru yüzdesi.
+// =============================================================================
+class _ListeningRunner extends ConsumerStatefulWidget {
+  const _ListeningRunner({required this.lesson, required this.locale});
+  final Lesson lesson;
+  final String locale;
+
+  @override
+  ConsumerState<_ListeningRunner> createState() => _ListeningRunnerState();
+}
+
+class _ListeningRunnerState extends ConsumerState<_ListeningRunner> {
+  final TtsSpeaker _tts = TtsSpeaker();
+  final TextEditingController _ctrl = TextEditingController();
+  int _index = 0;
+  int _correct = 0;
+  bool _checked = false;
+  bool _wasCorrect = false;
+  bool _saving = false;
+
+  List<Map<String, dynamic>> get _sentences {
+    final raw = widget.lesson.content['sentences'];
+    if (raw is! List) return const [];
+    return raw.whereType<Map>().map((m) => m.cast<String, dynamic>()).toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tts.init();
+    // Buton aktifliği yazılan metne bağlı; her değişimde yeniden değerlendir.
+    _ctrl.addListener(() => setState(() {}));
+    // İlk cümleyi otomatik çal — kullanıcı ekranı görünce egzersiz başlamış olur.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _speakCurrent());
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    _tts.dispose();
+    super.dispose();
+  }
+
+  Future<void> _speakCurrent() async {
+    final s = _sentences;
+    if (_index >= s.length) return;
+    await _tts.speak(s[_index]['en']?.toString() ?? '', sanitize: false);
+  }
+
+  /// Noktalama/büyük-küçük harf farkları doğruluğu etkilemesin.
+  static String _normalize(String s) => s
+      .toLowerCase()
+      .replaceAll(RegExp(r"[^a-z0-9\s']"), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+
+  void _check() {
+    final expected = _sentences[_index]['en']?.toString() ?? '';
+    final ok = _normalize(_ctrl.text) == _normalize(expected);
+    if (ok) _correct++;
+    setState(() {
+      _checked = true;
+      _wasCorrect = ok;
+    });
+  }
+
+  void _next() {
+    if (_index < _sentences.length - 1) {
+      setState(() {
+        _index++;
+        _checked = false;
+        _wasCorrect = false;
+        _ctrl.clear();
+      });
+      _speakCurrent();
+    } else {
+      _finish();
+    }
+  }
+
+  Future<void> _finish() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    final total = _sentences.length;
+    final score = total == 0 ? 0 : ((_correct * 100) ~/ total);
+    final res = await ref.read(coursesServiceProvider).completeLesson(
+          lessonId: widget.lesson.id,
+          score: score,
+        );
+    ref.invalidate(lessonProgressMapProvider);
+    if (!mounted) return;
+    setState(() => _saving = false);
+    await _CompletionDialog.show(context, res, score: score);
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final c = context.c;
+    final sentences = _sentences;
+    if (sentences.isEmpty) {
+      return Center(
+        child: Text(
+          l.lesson_noListening,
+          style: AppText.body(13, color: c.inkDim),
+        ),
+      );
+    }
+    final expected = sentences[_index]['en']?.toString() ?? '';
+    final translation = sentences[_index]['tr']?.toString() ?? '';
+    final isLast = _index == sentences.length - 1;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${l.quiz_question} ${_index + 1}/${sentences.length}',
+            style: AppText.label(11,
+                color: c.primaryContainer, weight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l.lesson_listenPrompt,
+            style: AppText.title(18, color: c.ink, weight: FontWeight.w700),
+          ),
+          const SizedBox(height: 18),
+          Center(
+            child: Semantics(
+              label: l.conv_replay,
+              button: true,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: _speakCurrent,
+                child: Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: c.primaryContainer.withOpacity(0.12),
+                    border:
+                        Border.all(color: c.primaryContainer.withOpacity(0.45)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: c.primaryContainer.withOpacity(0.25),
+                        blurRadius: 22,
+                      ),
+                    ],
+                  ),
+                  child: Icon(Icons.volume_up_rounded,
+                      color: c.primaryContainer, size: 34),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          NeonField(
+            controller: _ctrl,
+            autofocus: true,
+            hint: l.lesson_typeWhatYouHeard,
+            readOnly: _checked,
+          ),
+          const SizedBox(height: 14),
+          if (_checked)
+            GlassPanel(
+              padding: const EdgeInsets.all(14),
+              borderColor: (_wasCorrect ? c.success : c.error).withOpacity(0.5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _wasCorrect ? l.lesson_listenCorrect : l.lesson_listenWrong,
+                    style: AppText.label(11,
+                        color: _wasCorrect ? c.success : c.error,
+                        weight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(expected, style: AppText.body(14, color: c.ink)),
+                  if (translation.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(translation,
+                        style: AppText.body(12, color: c.inkMuted)),
+                  ],
+                ],
+              ),
+            ),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: c.primaryContainer,
+                foregroundColor: c.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: _saving
+                  ? null
+                  : _checked
+                      ? _next
+                      : (_ctrl.text.trim().isEmpty ? null : _check),
+              child: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
+                    )
+                  : Text(
+                      _checked
+                          ? (isLast ? l.common_finish : l.common_next)
+                          : l.lesson_listenCheck,
+                      style: AppText.label(13,
+                          color: c.onPrimary, weight: FontWeight.w700),
+                    ),
+            ),
           ),
         ],
       ),

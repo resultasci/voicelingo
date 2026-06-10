@@ -1028,20 +1028,31 @@ class AppL10nTr extends AppL10n {
       'İlgili senaryoyu konuş. Minimum tur sayısı bu ders için sayılır.';
 
   @override
-  String get lesson_listenBridge =>
-      'Dinleme egzersizleri yakında. Şimdilik tamamlanmış sayılıyor.';
-
-  @override
   String get lesson_openGrammar => 'Grameri Aç';
 
   @override
   String get lesson_startConv => 'Sohbete Başla';
 
   @override
-  String get lesson_markComplete => 'Tamamlandı işaretle';
+  String get lesson_noVocab => 'Bu derste kelime yok.';
 
   @override
-  String get lesson_noVocab => 'Bu derste kelime yok.';
+  String get lesson_noListening => 'Bu derste dinleme içeriği yok.';
+
+  @override
+  String get lesson_listenPrompt => 'Dinle ve duyduğunu yaz';
+
+  @override
+  String get lesson_typeWhatYouHeard => 'Duyduğun cümleyi yaz…';
+
+  @override
+  String get lesson_listenCheck => 'Kontrol et';
+
+  @override
+  String get lesson_listenCorrect => 'Doğru!';
+
+  @override
+  String get lesson_listenWrong => 'Doğrusu:';
 
   @override
   String get lesson_tapToFlip => 'Çevirmek için dokun';

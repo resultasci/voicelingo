@@ -1030,20 +1030,31 @@ class AppL10nEn extends AppL10n {
       'Practice the conversation scenario. Min turns will count toward lesson completion.';
 
   @override
-  String get lesson_listenBridge =>
-      'Listening exercises coming soon. Marking complete for now.';
-
-  @override
   String get lesson_openGrammar => 'Open Grammar';
 
   @override
   String get lesson_startConv => 'Start Conversation';
 
   @override
-  String get lesson_markComplete => 'Mark complete';
+  String get lesson_noVocab => 'No vocabulary in this lesson.';
 
   @override
-  String get lesson_noVocab => 'No vocabulary in this lesson.';
+  String get lesson_noListening => 'No listening content in this lesson.';
+
+  @override
+  String get lesson_listenPrompt => 'Listen and type what you hear';
+
+  @override
+  String get lesson_typeWhatYouHeard => 'Type the sentence you heard…';
+
+  @override
+  String get lesson_listenCheck => 'Check';
+
+  @override
+  String get lesson_listenCorrect => 'Correct!';
+
+  @override
+  String get lesson_listenWrong => 'Correct answer:';
 
   @override
   String get lesson_tapToFlip => 'Tap to flip';
