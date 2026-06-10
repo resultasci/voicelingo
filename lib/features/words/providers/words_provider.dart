@@ -145,7 +145,9 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
             w.nextReview.toIso8601String().split('T')[0] ==
                 today.toIso8601String().split('T')[0])
         .length;
-    NotificationService().scheduleDailyReviewReminder(dueCount);
+    _ref
+        .read(notificationServiceProvider)
+        .scheduleDailyReviewReminder(dueCount);
   }
 
   Future<void> addWord(String word, String translation) async {
@@ -411,12 +413,12 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   Future<void> _scheduleNextReviewNotification(Word updated) async {
     try {
       final notificationId = updated.id.hashCode;
-      await NotificationService().scheduleReviewReminder(
-        notificationId,
-        'Hatırlatma Zamanı!',
-        '"${updated.word}" kelimesinin tekrar zamanı geldi!',
-        updated.nextReview,
-      );
+      await _ref.read(notificationServiceProvider).scheduleReviewReminder(
+            notificationId,
+            'Hatırlatma Zamanı!',
+            '"${updated.word}" kelimesinin tekrar zamanı geldi!',
+            updated.nextReview,
+          );
     } catch (_) {
       // Notifications are best-effort.
     }

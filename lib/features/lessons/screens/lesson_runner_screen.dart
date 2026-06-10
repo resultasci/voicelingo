@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/audio/tts_speaker.dart';
+import '../../../core/services/settings_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -146,7 +147,8 @@ class _VocabRunner extends ConsumerStatefulWidget {
 }
 
 class _VocabRunnerState extends ConsumerState<_VocabRunner> {
-  final TtsSpeaker _tts = TtsSpeaker();
+  late final TtsSpeaker _tts =
+      TtsSpeaker(rate: ref.read(settingsServiceProvider).ttsRate);
   int _index = 0;
   bool _flipped = false;
   int _correct = 0;
@@ -341,7 +343,8 @@ class _ListeningRunner extends ConsumerStatefulWidget {
 }
 
 class _ListeningRunnerState extends ConsumerState<_ListeningRunner> {
-  final TtsSpeaker _tts = TtsSpeaker();
+  late final TtsSpeaker _tts =
+      TtsSpeaker(rate: ref.read(settingsServiceProvider).ttsRate);
   final TextEditingController _ctrl = TextEditingController();
   int _index = 0;
   int _correct = 0;

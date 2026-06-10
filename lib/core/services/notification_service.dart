@@ -1,17 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'settings_service.dart';
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
+  NotificationService(this._settings);
 
-  factory NotificationService() => _instance;
-
-  NotificationService._internal();
+  final SettingsService _settings;
 
   /// Stable id for the recurring "you have N words due today" reminder.
   static const int _dailyReminderId = 1001;
@@ -99,12 +98,12 @@ class NotificationService {
   /// Daily aggregate "you have N words due" reminder. Cancels and reschedules
   /// itself idempotently — safe to call after every word load.
   Future<void> scheduleDailyReviewReminder(int dueCount) async {
-    if (!SettingsService().notificationsEnabled) return;
+    if (!_settings.notificationsEnabled) return;
 
     await flutterLocalNotificationsPlugin.cancel(_dailyReminderId);
     if (dueCount <= 0) return;
 
-    final hour = SettingsService().reviewHour;
+    final hour = _settings.reviewHour;
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
       tz.local,
@@ -149,3 +148,10 @@ class NotificationService {
 
   Future<void> cancelAll() => cancelAllNotifications();
 }
+
+/// Gerçek instance bootstrap'taki ProviderScope override'ından gelir —
+/// `runApp`'ten önce `init()` tamamlanmış olur.
+final notificationServiceProvider = Provider<NotificationService>(
+  (_) => throw UnimplementedError(
+      'notificationServiceProvider bootstrap içinde override edilir'),
+);

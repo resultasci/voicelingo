@@ -85,7 +85,7 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
         // Best-effort: settings cache below still gates HomeScreen.
       }
     }
-    await SettingsService().setPlacementDone(true);
+    await ref.read(settingsServiceProvider).setPlacementDone(true);
     // cefr_level az önce yazıldı — Hive'daki eski profil tekrar servis edilmesin.
     await bustProfileCache();
     ref.invalidate(profileProvider);

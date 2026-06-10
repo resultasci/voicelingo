@@ -1,21 +1,18 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Singleton wrapper around SharedPreferences for app-wide user settings.
+/// SharedPreferences üzerinde uygulama geneli kullanıcı ayarları.
 ///
-/// Call [SettingsService.init] once at startup before any other access.
+/// Bootstrap [create] ile tek instance kurar ve [settingsServiceProvider]
+/// override'ı üzerinden yayınlar. Testlerde
+/// `SharedPreferences.setMockInitialValues` + `overrideWithValue` kullanın.
 class SettingsService {
-  SettingsService._internal();
-  static final SettingsService _instance = SettingsService._internal();
-  factory SettingsService() => _instance;
+  SettingsService(this._prefs);
 
-  static late SharedPreferences _prefs;
-  static bool _initialized = false;
+  final SharedPreferences _prefs;
 
-  static Future<void> init() async {
-    if (_initialized) return;
-    _prefs = await SharedPreferences.getInstance();
-    _initialized = true;
-  }
+  static Future<SettingsService> create() async =>
+      SettingsService(await SharedPreferences.getInstance());
 
   // ---------------------------------------------------------------------------
   // Theme: 'light' | 'dark' | 'system'
@@ -82,3 +79,10 @@ class SettingsService {
   Future<void> setTextScale(double scale) =>
       _prefs.setDouble(_kTextScale, scale.clamp(0.85, 1.5));
 }
+
+/// Gerçek instance bootstrap'taki ProviderScope override'ından gelir —
+/// `runApp`'ten önce `SettingsService.create()` tamamlanmış olur.
+final settingsServiceProvider = Provider<SettingsService>(
+  (_) => throw UnimplementedError(
+      'settingsServiceProvider bootstrap içinde override edilir'),
+);

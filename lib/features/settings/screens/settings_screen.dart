@@ -27,7 +27,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    final s = SettingsService();
+    final s = ref.read(settingsServiceProvider);
     _notificationsEnabled = s.notificationsEnabled;
     _reviewHour = s.reviewHour;
     _interfaceLanguage = s.interfaceLanguage;
@@ -35,21 +35,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _setNotifications(bool v) async {
     setState(() => _notificationsEnabled = v);
-    await SettingsService().setNotificationsEnabled(v);
+    await ref.read(settingsServiceProvider).setNotificationsEnabled(v);
+    final notifications = ref.read(notificationServiceProvider);
     if (!v) {
-      await NotificationService().cancelAll();
+      await notifications.cancelAll();
     } else {
       // Reschedule will be re-driven on next words load; trigger it manually
       // by emitting a 0-due placeholder so the channel is set up immediately.
-      await NotificationService().scheduleDailyReviewReminder(0);
+      await notifications.scheduleDailyReviewReminder(0);
     }
   }
 
   Future<void> _setReviewHour(int h) async {
     setState(() => _reviewHour = h);
-    await SettingsService().setReviewHour(h);
+    await ref.read(settingsServiceProvider).setReviewHour(h);
     if (_notificationsEnabled) {
-      await NotificationService().scheduleDailyReviewReminder(0);
+      await ref
+          .read(notificationServiceProvider)
+          .scheduleDailyReviewReminder(0);
     }
   }
 

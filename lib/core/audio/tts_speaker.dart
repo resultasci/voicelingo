@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
-import '../services/settings_service.dart';
-
 /// Uygulama genelinde tek FlutterTts sarmalayıcısı.
 ///
 /// Her ekran kendi instance'ını oluşturur (engine state'i platformda zaten
@@ -10,12 +8,14 @@ import '../services/settings_service.dart';
 /// language/pitch/rate ayarlarını paralel uygular; [speak] çağrısı init'i
 /// otomatik bekler, bu yüzden ayrıca init çağırmak zorunlu değildir.
 ///
-/// Varsayılan konuşma hızı kullanıcının Ayarlar'daki TTS tercihinden gelir.
+/// Kullanıcının Ayarlar'daki TTS hızına saygı için kurulum noktası
+/// `rate: ref.read(settingsServiceProvider).ttsRate` geçmelidir; geçilmezse
+/// 0.5 varsayılanı kullanılır.
 class TtsSpeaker {
   TtsSpeaker({String language = 'en-US', double pitch = 1.0, double? rate})
       : _language = language,
         _pitch = pitch,
-        _rate = rate ?? _settingsRate();
+        _rate = rate ?? 0.5;
 
   final FlutterTts _tts = FlutterTts();
   String _language;
@@ -25,15 +25,6 @@ class TtsSpeaker {
 
   /// Düşük seviye tüketiciler (ör. StreamingTtsBuffer) için ham engine.
   FlutterTts get raw => _tts;
-
-  static double _settingsRate() {
-    try {
-      return SettingsService().ttsRate;
-    } catch (_) {
-      // SettingsService.init() çağrılmamış (ör. test ortamı) — makul varsayılan.
-      return 0.5;
-    }
-  }
 
   /// TTS metinlerinden okunamayan kısımları ayıklar: parantez/köşeli parantez
   /// içeriği ve İngilizce TTS'in telaffuz edemeyeceği semboller.

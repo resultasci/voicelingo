@@ -55,7 +55,8 @@ class ConversationController extends ChangeNotifier {
         _invalidate = invalidate,
         _greetingText = greetingText,
         _replyFailedText = replyFailedText,
-        _audioSvc = read(audioRecorderServiceProvider);
+        _audioSvc = read(audioRecorderServiceProvider),
+        _ttsRate = read(settingsServiceProvider).ttsRate;
 
   final T Function<T>(ProviderListenable<T>) _read;
   final void Function(ProviderOrFamily) _invalidate;
@@ -72,7 +73,7 @@ class ConversationController extends ChangeNotifier {
   final void Function(String detail)? onReplyError;
 
   final AudioRecorderService _audioSvc;
-  final TtsSpeaker _tts = TtsSpeaker();
+  late final TtsSpeaker _tts = TtsSpeaker(rate: _ttsRate);
   final AmplitudeHistory amplitudes = AmplitudeHistory();
 
   VadDetector? _vad;
@@ -97,7 +98,7 @@ class ConversationController extends ChangeNotifier {
   bool _conversationCreated = false;
   String? _lastUserText;
 
-  double _ttsRate = SettingsService().ttsRate;
+  double _ttsRate;
   double get ttsRate => _ttsRate;
 
   AICharacter _character = AICharacters.defaultCharacter;
@@ -593,7 +594,7 @@ class ConversationController extends ChangeNotifier {
   Future<void> setTtsRate(double rate) async {
     _ttsRate = rate;
     _notify();
-    await SettingsService().setTtsRate(rate);
+    await _read(settingsServiceProvider).setTtsRate(rate);
     try {
       await _tts.setRate(rate);
     } catch (_) {}

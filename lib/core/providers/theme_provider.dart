@@ -7,11 +7,13 @@ import '../services/settings_service.dart';
 /// via [SettingsService] so changes survive restarts.
 final themeModeProvider =
     StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
-  return ThemeModeNotifier();
+  return ThemeModeNotifier(ref.watch(settingsServiceProvider));
 });
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(_decode(SettingsService().themeMode));
+  ThemeModeNotifier(this._settings) : super(_decode(_settings.themeMode));
+
+  final SettingsService _settings;
 
   static ThemeMode _decode(String s) {
     switch (s) {
@@ -38,7 +40,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
   Future<void> setMode(ThemeMode mode) async {
     state = mode;
-    await SettingsService().setThemeMode(_encode(mode));
+    await _settings.setThemeMode(_encode(mode));
   }
 }
 
@@ -46,15 +48,17 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 /// MediaQuery.textScaler'a uygulanır ([app/app.dart]).
 final textScaleProvider =
     StateNotifierProvider<TextScaleNotifier, double>((ref) {
-  return TextScaleNotifier();
+  return TextScaleNotifier(ref.watch(settingsServiceProvider));
 });
 
 class TextScaleNotifier extends StateNotifier<double> {
-  TextScaleNotifier() : super(SettingsService().textScale);
+  TextScaleNotifier(this._settings) : super(_settings.textScale);
+
+  final SettingsService _settings;
 
   Future<void> setScale(double scale) async {
     final clamped = scale.clamp(0.85, 1.5);
     state = clamped;
-    await SettingsService().setTextScale(clamped);
+    await _settings.setTextScale(clamped);
   }
 }

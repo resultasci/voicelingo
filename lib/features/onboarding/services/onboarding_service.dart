@@ -14,8 +14,9 @@ import '../../../core/services/settings_service.dart';
 ///   - profiles.onboarding_completed_at set edilir
 ///   - SettingsService'e local cache yazılır (router redirect için)
 class OnboardingService {
-  OnboardingService(this._db);
+  OnboardingService(this._db, this._settings);
   final SupabaseClient _db;
+  final SettingsService _settings;
 
   /// Hedef + motivasyon kaydedilir.
   Future<void> savePreferences({
@@ -39,10 +40,13 @@ class OnboardingService {
       'onboarding_completed_at': nowIso,
       'last_active_at': nowIso,
     }).eq('id', user.id);
-    await SettingsService().setOnboardingDone(true);
+    await _settings.setOnboardingDone(true);
   }
 }
 
 final onboardingServiceProvider = Provider<OnboardingService>((ref) {
-  return OnboardingService(Supabase.instance.client);
+  return OnboardingService(
+    Supabase.instance.client,
+    ref.watch(settingsServiceProvider),
+  );
 });

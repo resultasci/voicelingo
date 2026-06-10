@@ -38,17 +38,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => NotificationService().requestPermissions());
+    Future.microtask(
+        () => ref.read(notificationServiceProvider).requestPermissions());
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeRunPlacement());
   }
 
   Future<void> _maybeRunPlacement() async {
     if (!mounted) return;
-    if (SettingsService().placementDone) return;
+    final settings = ref.read(settingsServiceProvider);
+    if (settings.placementDone) return;
     final profile = await ref.read(profileProvider.future);
     if (!mounted) return;
     if (profile?.cefrLevel != null && profile!.cefrLevel!.isNotEmpty) {
-      await SettingsService().setPlacementDone(true);
+      await settings.setPlacementDone(true);
       return;
     }
     await Navigator.of(context).push(

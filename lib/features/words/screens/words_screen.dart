@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/audio/tts_speaker.dart';
+import '../../../core/services/settings_service.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
@@ -23,7 +24,8 @@ class WordsScreen extends ConsumerStatefulWidget {
 }
 
 class _WordsScreenState extends ConsumerState<WordsScreen> {
-  final TtsSpeaker _tts = TtsSpeaker();
+  late final TtsSpeaker _tts =
+      TtsSpeaker(rate: ref.read(settingsServiceProvider).ttsRate);
   late final ReviewController _review;
 
   final _searchCtrl = TextEditingController();

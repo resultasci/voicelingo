@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/tts_speaker.dart';
+import '../../../core/services/settings_service.dart';
 import '../../../core/ai/ai_character.dart';
 import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
@@ -26,7 +27,8 @@ class CharacterPickerScreen extends ConsumerStatefulWidget {
 }
 
 class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
-  final TtsSpeaker _tts = TtsSpeaker();
+  late final TtsSpeaker _tts =
+      TtsSpeaker(rate: ref.read(settingsServiceProvider).ttsRate);
   String? _previewingId;
   String? _selectedId;
   bool _saving = false;

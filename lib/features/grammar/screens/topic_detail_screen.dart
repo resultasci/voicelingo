@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/tts_speaker.dart';
+import '../../../core/services/settings_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -20,7 +21,8 @@ class TopicDetailScreen extends ConsumerStatefulWidget {
 class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
-  final TtsSpeaker _tts = TtsSpeaker();
+  late final TtsSpeaker _tts =
+      TtsSpeaker(rate: ref.read(settingsServiceProvider).ttsRate);
 
   @override
   void initState() {

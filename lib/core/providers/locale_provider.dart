@@ -6,11 +6,13 @@ import '../services/settings_service.dart';
 /// Kullanıcı arayüz dili. SettingsService'te `interfaceLanguage` (tr/en)
 /// olarak saklanır; MaterialApp.locale'a bağlanır.
 final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
-  return LocaleNotifier();
+  return LocaleNotifier(ref.watch(settingsServiceProvider));
 });
 
 class LocaleNotifier extends StateNotifier<Locale> {
-  LocaleNotifier() : super(_decode(SettingsService().interfaceLanguage));
+  LocaleNotifier(this._settings) : super(_decode(_settings.interfaceLanguage));
+
+  final SettingsService _settings;
 
   static Locale _decode(String code) {
     switch (code) {
@@ -25,6 +27,6 @@ class LocaleNotifier extends StateNotifier<Locale> {
   Future<void> setLanguage(String code) async {
     final normalized = code == 'en' ? 'en' : 'tr';
     state = _decode(normalized);
-    await SettingsService().setInterfaceLanguage(normalized);
+    await _settings.setInterfaceLanguage(normalized);
   }
 }

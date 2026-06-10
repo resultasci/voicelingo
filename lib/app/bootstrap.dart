@@ -77,21 +77,35 @@ Future<void> bootstrap() async {
     return;
   }
 
-  // 3) PARALEL: dört bağımsız init aynı anda. Önceki sıralı await zinciri
+  // 3) PARALEL: üç bağımsız init aynı anda. Önceki sıralı await zinciri
   // ~1500-2500ms; paralel ile ~en yavaş tek adım kadar (genelde Supabase).
+  // Settings → Notification zinciri kendi Future'ında sıralı (ikincisi
+  // birincinin instance'ına bağımlı), diğerleriyle paralel.
+  late final SettingsService settings;
+  late final NotificationService notifications;
   await Future.wait<void>([
-    SettingsService.init(),
+    Future(() async {
+      settings = await SettingsService.create();
+      notifications = NotificationService(settings);
+      await notifications.init();
+    }),
     Future(() async {
       await Hive.initFlutter();
       await HiveBoxes.openAll();
     }),
-    NotificationService().init(),
     Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey),
   ]);
 
-  // 4) Sentry wrapper + runApp
+  // 4) Sentry wrapper + runApp. Servis instance'ları ProviderScope override'ı
+  // ile yayınlanır — provider'ların kendisi UnimplementedError fırlatır.
   Future<void> bootApp() async {
-    runApp(const ProviderScope(child: VoiceLingoApp()));
+    runApp(ProviderScope(
+      overrides: [
+        settingsServiceProvider.overrideWithValue(settings),
+        notificationServiceProvider.overrideWithValue(notifications),
+      ],
+      child: const VoiceLingoApp(),
+    ));
   }
 
   if (Env.sentryDsn.isNotEmpty) {

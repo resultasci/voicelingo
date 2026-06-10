@@ -103,7 +103,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _requestNotif() async {
-    await NotificationService().requestPermissions();
+    await ref.read(notificationServiceProvider).requestPermissions();
     if (!mounted) return;
     setState(() => _notifGranted = true);
   }

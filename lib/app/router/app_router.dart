@@ -68,8 +68,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (isAuth) {
-        final placementDone = SettingsService().placementDone;
-        final onboardingDone = SettingsService().onboardingDone;
+        final settings = ref.read(settingsServiceProvider);
+        final placementDone = settings.placementDone;
+        final onboardingDone = settings.onboardingDone;
 
         // Auth ekranlarından geliyorsa uygun yere yönlendir
         if (isLoggingIn || isResettingPassword) {
