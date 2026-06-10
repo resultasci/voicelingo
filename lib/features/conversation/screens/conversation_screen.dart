@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ai/ai_character.dart';
 import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
@@ -25,6 +24,7 @@ import '../../gamification/providers/gamification_providers.dart';
 import '../../scenarios/screens/scenario_picker_screen.dart';
 import '../models/conversation_message.dart';
 import '../services/characters_service.dart';
+import '../services/conversation_repository.dart';
 import '../widgets/bubble_entrance.dart';
 import '../widgets/feedback_pill.dart';
 import '../widgets/mic_button.dart';
@@ -222,24 +222,15 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
   Future<void> _ensureConversation() async {
     if (_conversationCreated) return;
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return;
-    try {
-      final row = await Supabase.instance.client
-          .from('conversations')
-          .insert({
-            'user_id': userId,
-            'scenario': widget.scenario?.id,
-            'title': widget.scenario?.title,
-            // Faz 5: karakter snapshot — sohbet history'sinde immutable kalır
-            'character_id': _character.id,
-          })
-          .select()
-          .single();
-      _conversationId = row['id'] as String;
+    final id =
+        await ref.read(conversationRepositoryProvider).createConversation(
+              scenarioId: widget.scenario?.id,
+              title: widget.scenario?.title,
+              characterId: _character.id,
+            );
+    if (id != null) {
+      _conversationId = id;
       _conversationCreated = true;
-    } catch (_) {
-      // Persistence is best-effort: user can still chat in-memory.
     }
   }
 
@@ -469,22 +460,14 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   Future<void> _logTurnSideEffects() async {
-    try {
-      final tzo = DateTime.now().timeZoneOffset.inHours;
-      final sign = tzo >= 0 ? '+' : '-';
-      final tzStr = '$sign${tzo.abs().toString().padLeft(2, '0')}:00';
-      await Supabase.instance.client.rpc('log_practice_session', params: {
-        'p_mode': 'conversation',
-        'p_words_practiced': 0,
-        'p_avg_score': 5.0,
-        'p_xp_earned': 5,
-        'p_timezone_offset': tzStr,
-      });
+    final logged =
+        await ref.read(conversationRepositoryProvider).logConversationTurn();
+    if (logged) {
       // XP/streak just changed server-side — drop the cached profile so the
       // dashboard HUD reflects it on next read instead of after the 6h TTL.
       await bustProfileCache();
       if (mounted) ref.invalidate(profileProvider);
-    } catch (_) {}
+    }
     await _bumpQuest(QuestType.conversationTurns);
   }
 
@@ -661,20 +644,15 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   Future<void> _persistMessage(ConversationMessage msg) async {
     if (msg.persisted) return;
     final convId = _conversationId;
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (convId == null || userId == null) return;
-    final role = msg.isUser ? 'user' : 'assistant';
-    try {
-      // Single round-trip: insert + bump conversations.updated_at in one RPC.
-      final id = await Supabase.instance.client.rpc('append_message', params: {
-        'p_conversation_id': convId,
-        'p_role': role,
-        'p_content': msg.text,
-      });
+    if (convId == null) return;
+    final id = await ref.read(conversationRepositoryProvider).appendMessage(
+          conversationId: convId,
+          role: msg.isUser ? 'user' : 'assistant',
+          content: msg.text,
+        );
+    if (id != null) {
       msg.persisted = true;
-      msg.remoteId = id as String?;
-    } catch (_) {
-      // Persistence is best-effort.
+      msg.remoteId = id;
     }
   }
 
@@ -682,14 +660,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     final remoteId = msg.remoteId;
     final eval = msg.evaluation;
     if (remoteId == null || eval == null) return;
-    try {
-      await Supabase.instance.client.from('messages').update({
-        'eval_score': eval.score,
-        'eval_suggestion': eval.correct,
-        'eval_explanation': eval.explanation,
-        'grammar_errors': eval.grammarErrors,
-      }).eq('id', remoteId);
-    } catch (_) {}
+    await ref
+        .read(conversationRepositoryProvider)
+        .patchEvaluation(remoteId, eval);
   }
 
   void _scrollToBottom() {
