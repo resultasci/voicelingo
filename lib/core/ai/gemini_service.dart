@@ -6,19 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 
 import '../errors/app_exception.dart';
 
-/// Errors surfaced by [GeminiService]. Wraps both transport and protocol issues
-/// behind a single user-facing surface.
-class AiException extends AppException {
-  final int statusCode;
-  AiException(this.statusCode, String message)
-      : super(message, code: 'ai_$statusCode');
-
-  bool get isRateLimit => statusCode == 429;
-  bool get isAuth => statusCode == 401;
-
-  @override
-  String toString() => message;
-}
+// AiException artık core/errors hiyerarşisinde yaşar; tarihsel tüketiciler
+// onu buradan import etmeye devam edebilsin.
+export '../errors/app_exception.dart' show AiException;
 
 /// Structured evaluation of a learner's spoken sentence.
 ///

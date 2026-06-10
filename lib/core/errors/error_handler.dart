@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'app_exception.dart';
-import '../ai/gemini_service.dart' show AiException;
 
 /// Extracts a localized message from any Object, mapping AppException/AiException
 /// down to the `AppL10n` strings.

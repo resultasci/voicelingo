@@ -46,3 +46,18 @@ class UnexpectedException extends AppException {
   const UnexpectedException(super.message, {super.cause})
       : super(code: 'unexpected');
 }
+
+/// ai-proxy Edge Function'dan dönen hata cevapları (statusCode + mesaj).
+/// GeminiService sınırda fırlatır; `error_handler.dart` statusCode'a göre
+/// lokalize mesaja çevirir.
+class AiException extends AppException {
+  final int statusCode;
+  AiException(this.statusCode, String message)
+      : super(message, code: 'ai_$statusCode');
+
+  bool get isRateLimit => statusCode == 429;
+  bool get isAuth => statusCode == 401;
+
+  @override
+  String toString() => message;
+}
