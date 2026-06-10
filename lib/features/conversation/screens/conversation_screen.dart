@@ -23,39 +23,16 @@ import '../../../theme/app_theme.dart';
 import '../../gamification/models/daily_quest.dart';
 import '../../gamification/providers/gamification_providers.dart';
 import '../../scenarios/screens/scenario_picker_screen.dart';
+import '../models/conversation_message.dart';
 import '../services/characters_service.dart';
+import '../widgets/bubble_entrance.dart';
+import '../widgets/feedback_pill.dart';
+import '../widgets/mic_button.dart';
+import '../widgets/scenario_strip.dart';
+import '../widgets/speed_toggle.dart';
 import 'character_picker_screen.dart';
 import '../services/streaming_tts_buffer.dart';
 import 'conversation_history_screen.dart';
-
-enum _ConvStatus {
-  idle,
-  connecting,
-  ready,
-  listening,
-  thinking,
-  playing,
-  error,
-}
-
-class _Message {
-  final bool isUser;
-  String text;
-  SpeechEvaluation? evaluation;
-  bool isError;
-  bool persisted = false;
-  String? remoteId;
-
-  /// Used to run the entrance animation only for freshly added bubbles —
-  /// items re-entering the viewport on scroll render statically.
-  final DateTime createdAt = DateTime.now();
-
-  _Message({
-    required this.isUser,
-    required this.text,
-    this.isError = false,
-  });
-}
 
 class ConversationScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
@@ -83,9 +60,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   StreamSubscription<VadEvent>? _vadSub;
   StreamSubscription<double>? _amplitudeSub;
 
-  _ConvStatus _status = _ConvStatus.idle;
+  ConvStatus _status = ConvStatus.idle;
   String? _errorMsg;
-  final List<_Message> _messages = [];
+  final List<ConversationMessage> _messages = [];
   bool _ttsInitialized = false;
   String? _conversationId;
   bool _conversationCreated = false;
@@ -152,7 +129,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.hidden) {
-      if (_status == _ConvStatus.playing || _status == _ConvStatus.listening) {
+      if (_status == ConvStatus.playing || _status == ConvStatus.listening) {
         _stopAudioAndCleanUp();
       }
     }
@@ -167,7 +144,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     _tearDownVad();
     _pulse.stop();
     if (mounted) {
-      setState(() => _status = _ConvStatus.ready);
+      setState(() => _status = ConvStatus.ready);
     }
   }
 
@@ -182,13 +159,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
       _tts.setCompletionHandler(() {
         if (!mounted) return;
-        if (_status == _ConvStatus.playing) {
-          setState(() => _status = _ConvStatus.ready);
+        if (_status == ConvStatus.playing) {
+          setState(() => _status = ConvStatus.ready);
           // Faz 5: hands-free mod → AI bittiğinde otomatik dinlemeye geç
           if (_handsFreeMode) {
             Future.delayed(const Duration(milliseconds: 250), () {
               if (!mounted) return;
-              if (_status == _ConvStatus.ready) _startListening();
+              if (_status == ConvStatus.ready) _startListening();
             });
           }
         }
@@ -197,7 +174,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       _tts.setErrorHandler((msg) {
         if (mounted) {
           setState(() {
-            _status = _ConvStatus.error;
+            _status = ConvStatus.error;
             _errorMsg = AppL10n.of(context).conv_errTts(msg);
           });
         }
@@ -209,7 +186,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     } catch (_) {
       if (mounted) {
         setState(() {
-          _status = _ConvStatus.error;
+          _status = ConvStatus.error;
           _errorMsg = AppL10n.of(context).conv_errTtsInit;
         });
       }
@@ -224,7 +201,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
   Future<void> _autoStart() async {
     if (!mounted || !_ttsInitialized) return;
-    setState(() => _status = _ConvStatus.ready);
+    setState(() => _status = ConvStatus.ready);
 
     final scenario = widget.scenario;
     if (scenario != null) {
@@ -290,9 +267,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
   Future<void> _toggleMic() async {
     HapticFeedback.lightImpact();
-    if (_status == _ConvStatus.listening) {
+    if (_status == ConvStatus.listening) {
       await _stopListening();
-    } else if (_status == _ConvStatus.ready) {
+    } else if (_status == ConvStatus.ready) {
       await _startListening();
     }
   }
@@ -300,7 +277,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   Future<void> _startListening() async {
     if (!await _audioSvc.hasPermission()) {
       setState(() {
-        _status = _ConvStatus.error;
+        _status = ConvStatus.error;
         _errorMsg = AppL10n.of(context).conv_errMicPermission;
       });
       return;
@@ -324,12 +301,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       _amplitudeSub?.cancel();
       _amplitudeSub = _audioSvc.amplitudeStream.listen(_amplitudes.addDb);
 
-      setState(() => _status = _ConvStatus.listening);
+      setState(() => _status = ConvStatus.listening);
       _pulse.repeat(reverse: true);
     } catch (e) {
       _tearDownVad();
       setState(() {
-        _status = _ConvStatus.error;
+        _status = ConvStatus.error;
         _errorMsg = AppL10n.of(context).conv_errMicOpen('$e');
       });
     }
@@ -337,7 +314,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
   void _onVadEvent(VadEvent event) {
     if (event == VadEvent.speechEnded || event == VadEvent.maxDurationReached) {
-      if (_status == _ConvStatus.listening) _stopListening();
+      if (_status == ConvStatus.listening) _stopListening();
     }
   }
 
@@ -350,17 +327,17 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       final path = await _audioSvc.stop();
 
       if (path != null && path.isNotEmpty) {
-        setState(() => _status = _ConvStatus.thinking);
+        setState(() => _status = ConvStatus.thinking);
         await _processAudio(path);
       } else {
         setState(() {
-          _status = _ConvStatus.error;
+          _status = ConvStatus.error;
           _errorMsg = AppL10n.of(context).conv_errRecordFailed;
         });
       }
     } catch (e) {
       setState(() {
-        _status = _ConvStatus.error;
+        _status = ConvStatus.error;
         _errorMsg = AppL10n.of(context).conv_errAudioProcess('$e');
       });
     }
@@ -388,7 +365,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
       if (userText.isEmpty) {
         setState(() {
-          _status = _ConvStatus.error;
+          _status = ConvStatus.error;
           _errorMsg = AppL10n.of(context).conv_errNoSpeech;
         });
         return;
@@ -406,7 +383,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _status = _ConvStatus.error;
+          _status = ConvStatus.error;
           _errorMsg = AppL10n.of(context).conv_errGeneric('$e');
         });
       }
@@ -423,7 +400,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
     // Optimistic placeholder so the user sees their bubble immediately.
     final userMsg = _addMessage(isUser: true, text: '…');
-    setState(() => _status = _ConvStatus.thinking);
+    setState(() => _status = ConvStatus.thinking);
 
     final history = _messages
         .where((m) =>
@@ -463,7 +440,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         // STT returned nothing — drop the placeholder.
         setState(() => _messages.remove(userMsg));
         setState(() {
-          _status = _ConvStatus.error;
+          _status = ConvStatus.error;
           _errorMsg = AppL10n.of(context).conv_errNoSpeech;
         });
         return;
@@ -474,9 +451,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         final aiMsg = _addMessage(isUser: false, text: turn.reply);
         _persistMessage(aiMsg);
         _speakMessage(turn.reply);
-        setState(() => _status = _ConvStatus.playing);
+        setState(() => _status = ConvStatus.playing);
       } else {
-        setState(() => _status = _ConvStatus.ready);
+        setState(() => _status = ConvStatus.ready);
       }
 
       // Daily quest + XP best-effort (same as legacy _replyTo).
@@ -485,7 +462,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       if (!mounted) return;
       setState(() {
         _messages.remove(userMsg);
-        _status = _ConvStatus.error;
+        _status = ConvStatus.error;
         _errorMsg = AppL10n.of(context).conv_errGeneric('$e');
       });
     }
@@ -532,7 +509,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     unawaited(_bumpQuest(QuestType.perfectScore));
   }
 
-  Future<void> _attachEvaluation(_Message userMsg, String text) async {
+  Future<void> _attachEvaluation(
+      ConversationMessage userMsg, String text) async {
     try {
       final aiService = ref.read(geminiServiceProvider);
       final eval = await aiService.evaluateSpeech(text);
@@ -557,12 +535,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
   Future<void> _sendText() async {
     final text = _textCtrl.text.trim();
-    if (text.isEmpty || _status == _ConvStatus.thinking) return;
+    if (text.isEmpty || _status == ConvStatus.thinking) return;
     _textCtrl.clear();
     final userMsg = _addMessage(isUser: true, text: text);
     _lastUserText = text;
     _persistMessage(userMsg);
-    setState(() => _status = _ConvStatus.thinking);
+    setState(() => _status = ConvStatus.thinking);
     _attachEvaluation(userMsg, text);
     await _replyTo(text);
   }
@@ -578,7 +556,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               })
           .toList();
 
-      setState(() => _status = _ConvStatus.thinking);
+      setState(() => _status = ConvStatus.thinking);
 
       // Faz 5: AI karakter sistem prompt'u her zaman gönderilir.
       // Senaryo varsa karakterin prompt'una ek bağlam olarak eklenir.
@@ -597,7 +575,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       final msg = _addMessage(isUser: false, text: aiResponse);
       _persistMessage(msg);
       _speakMessage(aiResponse);
-      setState(() => _status = _ConvStatus.playing);
+      setState(() => _status = ConvStatus.playing);
 
       // XP + daily quest — best-effort, never delays rendering the reply.
       unawaited(_logTurnSideEffects());
@@ -609,7 +587,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         text: l.conv_replyFailed,
         isError: true,
       );
-      setState(() => _status = _ConvStatus.ready);
+      setState(() => _status = ConvStatus.ready);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: context.c.bgCard,
@@ -627,7 +605,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     setState(() {
       _messages.removeWhere((m) => m.isError);
     });
-    setState(() => _status = _ConvStatus.thinking);
+    setState(() => _status = ConvStatus.thinking);
     await _replyTo(_lastUserText!);
   }
 
@@ -654,7 +632,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _status = _ConvStatus.error;
+          _status = ConvStatus.error;
           _errorMsg = AppL10n.of(context).conv_errSpeak('$e');
         });
       }
@@ -669,18 +647,18 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     } catch (_) {}
   }
 
-  _Message _addMessage({
+  ConversationMessage _addMessage({
     required bool isUser,
     required String text,
     bool isError = false,
   }) {
-    final m = _Message(isUser: isUser, text: text, isError: isError);
+    final m = ConversationMessage(isUser: isUser, text: text, isError: isError);
     setState(() => _messages.add(m));
     Future.delayed(const Duration(milliseconds: 80), _scrollToBottom);
     return m;
   }
 
-  Future<void> _persistMessage(_Message msg) async {
+  Future<void> _persistMessage(ConversationMessage msg) async {
     if (msg.persisted) return;
     final convId = _conversationId;
     final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -700,7 +678,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     }
   }
 
-  Future<void> _patchEvaluation(_Message msg) async {
+  Future<void> _patchEvaluation(ConversationMessage msg) async {
     final remoteId = msg.remoteId;
     final eval = msg.evaluation;
     if (remoteId == null || eval == null) return;
@@ -725,40 +703,40 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   bool get _canToggleMic =>
-      _status == _ConvStatus.ready || _status == _ConvStatus.listening;
+      _status == ConvStatus.ready || _status == ConvStatus.listening;
 
   Color _statusColor(AppPalette c) {
     switch (_status) {
-      case _ConvStatus.listening:
+      case ConvStatus.listening:
         return c.secondaryContainer;
-      case _ConvStatus.ready:
+      case ConvStatus.ready:
         return c.primaryFixed;
-      case _ConvStatus.thinking:
+      case ConvStatus.thinking:
         return c.secondary;
-      case _ConvStatus.playing:
+      case ConvStatus.playing:
         return c.tertiaryFixedDim;
-      case _ConvStatus.error:
+      case ConvStatus.error:
         return c.error;
-      case _ConvStatus.idle:
-      case _ConvStatus.connecting:
+      case ConvStatus.idle:
+      case ConvStatus.connecting:
         return c.inkDim;
     }
   }
 
   String _statusLabel(AppL10n l) {
     switch (_status) {
-      case _ConvStatus.idle:
-      case _ConvStatus.connecting:
+      case ConvStatus.idle:
+      case ConvStatus.connecting:
         return l.conv_statusStarting;
-      case _ConvStatus.ready:
+      case ConvStatus.ready:
         return l.conv_statusReady;
-      case _ConvStatus.listening:
+      case ConvStatus.listening:
         return l.conv_statusListening;
-      case _ConvStatus.thinking:
+      case ConvStatus.thinking:
         return l.conv_statusThinking;
-      case _ConvStatus.playing:
+      case ConvStatus.playing:
         return l.conv_statusSpeaking;
-      case _ConvStatus.error:
+      case ConvStatus.error:
         return l.conv_statusError;
     }
   }
@@ -774,7 +752,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               children: [
                 _buildHeader(),
                 Expanded(
-                  child: _status == _ConvStatus.error && _messages.isEmpty
+                  child: _status == ConvStatus.error && _messages.isEmpty
                       ? _buildError()
                       : _buildMessages(),
                 ),
@@ -865,7 +843,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     ),
                   ),
           ),
-          _SpeedToggle(
+          SpeedToggle(
             rate: _ttsRate,
             onChanged: _setTtsRate,
           ),
@@ -947,9 +925,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               key: ValueKey(_status),
               text: _statusLabel(l),
               color: _statusColor(c),
-              icon: _status == _ConvStatus.connecting
+              icon: _status == ConvStatus.connecting
                   ? Icons.sync
-                  : _status == _ConvStatus.listening
+                  : _status == ConvStatus.listening
                       ? Icons.fiber_manual_record
                       : null,
             ),
@@ -961,16 +939,16 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
   Widget _buildMessages() {
     if (_messages.isEmpty) {
-      final isBusy = _status == _ConvStatus.idle ||
-          _status == _ConvStatus.connecting ||
-          _status == _ConvStatus.thinking;
+      final isBusy = _status == ConvStatus.idle ||
+          _status == ConvStatus.connecting ||
+          _status == ConvStatus.thinking;
       return _buildEmptyState(isBusy: isBusy);
     }
 
     return ListView.builder(
       controller: _scrollCtrl,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      itemCount: _messages.length + (_status == _ConvStatus.thinking ? 1 : 0),
+      itemCount: _messages.length + (_status == ConvStatus.thinking ? 1 : 0),
       itemBuilder: (context, i) {
         if (i == _messages.length) {
           return _buildThinkingBubble();
@@ -1007,11 +985,11 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _BlinkingDot(index: 0),
+                BlinkingDot(index: 0),
                 SizedBox(width: 4),
-                _BlinkingDot(index: 1),
+                BlinkingDot(index: 1),
                 SizedBox(width: 4),
-                _BlinkingDot(index: 2),
+                BlinkingDot(index: 2),
               ],
             ),
           ),
@@ -1021,7 +999,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   /// Long-press anywhere on a bubble → copy its text.
-  void _copyMessage(_Message msg) {
+  void _copyMessage(ConversationMessage msg) {
     Clipboard.setData(ClipboardData(text: msg.text));
     HapticFeedback.selectionClick();
     final l = AppL10n.of(context);
@@ -1034,16 +1012,16 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   /// Speaker button under AI bubbles — re-listen to any past reply.
-  Future<void> _replayMessage(_Message msg) async {
-    if (_status == _ConvStatus.listening || _status == _ConvStatus.thinking) {
+  Future<void> _replayMessage(ConversationMessage msg) async {
+    if (_status == ConvStatus.listening || _status == ConvStatus.thinking) {
       return;
     }
     HapticFeedback.selectionClick();
-    setState(() => _status = _ConvStatus.playing);
+    setState(() => _status = ConvStatus.playing);
     await _speakMessage(msg.text);
   }
 
-  Widget _buildBubble(_Message msg) {
+  Widget _buildBubble(ConversationMessage msg) {
     final l = AppL10n.of(context);
     final c = context.c;
     final isUser = msg.isUser;
@@ -1130,7 +1108,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           if (msg.isUser && msg.evaluation != null)
             Padding(
               padding: const EdgeInsets.only(top: 6, right: 42),
-              child: _FeedbackPill(evaluation: msg.evaluation!),
+              child: FeedbackPill(evaluation: msg.evaluation!),
             ),
           if (!isUser && !msg.isError)
             Padding(
@@ -1172,15 +1150,15 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     final isFresh =
         DateTime.now().difference(msg.createdAt).inMilliseconds < 600;
     if (!isFresh || reduceMotion(context)) return bubble;
-    return _BubbleEntrance(fromRight: isUser, child: bubble);
+    return BubbleEntrance(fromRight: isUser, child: bubble);
   }
 
   Widget _buildEmptyState({required bool isBusy}) {
     final l = AppL10n.of(context);
     final c = context.c;
-    final hint = _status == _ConvStatus.connecting
+    final hint = _status == ConvStatus.connecting
         ? l.conv_preparing
-        : _status == _ConvStatus.thinking
+        : _status == ConvStatus.thinking
             ? l.conv_aiPreparing
             : l.conv_emptyHint;
 
@@ -1253,7 +1231,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             const SizedBox(height: 24),
             SectionLabel(l.conv_readyScenarios),
             const SizedBox(height: 12),
-            _ScenarioStrip(
+            ScenarioStrip(
               onPick: (s) {
                 if (_isEmbeddedTab) {
                   Navigator.of(context).push(MaterialPageRoute(
@@ -1277,7 +1255,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   Future<void> _resetConversation() async {
     setState(() {
       _messages.clear();
-      _status = _ConvStatus.idle;
+      _status = ConvStatus.idle;
       _errorMsg = null;
       _conversationId = null;
       _conversationCreated = false;
@@ -1322,7 +1300,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   Widget _buildInputBar() {
     final l = AppL10n.of(context);
     final c = context.c;
-    final isListening = _status == _ConvStatus.listening;
+    final isListening = _status == ConvStatus.listening;
     return ClipRRect(
       borderRadius: BorderRadius.circular(99),
       child: BackdropFilter(
@@ -1370,7 +1348,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   ),
                 ),
               ),
-              if (_status == _ConvStatus.listening)
+              if (_status == ConvStatus.listening)
                 Expanded(
                   flex: 0,
                   child: SizedBox(
@@ -1404,13 +1382,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     );
                   }
                   return Semantics(
-                    label: _status == _ConvStatus.listening
+                    label: _status == ConvStatus.listening
                         ? l.conv_stopRecording
                         : l.conv_startRecording,
                     button: true,
                     child: AnimatedBuilder(
                       animation: _pulse,
-                      builder: (_, __) => _MicButton(
+                      builder: (_, __) => MicButton(
                         status: _status,
                         pulse: _pulse.value,
                         onTap: _canToggleMic ? _toggleMic : null,
@@ -1421,441 +1399,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ===========================================================================
-// TTS speed toggle: cycles through 0.5x / 0.75x / 1.0x.
-// ===========================================================================
-class _SpeedToggle extends StatelessWidget {
-  final double rate;
-  final ValueChanged<double> onChanged;
-  const _SpeedToggle({required this.rate, required this.onChanged});
-
-  static const _options = [0.5, 0.75, 1.0];
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.c;
-    final idx = _options.indexOf(rate).clamp(0, _options.length - 1);
-    final label =
-        '${_options[idx].toStringAsFixed(2).replaceAll(RegExp(r"0+$"), "").replaceAll(RegExp(r"\.$"), "")}×';
-    return Semantics(
-      label: AppL10n.of(context).settings_ttsSpeed,
-      value: label,
-      button: true,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(99),
-        onTap: () {
-          final next = _options[(idx + 1) % _options.length];
-          onChanged(next);
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            border: Border.all(color: c.primaryContainer.withOpacity(0.4)),
-            borderRadius: BorderRadius.circular(99),
-          ),
-          child: Text(
-            label,
-            style: AppText.label(11,
-                color: c.primaryContainer, weight: FontWeight.w700),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ===========================================================================
-// Feedback pill — TASK 2.1
-// ===========================================================================
-class _FeedbackPill extends StatefulWidget {
-  final SpeechEvaluation evaluation;
-  const _FeedbackPill({required this.evaluation});
-
-  @override
-  State<_FeedbackPill> createState() => _FeedbackPillState();
-}
-
-class _FeedbackPillState extends State<_FeedbackPill> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppL10n.of(context);
-    final c = context.c;
-    final eval = widget.evaluation;
-    final isHigh = eval.score >= 80;
-    final color = isHigh ? c.primaryFixed : c.tertiaryFixedDim;
-    final label = isHigh
-        ? l.conv_feedbackGreat
-        : l.conv_feedbackMoreNatural(
-            eval.correct.isNotEmpty ? eval.correct : "—");
-
-    return Semantics(
-      label: l.conv_evalSemantics(label),
-      button: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(99),
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.10),
-                border: Border.all(color: color.withOpacity(0.45)),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      label,
-                      style: AppText.label(10,
-                          color: color, weight: FontWeight.w700),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(
-                    _expanded ? Icons.expand_less : Icons.expand_more,
-                    color: color,
-                    size: 14,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_expanded)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 320),
-                child: GlassPanel(
-                  padding: const EdgeInsets.all(12),
-                  borderColor: color.withOpacity(0.35),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(l.conv_score(eval.score),
-                          style: AppText.label(10,
-                              color: color, weight: FontWeight.w700)),
-                      if (eval.explanation.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(eval.explanation,
-                            style: AppText.body(12, color: c.ink)),
-                      ],
-                      if (eval.grammarErrors.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(l.conv_errorsLabel,
-                            style: AppText.label(9,
-                                color: c.inkDim, weight: FontWeight.w700)),
-                        const SizedBox(height: 4),
-                        ...eval.grammarErrors.map((e) => Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text('• $e',
-                                  style: AppText.body(12, color: c.inkMuted)),
-                            )),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ===========================================================================
-// Horizontal scenario strip — surfaces scenarios on the empty Practice screen
-// so users discover them without hunting for the FAB.
-// ===========================================================================
-class _ScenarioStrip extends StatelessWidget {
-  final ValueChanged<ScenarioModel> onPick;
-  final VoidCallback onSeeAll;
-  const _ScenarioStrip({required this.onPick, required this.onSeeAll});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 132,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        itemCount: builtInScenarios.length + 1,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, i) {
-          if (i == builtInScenarios.length) {
-            return _AllScenariosTile(onTap: onSeeAll);
-          }
-          final s = builtInScenarios[i];
-          return _ScenarioTile(scenario: s, onTap: () => onPick(s));
-        },
-      ),
-    );
-  }
-}
-
-class _ScenarioTile extends StatelessWidget {
-  final ScenarioModel scenario;
-  final VoidCallback onTap;
-  const _ScenarioTile({required this.scenario, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.c;
-    return SizedBox(
-      width: 168,
-      child: GlassPanel(
-        padding: const EdgeInsets.all(14),
-        glowColor: c.primaryContainer,
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: c.primaryContainer.withOpacity(0.15),
-                border: Border.all(color: c.primaryContainer.withOpacity(0.4)),
-              ),
-              child: Icon(scenario.icon, color: c.primaryContainer, size: 18),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              scenario.title,
-              style:
-                  AppText.title(14, color: c.primary, weight: FontWeight.w700),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Expanded(
-              child: Text(
-                scenario.description,
-                style: AppText.body(11, color: c.inkMuted),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AllScenariosTile extends StatelessWidget {
-  final VoidCallback onTap;
-  const _AllScenariosTile({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.c;
-    return SizedBox(
-      width: 132,
-      child: GlassPanel(
-        padding: const EdgeInsets.all(14),
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: c.tertiaryFixedDim.withOpacity(0.15),
-                border: Border.all(color: c.tertiaryFixedDim.withOpacity(0.4)),
-              ),
-              child: Icon(Icons.grid_view_rounded,
-                  color: c.tertiaryFixedDim, size: 18),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              AppL10n.of(context).conv_seeAll,
-              style: AppText.label(11,
-                  color: c.tertiaryFixedDim, weight: FontWeight.w700),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// One-shot entrance for chat bubbles: fade + slide-up + a tiny horizontal
-/// push from the sender's side. Owns its controller so the animation runs
-/// exactly once per insertion and survives parent rebuilds mid-flight.
-class _BubbleEntrance extends StatefulWidget {
-  final Widget child;
-  final bool fromRight;
-  const _BubbleEntrance({required this.child, required this.fromRight});
-
-  @override
-  State<_BubbleEntrance> createState() => _BubbleEntranceState();
-}
-
-class _BubbleEntranceState extends State<_BubbleEntrance>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 280),
-  )..forward();
-  late final CurvedAnimation _t =
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
-
-  @override
-  void dispose() {
-    _t.dispose();
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final dx = widget.fromRight ? 0.06 : -0.06;
-    return FadeTransition(
-      opacity: _t,
-      child: SlideTransition(
-        position: _t.drive(
-          Tween(begin: Offset(dx, 0.25), end: Offset.zero),
-        ),
-        child: widget.child,
-      ),
-    );
-  }
-}
-
-/// Self-animating "AI is thinking" dot. Owns its controller so the blink loop
-/// repaints only this 6×6 dot — the previous TweenAnimationBuilder+onEnd
-/// approach rebuilt the entire conversation screen every cycle.
-class _BlinkingDot extends StatefulWidget {
-  final int index;
-  const _BlinkingDot({required this.index});
-
-  @override
-  State<_BlinkingDot> createState() => _BlinkingDotState();
-}
-
-class _BlinkingDotState extends State<_BlinkingDot>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 600 + (widget.index * 200)),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _ctrl.drive(Tween(begin: 0.2, end: 1.0)),
-      child: Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(
-          color: context.c.primaryContainer,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
-}
-
-class _MicButton extends StatelessWidget {
-  final _ConvStatus status;
-  final double pulse;
-  final VoidCallback? onTap;
-  const _MicButton({
-    required this.status,
-    required this.pulse,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.c;
-    final isListening = status == _ConvStatus.listening;
-    final isThinking = status == _ConvStatus.thinking;
-    final size = isListening ? 48.0 + pulse * 4 : 48.0;
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 56,
-        height: 56,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            if (isListening)
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: c.primaryContainer.withOpacity(0.3 + pulse * 0.4),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: c.primaryContainer,
-                boxShadow: [
-                  BoxShadow(
-                    color: c.primaryContainer.withOpacity(0.6),
-                    blurRadius: 18,
-                  ),
-                ],
-              ),
-              child: Center(
-                child: isThinking
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: c.onPrimary,
-                        ),
-                      )
-                    : Icon(
-                        isListening ? Icons.stop_rounded : Icons.mic,
-                        color: c.onPrimary,
-                        size: 22,
-                      ),
-              ),
-            ),
-          ],
         ),
       ),
     );
