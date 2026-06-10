@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../models/user_profile.dart';
+import '../../../core/models/user_profile.dart';
 import '../../../providers/nav_provider.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../providers/words_provider.dart';

@@ -26,7 +26,7 @@ import '../../features/scenarios/screens/scenarios_gallery_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/words/screens/word_detail_screen.dart';
 import '../../features/words/screens/words_screen.dart';
-import '../../models/word.dart';
+import '../../core/models/word.dart';
 import '../../services/settings_service.dart';
 
 final supabase = Supabase.instance.client;

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../../models/word.dart';
+import '../models/word.dart';
 import '../storage/hive_boxes.dart';
 
 /// Words için offline cache wrapper.

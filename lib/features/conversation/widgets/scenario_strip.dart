@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../models/scenario.dart';
+import '../../../core/models/scenario.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// Horizontal scenario strip — surfaces scenarios on the empty Practice screen

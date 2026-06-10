@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../models/scenario.dart';
+import '../../../core/models/scenario.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../conversation/screens/conversation_screen.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/scenario.dart';
+import '../../../core/models/scenario.dart';
 
 /// DB-backed senaryo. Mevcut [ScenarioModel] in-memory built-in'ler için
 /// kullanılmaya devam ediyor; bu sınıf hem sistem hem de kullanıcı tarafından

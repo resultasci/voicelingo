@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/character_avatar.dart';
 import '../../../core/audio/waveform_painter.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../models/scenario.dart';
+import '../../../core/models/scenario.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../scenarios/screens/scenario_picker_screen.dart';
 import '../controllers/conversation_controller.dart';

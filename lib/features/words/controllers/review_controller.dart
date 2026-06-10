@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../models/word.dart';
+import '../../../core/models/word.dart';
 
 /// Flashcard review oturumunun state makinesi — eskiden WordsScreen'de
 /// 9 ayrı alan + setState olarak dağınık duran akış.
