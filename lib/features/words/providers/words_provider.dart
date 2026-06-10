@@ -4,15 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // AppException hierarchy defines our own AuthException; hide Supabase's to avoid
 // the ambiguous-import clash (AuthState etc. still come from Supabase).
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
+
+import '../../../core/ai/gemini_service.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/logger/app_logger.dart';
+import '../../../core/models/word.dart';
 import '../../../core/network/connectivity_service.dart';
 import '../../../core/offline/words_cache.dart';
+import '../../../core/services/notification_service.dart';
 import '../../gamification/models/daily_quest.dart';
 import '../../gamification/providers/gamification_providers.dart';
-import '../../../core/models/word.dart';
-import '../../../core/services/notification_service.dart';
-import '../../../core/ai/gemini_service.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../services/words_repository.dart';
 
@@ -176,7 +177,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
           tag: 'WordsProvider');
 
       // Fire-and-forget enrichment: never block the user.
-      _enrichWord(id: newWord.id, word: trimmedWord);
+      unawaited(_enrichWord(id: newWord.id, word: trimmedWord));
       unawaited(_bumpQuest(QuestType.learnWords, 1));
     } on DuplicateWordException {
       AppLogger.warning(
@@ -334,7 +335,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         'next_review': updated.nextReview.toIso8601String().split('T')[0],
       });
       // Schedule per-word reminder fire-and-forget; not awaited to keep latency low.
-      _scheduleNextReviewNotification(updated);
+      unawaited(_scheduleNextReviewNotification(updated));
     }
 
     await _repo.commitReviews(payload);

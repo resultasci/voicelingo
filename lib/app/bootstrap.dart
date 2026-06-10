@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -10,9 +11,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/config/env.dart';
 import '../core/logger/app_logger.dart';
-import '../core/storage/hive_boxes.dart';
 import '../core/services/notification_service.dart';
 import '../core/services/settings_service.dart';
+import '../core/storage/hive_boxes.dart';
 import '../core/theme/app_theme.dart';
 import 'app.dart';
 

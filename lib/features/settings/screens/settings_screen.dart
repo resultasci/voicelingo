@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../l10n/generated/app_localizations.dart';
-import '../../../features/auth/providers/auth_provider.dart';
+
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/auth/providers/auth_provider.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../auth/screens/change_password_screen.dart';
 import '../../auth/screens/delete_account_screen.dart';
 

@@ -10,6 +10,8 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  language:
+    strict-casts: true
   exclude:
     - lib/l10n/generated/**
     - "**/*.g.dart"
@@ -20,6 +22,12 @@ linter:
     prefer_const_constructors: true
     prefer_const_literals_to_create_immutables: true
     prefer_final_locals: true
+    # Mimari sertleştirme sprinti ekleri (yüksek sinyal / düşük churn):
+    always_declare_return_types: true
+    cancel_subscriptions: true
+    directives_ordering: true
+    prefer_single_quotes: true
+    unawaited_futures: true
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

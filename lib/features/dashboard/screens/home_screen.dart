@@ -1,15 +1,17 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/perf/device_tier.dart';
-import '../../../core/widgets/brand_logo.dart';
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/providers/nav_provider.dart';
-import '../../../features/profile/providers/profile_provider.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/brand_logo.dart';
 import '../../../core/widgets/level_up_dialog.dart';
+import '../../../features/profile/providers/profile_provider.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../conversation/screens/conversation_screen.dart';
 import '../../onboarding/screens/placement_test_screen.dart';
 import '../../profile/screens/profile_screen.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// TTS speed toggle: cycles through 0.5x / 0.75x / 1.0x.
 class SpeedToggle extends StatelessWidget {

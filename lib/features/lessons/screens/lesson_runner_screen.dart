@@ -1,13 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/audio/tts_speaker.dart';
-import '../../../core/services/settings_service.dart';
-import '../../../l10n/generated/app_localizations.dart';
-import '../../../core/providers/locale_provider.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/models/scenario.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../core/services/settings_service.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../conversation/screens/conversation_screen.dart';
 import '../../grammar/screens/topic_detail_screen.dart';
 import '../../grammar/services/grammar_service.dart';
@@ -86,13 +88,13 @@ class LessonRunnerScreen extends ConsumerWidget {
   Future<void> _openGrammar(BuildContext context, WidgetRef ref) async {
     final code = lesson.content['topic_code']?.toString();
     if (code == null || code.isEmpty) {
-      context.push('/grammar');
+      unawaited(context.push('/grammar'));
       return;
     }
     final topic = await ref.read(grammarServiceProvider).getTopicByCode(code);
     if (!context.mounted) return;
     if (topic == null) {
-      context.push('/grammar');
+      unawaited(context.push('/grammar'));
       return;
     }
     await Navigator.of(context).push(MaterialPageRoute(

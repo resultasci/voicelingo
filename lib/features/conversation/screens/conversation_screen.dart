@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/ai/character_avatar.dart';
 import '../../../core/audio/waveform_painter.dart';
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/models/scenario.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../scenarios/screens/scenario_picker_screen.dart';
 import '../controllers/conversation_controller.dart';
 import '../models/conversation_message.dart';
@@ -135,7 +139,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   }
 
   Future<void> _toggleMic() async {
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
     await _c.toggleMic();
   }
 
@@ -149,7 +153,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   /// Long-press anywhere on a bubble → copy its text.
   void _copyMessage(ConversationMessage msg) {
     Clipboard.setData(ClipboardData(text: msg.text));
-    HapticFeedback.selectionClick();
+    unawaited(HapticFeedback.selectionClick());
     final l = AppL10n.of(context);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -161,7 +165,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
   /// Speaker button under AI bubbles — re-listen to any past reply.
   Future<void> _replayMessage(ConversationMessage msg) async {
-    HapticFeedback.selectionClick();
+    unawaited(HapticFeedback.selectionClick());
     await _c.replayMessage(msg);
   }
 
@@ -361,7 +365,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   ? l.conv_handsFreeOnTip
                   : l.conv_handsFreeOffTip,
               onPressed: () {
-                HapticFeedback.selectionClick();
+                unawaited(HapticFeedback.selectionClick());
                 _c.setHandsFree(!_c.handsFreeMode);
               },
             ),

@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../core/models/word.dart';
+import '../../core/services/settings_service.dart';
 import '../../features/auth/screens/auth_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/conversation/screens/character_picker_screen.dart';
@@ -26,8 +29,6 @@ import '../../features/scenarios/screens/scenarios_gallery_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/words/screens/word_detail_screen.dart';
 import '../../features/words/screens/words_screen.dart';
-import '../../core/models/word.dart';
-import '../../core/services/settings_service.dart';
 
 final supabase = Supabase.instance.client;
 

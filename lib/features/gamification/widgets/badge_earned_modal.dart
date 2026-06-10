@@ -3,8 +3,8 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../services/badges_service.dart';
 
 /// Rozet kazanıldığında gösterilen modal. Confetti + neon glow + XP info.

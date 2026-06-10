@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../../l10n/generated/app_localizations.dart';
+
 import '../../../core/models/user_profile.dart';
 import '../../../core/providers/nav_provider.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../features/profile/providers/profile_provider.dart';
 import '../../../features/words/providers/words_provider.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../gamification/providers/gamification_providers.dart';
 import '../../gamification/widgets/daily_quests_card.dart';
 import '../../words/screens/flashcard_screen.dart';

@@ -5,12 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
 import '../../../core/audio/audio_permission_service.dart';
-import '../../../core/widgets/brand_logo.dart';
-import '../../../features/conversation/services/characters_service.dart';
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/brand_logo.dart';
+import '../../../features/conversation/services/characters_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../services/onboarding_service.dart';
 
 /// 4 adımlı onboarding: welcome → permissions → goal → motivation.

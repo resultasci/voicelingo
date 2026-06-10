@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/models/word.dart';
-import '../providers/words_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
+import '../providers/words_provider.dart';
 
 class FlashcardScreen extends ConsumerStatefulWidget {
   final List<Word> dueWords;

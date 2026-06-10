@@ -1,18 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/audio/tts_speaker.dart';
-import '../../../core/services/settings_service.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/logger/app_logger.dart';
+import '../../../core/models/word.dart';
+import '../../../core/services/settings_service.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../core/models/word.dart';
-import '../providers/words_provider.dart';
-import '../../../core/theme/app_theme.dart';
 import '../controllers/review_controller.dart';
+import '../providers/words_provider.dart';
 import '../widgets/add_word_sheet.dart';
 import '../widgets/generate_words_sheet.dart';
 
@@ -76,7 +79,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   }
 
   Future<void> _rate(int quality) async {
-    if (!_review.isRating) HapticFeedback.lightImpact();
+    if (!_review.isRating) unawaited(HapticFeedback.lightImpact());
     await _review.rate(quality);
   }
 
@@ -94,7 +97,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
       await ref
           .read(wordsProvider.notifier)
           .addWord(entry.word, entry.translation);
-      _speak(entry.word); // Eklenen kelimeyi hemen sesli oku
+      unawaited(_speak(entry.word)); // Eklenen kelimeyi hemen sesli oku
     } on DuplicateWordException {
       AppLogger.warning(
           'Arayüzde kelime eklendi ama zaten vardı, uyarı gösteriliyor: ${entry.word}',

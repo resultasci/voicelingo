@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/widgets/connectivity_banner.dart';
-import '../l10n/generated/app_localizations.dart';
 import '../core/providers/locale_provider.dart';
 import '../core/providers/theme_provider.dart';
-import 'router/app_router.dart';
 import '../core/theme/app_theme.dart';
+import '../core/widgets/connectivity_banner.dart';
+import '../l10n/generated/app_localizations.dart';
+import 'router/app_router.dart';
 
 /// Kök widget. Bootstrap tamamlandıktan sonra `runApp(ProviderScope(...))`
 /// içinden çağrılır; tüm async setup [bootstrap.dart]'a aittir.

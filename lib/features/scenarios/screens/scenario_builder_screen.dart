@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/error_handler.dart';
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/providers/locale_provider.dart';
-import '../../../features/profile/providers/profile_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/profile/providers/profile_provider.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../models/dynamic_scenario.dart';
 import '../services/scenarios_service.dart';
 

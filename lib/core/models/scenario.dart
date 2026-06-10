@@ -28,7 +28,7 @@ const builtInScenarios = <ScenarioModel>[
         'Help the user practice ordering, asking about menu items, and small talk. '
         'Reply in English; if the learner is stuck, you may add a tiny Turkish hint in parentheses.',
     openingLine:
-        "Hi there! Welcome to Brew & Co. What can I get started for you today?",
+        'Hi there! Welcome to Brew & Co. What can I get started for you today?',
     icon: Icons.local_cafe_outlined,
   ),
   ScenarioModel(
@@ -40,7 +40,7 @@ const builtInScenarios = <ScenarioModel>[
         'for a junior software role. Ask one short question at a time and react '
         'naturally to the user\'s answers. Keep replies under three sentences.',
     openingLine:
-        "Thanks for joining today. Could you start by telling me a little about yourself?",
+        'Thanks for joining today. Could you start by telling me a little about yourself?',
     icon: Icons.work_outline,
   ),
   ScenarioModel(
@@ -52,7 +52,7 @@ const builtInScenarios = <ScenarioModel>[
         'their symptoms, gently probe for details, and suggest reasonable next '
         'steps. Avoid heavy medical jargon. Keep replies short and supportive.',
     openingLine:
-        "Hello, please come in and have a seat. So, what brings you in today?",
+        'Hello, please come in and have a seat. So, what brings you in today?',
     icon: Icons.medical_services_outlined,
   ),
   ScenarioModel(
@@ -64,7 +64,7 @@ const builtInScenarios = <ScenarioModel>[
         'curious small talk. Switch topics naturally (weather, weekend plans, '
         'work, hobbies). Keep replies short and inviting.',
     openingLine:
-        "Hey! Mind if I sit here? It’s pretty crowded today, isn’t it?",
+        'Hey! Mind if I sit here? It’s pretty crowded today, isn’t it?',
     icon: Icons.people_alt_outlined,
   ),
   ScenarioModel(
@@ -76,7 +76,7 @@ const builtInScenarios = <ScenarioModel>[
         'Help the user check in, answer baggage and boarding-time questions, '
         'and stay polite and efficient. Keep each turn under three sentences.',
     openingLine:
-        "Good morning, may I see your passport and booking reference, please?",
+        'Good morning, may I see your passport and booking reference, please?',
     icon: Icons.flight_takeoff_outlined,
   ),
 ];

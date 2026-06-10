@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/errors/error_handler.dart';
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/providers/locale_provider.dart';
-import '../../conversation/screens/conversation_screen.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
+import '../../conversation/screens/conversation_screen.dart';
 import '../models/dynamic_scenario.dart';
 import '../services/scenarios_service.dart';
 

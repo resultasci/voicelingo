@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/error_handler.dart';
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/models/conversation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../services/conversation_repository.dart';
 import 'conversation_view_screen.dart';
 

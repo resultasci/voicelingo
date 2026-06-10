@@ -13,8 +13,8 @@ import '../../../core/audio/tts_speaker.dart';
 import '../../../core/audio/vad_detector.dart';
 import '../../../core/config/feature_flags.dart';
 import '../../../core/models/scenario.dart';
-import '../../../features/profile/providers/profile_provider.dart';
 import '../../../core/services/settings_service.dart';
+import '../../../features/profile/providers/profile_provider.dart';
 import '../../gamification/models/daily_quest.dart';
 import '../../gamification/providers/gamification_providers.dart';
 import '../models/conversation_message.dart';
@@ -161,7 +161,7 @@ class ConversationController extends ChangeNotifier {
 
   /// Uygulama arka plana alındığında çalan/dinleyen sesleri durdurur.
   void stopAudioAndCleanUp() {
-    _activeBuffer?.cancel();
+    unawaited(_activeBuffer?.cancel());
     _activeBuffer?.dispose();
     _activeBuffer = null;
     _tts.stop();
@@ -241,9 +241,9 @@ class ConversationController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _tearDownVad();
-    _activeBuffer?.cancel();
+    unawaited(_activeBuffer?.cancel());
     _activeBuffer?.dispose();
-    _amplitudeSub?.cancel();
+    unawaited(_amplitudeSub?.cancel());
     amplitudes.dispose();
     _tts.dispose();
     super.dispose();
@@ -288,7 +288,7 @@ class ConversationController extends ChangeNotifier {
 
       await _audioSvc.start(vad: _vad);
 
-      _amplitudeSub?.cancel();
+      unawaited(_amplitudeSub?.cancel());
       _amplitudeSub = _audioSvc.amplitudeStream.listen(amplitudes.addDb);
 
       _setStatus(ConvStatus.listening);
@@ -353,17 +353,17 @@ class ConversationController extends ChangeNotifier {
 
       final userMsg = _addMessage(isUser: true, text: userText);
       _lastUserText = userText;
-      _persistMessage(userMsg);
+      unawaited(_persistMessage(userMsg));
 
       // Reply + evaluate in parallel — evaluation must never crash chat.
       final replyFuture = _replyTo(userText);
-      _attachEvaluation(userMsg, userText);
+      unawaited(_attachEvaluation(userMsg, userText));
 
       await replyFuture;
     } catch (e) {
       if (!_disposed) _setError(ConvError.generic, '$e');
     } finally {
-      _deleteAudioFile(filePath);
+      unawaited(_deleteAudioFile(filePath));
     }
   }
 
@@ -407,8 +407,8 @@ class ConversationController extends ChangeNotifier {
         if (turn.evaluation != null) userMsg.evaluation = turn.evaluation;
         _notify();
         _lastUserText = turn.transcript;
-        _persistMessage(userMsg);
-        if (turn.evaluation != null) _patchEvaluation(userMsg);
+        unawaited(_persistMessage(userMsg));
+        if (turn.evaluation != null) unawaited(_patchEvaluation(userMsg));
         _maybePerfectScore(turn.evaluation);
       } else {
         // STT returned nothing — drop the placeholder.
@@ -420,15 +420,15 @@ class ConversationController extends ChangeNotifier {
       // Render the AI reply and speak it.
       if (turn.reply.isNotEmpty) {
         final aiMsg = _addMessage(isUser: false, text: turn.reply);
-        _persistMessage(aiMsg);
-        _speakMessage(turn.reply);
+        unawaited(_persistMessage(aiMsg));
+        unawaited(_speakMessage(turn.reply));
         _setStatus(ConvStatus.playing);
       } else {
         _setStatus(ConvStatus.ready);
       }
 
       // Daily quest + XP best-effort (same as legacy _replyTo).
-      _logTurnSideEffects();
+      unawaited(_logTurnSideEffects());
     } catch (e) {
       if (_disposed) return;
       _messages.remove(userMsg);
@@ -478,7 +478,7 @@ class ConversationController extends ChangeNotifier {
       userMsg.evaluation = eval;
       _notify();
       // Backfill the persisted row with evaluation fields.
-      _patchEvaluation(userMsg);
+      unawaited(_patchEvaluation(userMsg));
       _maybePerfectScore(eval);
     } catch (_) {
       // Evaluation is optional; never break the conversation flow.
@@ -498,9 +498,9 @@ class ConversationController extends ChangeNotifier {
     if (text.isEmpty || _status == ConvStatus.thinking) return;
     final userMsg = _addMessage(isUser: true, text: text);
     _lastUserText = text;
-    _persistMessage(userMsg);
+    unawaited(_persistMessage(userMsg));
     _setStatus(ConvStatus.thinking);
-    _attachEvaluation(userMsg, text);
+    unawaited(_attachEvaluation(userMsg, text));
     await _replyTo(text);
   }
 
@@ -532,8 +532,8 @@ class ConversationController extends ChangeNotifier {
       if (_disposed) return;
 
       final msg = _addMessage(isUser: false, text: aiResponse);
-      _persistMessage(msg);
-      _speakMessage(aiResponse);
+      unawaited(_persistMessage(msg));
+      unawaited(_speakMessage(aiResponse));
       _setStatus(ConvStatus.playing);
 
       // XP + daily quest — best-effort, never delays rendering the reply.
@@ -561,7 +561,7 @@ class ConversationController extends ChangeNotifier {
     try {
       final flags = _read(resolvedFeatureFlagsProvider);
 
-      _activeBuffer?.cancel();
+      unawaited(_activeBuffer?.cancel());
       _activeBuffer?.dispose();
 
       if (flags.useStreamingTts && text.length > 80) {

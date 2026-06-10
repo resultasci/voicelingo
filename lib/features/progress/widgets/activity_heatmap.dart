@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// GitHub-tarzı 90 günlük (varsayılan) XP heatmap.
 /// Hücre rengi günlük XP'ye göre 5 seviyeli; tıklayınca o günün XP'sini gösterir.

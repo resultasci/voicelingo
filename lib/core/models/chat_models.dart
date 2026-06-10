@@ -13,10 +13,10 @@ class Conversation {
 
   factory Conversation.fromMap(Map<String, dynamic> map) {
     return Conversation(
-      id: map['id'],
-      userId: map['user_id'],
-      title: map['title'],
-      createdAt: DateTime.parse(map['created_at']),
+      id: map['id'] as String,
+      userId: map['user_id'] as String,
+      title: map['title'] as String?,
+      createdAt: DateTime.parse(map['created_at'] as String),
     );
   }
 }
@@ -40,12 +40,12 @@ class ChatMessage {
 
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
     return ChatMessage(
-      id: map['id'],
-      conversationId: map['conversation_id'],
+      id: map['id'] as String,
+      conversationId: map['conversation_id'] as String,
       isUser: map['role'] == 'user',
-      text: map['content'],
-      feedback: map['feedback'],
-      createdAt: DateTime.parse(map['created_at']),
+      text: map['content'] as String,
+      feedback: map['feedback'] as String?,
+      createdAt: DateTime.parse(map['created_at'] as String),
     );
   }
 
