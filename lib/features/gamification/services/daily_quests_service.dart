@@ -57,9 +57,32 @@ class DailyQuestsService {
     return DailyQuest.fromMap(row);
   }
 
+  /// Bugünün tamamlanmamış [type] quest'inin progress'ini artırır; o tipte
+  /// aktif quest yoksa no-op. Güncellenen quest'i döner (tamamlanma kontrolü
+  /// için), bulunamazsa null.
+  Future<DailyQuest?> incrementByType(QuestType type, {int delta = 1}) async {
+    final user = _db.auth.currentUser;
+    if (user == null || delta <= 0) return null;
+    final rows = await _db
+        .from('daily_quests')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('quest_date', _today().toIso8601String().split('T').first)
+        .eq('quest_type', type.code)
+        .isFilter('completed_at', null)
+        .limit(1);
+    if (rows.isEmpty) return null;
+    return updateProgress(questId: rows.first['id'] as String, delta: delta);
+  }
+
   List<DailyQuest> _generate({required String userId, required DateTime date}) {
     final rng = Random(date.day * 31 + date.month);
-    final types = QuestType.values.toList()..shuffle(rng);
+    // practiceMinutes üretim havuzunda değil: uygulamada süre ölçümü olmadığı
+    // için bu tip asla tamamlanamıyor. Enum değeri eski satırlar için duruyor.
+    final types = QuestType.values
+        .where((t) => t != QuestType.practiceMinutes)
+        .toList()
+      ..shuffle(rng);
     final chosen = types.take(3).toList();
     return chosen.map((t) {
       final target = switch (t) {

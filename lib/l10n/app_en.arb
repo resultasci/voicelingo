@@ -507,5 +507,14 @@
   "conn_offlineBanner": "You are offline. Saved progress will sync later.",
   "levelup_title": "LEVEL UP!",
   "levelup_body": "You're doing great! You reached a new level:\nLevel {level}",
-  "levelup_continue": "CONTINUE"
+  "levelup_continue": "CONTINUE",
+
+  "quests_title": "Daily Quests",
+  "quests_completed": "{done}/{total}",
+  "quests_xp": "+{xp} XP",
+  "quest_learnWords": "Learn new words",
+  "quest_reviewWords": "Review words",
+  "quest_practiceMinutes": "Practice",
+  "quest_conversationTurns": "Complete conversation turns",
+  "quest_perfectScore": "Get a perfect score"
 }

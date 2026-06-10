@@ -8,6 +8,8 @@ import '../core/errors/app_exception.dart';
 import '../core/logger/app_logger.dart';
 import '../core/network/connectivity_service.dart';
 import '../core/offline/words_cache.dart';
+import '../features/gamification/models/daily_quest.dart';
+import '../features/gamification/providers/gamification_providers.dart';
 import '../models/word.dart';
 import '../services/notification_service.dart';
 import '../core/ai/gemini_service.dart';
@@ -118,6 +120,23 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     }
   }
 
+  /// Daily quest progress'ini best-effort artırır. Quest tamamlandıysa XP
+  /// server'da yazılmıştır — profil cache'i düşürülür ki HUD güncellensin.
+  Future<void> _bumpQuest(QuestType type, int delta) async {
+    try {
+      final svc = _ref.read(dailyQuestsServiceProvider);
+      final updated = await svc.incrementByType(type, delta: delta);
+      if (updated == null) return;
+      _ref.invalidate(dailyQuestsProvider);
+      if (updated.isCompleted) {
+        await bustProfileCache();
+        _ref.invalidate(profileProvider);
+      }
+    } catch (_) {
+      // Quests are best-effort.
+    }
+  }
+
   void _scheduleDailyReminderFor(List<Word> words) {
     final today = DateTime.now();
     final dueCount = words
@@ -179,6 +198,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
       if (newId != null) {
         _enrichWord(id: newId, word: trimmedWord);
       }
+      unawaited(_bumpQuest(QuestType.learnWords, 1));
     } on PostgrestException catch (e, st) {
       if (e.code == '23505') {
         AppLogger.warning(
@@ -246,6 +266,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
 
     // Enrich a bounded subset to stay well under the daily enrich cap (100/day).
     unawaited(_enrichBatch(inserted));
+    unawaited(_bumpQuest(QuestType.learnWords, inserted.length));
     return inserted.length;
   }
 
@@ -381,6 +402,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     } catch (_) {
       // XP is best-effort.
     }
+    unawaited(_bumpQuest(QuestType.reviewWords, results.length));
 
     _cache = null;
     await load(forceRefresh: true);

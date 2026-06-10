@@ -1487,4 +1487,32 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get levelup_continue => 'CONTINUE';
+
+  @override
+  String get quests_title => 'Daily Quests';
+
+  @override
+  String quests_completed(int done, int total) {
+    return '$done/$total';
+  }
+
+  @override
+  String quests_xp(int xp) {
+    return '+$xp XP';
+  }
+
+  @override
+  String get quest_learnWords => 'Learn new words';
+
+  @override
+  String get quest_reviewWords => 'Review words';
+
+  @override
+  String get quest_practiceMinutes => 'Practice';
+
+  @override
+  String get quest_conversationTurns => 'Complete conversation turns';
+
+  @override
+  String get quest_perfectScore => 'Get a perfect score';
 }

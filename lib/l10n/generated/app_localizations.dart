@@ -2754,6 +2754,54 @@ abstract class AppL10n {
   /// In tr, this message translates to:
   /// **'DEVAM ET'**
   String get levelup_continue;
+
+  /// No description provided for @quests_title.
+  ///
+  /// In tr, this message translates to:
+  /// **'Günlük Görevler'**
+  String get quests_title;
+
+  /// No description provided for @quests_completed.
+  ///
+  /// In tr, this message translates to:
+  /// **'{done}/{total}'**
+  String quests_completed(int done, int total);
+
+  /// No description provided for @quests_xp.
+  ///
+  /// In tr, this message translates to:
+  /// **'+{xp} XP'**
+  String quests_xp(int xp);
+
+  /// No description provided for @quest_learnWords.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni kelime öğren'**
+  String get quest_learnWords;
+
+  /// No description provided for @quest_reviewWords.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kelime tekrarla'**
+  String get quest_reviewWords;
+
+  /// No description provided for @quest_practiceMinutes.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pratik yap'**
+  String get quest_practiceMinutes;
+
+  /// No description provided for @quest_conversationTurns.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konuşma turu tamamla'**
+  String get quest_conversationTurns;
+
+  /// No description provided for @quest_perfectScore.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mükemmel skor al'**
+  String get quest_perfectScore;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -592,5 +592,20 @@
   "@levelup_body": {
     "placeholders": { "level": { "type": "int" } }
   },
-  "levelup_continue": "DEVAM ET"
+  "levelup_continue": "DEVAM ET",
+
+  "quests_title": "Günlük Görevler",
+  "quests_completed": "{done}/{total}",
+  "@quests_completed": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "quests_xp": "+{xp} XP",
+  "@quests_xp": {
+    "placeholders": { "xp": { "type": "int" } }
+  },
+  "quest_learnWords": "Yeni kelime öğren",
+  "quest_reviewWords": "Kelime tekrarla",
+  "quest_practiceMinutes": "Pratik yap",
+  "quest_conversationTurns": "Konuşma turu tamamla",
+  "quest_perfectScore": "Mükemmel skor al"
 }

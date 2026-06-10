@@ -1487,4 +1487,32 @@ class AppL10nTr extends AppL10n {
 
   @override
   String get levelup_continue => 'DEVAM ET';
+
+  @override
+  String get quests_title => 'Günlük Görevler';
+
+  @override
+  String quests_completed(int done, int total) {
+    return '$done/$total';
+  }
+
+  @override
+  String quests_xp(int xp) {
+    return '+$xp XP';
+  }
+
+  @override
+  String get quest_learnWords => 'Yeni kelime öğren';
+
+  @override
+  String get quest_reviewWords => 'Kelime tekrarla';
+
+  @override
+  String get quest_practiceMinutes => 'Pratik yap';
+
+  @override
+  String get quest_conversationTurns => 'Konuşma turu tamamla';
+
+  @override
+  String get quest_perfectScore => 'Mükemmel skor al';
 }

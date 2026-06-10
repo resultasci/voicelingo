@@ -458,6 +458,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         _lastUserText = turn.transcript;
         _persistMessage(userMsg);
         if (turn.evaluation != null) _patchEvaluation(userMsg);
+        _maybePerfectScore(turn.evaluation);
       } else {
         // STT returned nothing — drop the placeholder.
         setState(() => _messages.remove(userMsg));
@@ -507,16 +508,28 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       await bustProfileCache();
       if (mounted) ref.invalidate(profileProvider);
     } catch (_) {}
+    await _bumpQuest(QuestType.conversationTurns);
+  }
+
+  /// Daily quest progress'ini best-effort artırır; tamamlanmada XP server'da
+  /// yazıldığı için profil cache'i düşürülür.
+  Future<void> _bumpQuest(QuestType type, {int delta = 1}) async {
     try {
-      final quests = ref.read(dailyQuestsProvider).value ?? const [];
-      final target = quests.where(
-          (q) => q.type == QuestType.conversationTurns && !q.isCompleted);
-      if (target.isNotEmpty) {
-        final svc = ref.read(dailyQuestsServiceProvider);
-        await svc.updateProgress(questId: target.first.id, delta: 1);
-        ref.invalidate(dailyQuestsProvider);
+      final svc = ref.read(dailyQuestsServiceProvider);
+      final updated = await svc.incrementByType(type, delta: delta);
+      if (updated == null || !mounted) return;
+      ref.invalidate(dailyQuestsProvider);
+      if (updated.isCompleted) {
+        await bustProfileCache();
+        if (mounted) ref.invalidate(profileProvider);
       }
     } catch (_) {}
+  }
+
+  /// Edge prompt rubriğine göre 90-100 bandı "already perfect" demektir.
+  void _maybePerfectScore(SpeechEvaluation? eval) {
+    if (eval == null || eval.score < 90) return;
+    unawaited(_bumpQuest(QuestType.perfectScore));
   }
 
   Future<void> _attachEvaluation(_Message userMsg, String text) async {
@@ -527,6 +540,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       setState(() => userMsg.evaluation = eval);
       // Backfill the persisted row with evaluation fields.
       _patchEvaluation(userMsg);
+      _maybePerfectScore(eval);
     } catch (_) {
       // Evaluation is optional; never break the conversation flow.
     }

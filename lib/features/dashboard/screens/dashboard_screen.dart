@@ -7,6 +7,8 @@ import '../../../providers/nav_provider.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../providers/words_provider.dart';
 import '../../../theme/app_theme.dart';
+import '../../gamification/providers/gamification_providers.dart';
+import '../../gamification/widgets/daily_quests_card.dart';
 import '../../words/screens/flashcard_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -26,6 +28,7 @@ class DashboardScreen extends ConsumerWidget {
       onRefresh: () async {
         await bustProfileCache();
         ref.invalidate(profileProvider);
+        ref.invalidate(dailyQuestsProvider);
         await ref.read(wordsProvider.notifier).load(forceRefresh: true);
       },
       child: initialLoading
@@ -55,6 +58,8 @@ class DashboardScreen extends ConsumerWidget {
                 _AiPracticeCard(
                   onTap: () => ref.read(selectedTabProvider.notifier).state = 2,
                 ),
+                const SizedBox(height: 28),
+                const DailyQuestsCard(),
                 const SizedBox(height: 28),
                 wordsAsync.when(
                   data: (words) {
