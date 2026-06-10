@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 
+import '../../../core/audio/tts_speaker.dart';
 import '../../../core/ai/ai_character.dart';
 import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
@@ -26,7 +26,7 @@ class CharacterPickerScreen extends ConsumerStatefulWidget {
 }
 
 class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
-  late final FlutterTts _tts;
+  final TtsSpeaker _tts = TtsSpeaker();
   String? _previewingId;
   String? _selectedId;
   bool _saving = false;
@@ -34,8 +34,7 @@ class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
   @override
   void initState() {
     super.initState();
-    _tts = FlutterTts();
-    _tts.awaitSpeakCompletion(true);
+    _tts.setAwaitSpeakCompletion(true);
     _tts.setCompletionHandler(() {
       if (mounted) setState(() => _previewingId = null);
     });
@@ -55,10 +54,12 @@ class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
       return;
     }
     setState(() => _previewingId = character.id);
-    await _tts.setLanguage(character.ttsLocale);
-    await _tts.setPitch(character.ttsPitch);
-    await _tts.setSpeechRate(character.ttsRate);
-    await _tts.speak(character.introLine);
+    await _tts.configure(
+      language: character.ttsLocale,
+      pitch: character.ttsPitch,
+      rate: character.ttsRate,
+    );
+    await _tts.speak(character.introLine, sanitize: false);
   }
 
   Future<void> _confirm() async {
@@ -80,7 +81,7 @@ class _CharacterPickerScreenState extends ConsumerState<CharacterPickerScreen> {
 
   @override
   void dispose() {
-    _tts.stop();
+    _tts.dispose();
     super.dispose();
   }
 

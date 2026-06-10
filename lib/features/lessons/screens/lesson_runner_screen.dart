@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/audio/tts_speaker.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
@@ -154,7 +154,7 @@ class _VocabRunner extends ConsumerStatefulWidget {
 }
 
 class _VocabRunnerState extends ConsumerState<_VocabRunner> {
-  late final FlutterTts _tts;
+  final TtsSpeaker _tts = TtsSpeaker();
   int _index = 0;
   bool _flipped = false;
   int _correct = 0;
@@ -169,21 +169,16 @@ class _VocabRunnerState extends ConsumerState<_VocabRunner> {
   @override
   void initState() {
     super.initState();
-    _tts = FlutterTts()
-      ..setLanguage('en-US')
-      ..setSpeechRate(0.5);
+    _tts.init();
   }
 
   @override
   void dispose() {
-    _tts.stop();
+    _tts.dispose();
     super.dispose();
   }
 
-  Future<void> _speak(String text) async {
-    await _tts.stop();
-    await _tts.speak(text);
-  }
+  Future<void> _speak(String text) => _tts.speak(text, sanitize: false);
 
   void _record(bool known) {
     if (known) _correct += 1;

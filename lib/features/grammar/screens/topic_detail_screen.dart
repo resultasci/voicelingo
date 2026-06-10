@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 
+import '../../../core/audio/tts_speaker.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../theme/app_theme.dart';
@@ -20,29 +20,24 @@ class TopicDetailScreen extends ConsumerStatefulWidget {
 class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
-  late final FlutterTts _tts;
+  final TtsSpeaker _tts = TtsSpeaker();
 
   @override
   void initState() {
     super.initState();
     _tabCtrl = TabController(length: 3, vsync: this);
-    _tts = FlutterTts()
-      ..setLanguage('en-US')
-      ..setPitch(1.0)
-      ..setSpeechRate(0.5);
+    _tts.init();
   }
 
   @override
   void dispose() {
     _tabCtrl.dispose();
-    _tts.stop();
+    _tts.dispose();
     super.dispose();
   }
 
-  Future<void> _speak(String text) async {
-    await _tts.stop();
-    await _tts.speak(text);
-  }
+  // Örnek cümleler okunduğu için noktalama korunur (prosodi).
+  Future<void> _speak(String text) => _tts.speak(text, sanitize: false);
 
   @override
   Widget build(BuildContext context) {

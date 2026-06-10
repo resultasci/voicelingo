@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/ai/gemini_service.dart';
+import '../../../core/audio/tts_speaker.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -28,7 +28,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   int _correct = 0;
   bool _isRating = false;
   final List<({String wordId, int quality})> _batch = [];
-  final FlutterTts _tts = FlutterTts();
+  final TtsSpeaker _tts = TtsSpeaker();
 
   final _searchCtrl = TextEditingController();
   // Stable filter identity keys (decoupled from localized labels).
@@ -40,6 +40,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   @override
   void initState() {
     super.initState();
+    _tts.init();
     _searchCtrl.addListener(() {
       setState(() => _query = _searchCtrl.text.trim().toLowerCase());
     });
@@ -48,27 +49,11 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
-    _tts.stop();
+    _tts.dispose();
     super.dispose();
   }
 
-  Future<void> _speak(String text) async {
-    try {
-      final cleanText = text
-          .replaceAll(RegExp(r'\(.*?\)'), '')
-          .replaceAll(RegExp(r'\[.*?\]'), '')
-          .replaceAll(RegExp(r"[^a-zA-Z0-9\s'\-]"),
-              '') // Sadece harf, sayı, boşluk, tırnak ve tire
-          .trim();
-      if (cleanText.isEmpty) return;
-
-      await _tts.setLanguage('en-US');
-      await _tts.setSpeechRate(0.5);
-      await _tts.speak(cleanText);
-    } catch (_) {
-      // Speaker is best-effort; silent failure is fine.
-    }
-  }
+  Future<void> _speak(String text) => _tts.speak(text);
 
   void _startReview() {
     final words = ref.read(wordsProvider).value ?? [];
