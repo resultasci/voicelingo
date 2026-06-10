@@ -441,18 +441,6 @@ class _CommunicationsSection extends StatelessWidget {
               ),
             ),
           ),
-          _Field(
-            label: l.settings_comingSoon,
-            child: Opacity(
-              opacity: 0.45,
-              child: _ToggleRow(
-                title: l.settings_systemUpdates,
-                subtitle: l.settings_systemUpdatesSub,
-                value: false,
-                onChanged: (_) {},
-              ),
-            ),
-          ),
         ],
       ),
     );

@@ -745,24 +745,6 @@ abstract class AppL10n {
   /// **'GÜNDE BİR KEZ'**
   String get settings_onceADay;
 
-  /// No description provided for @settings_comingSoon.
-  ///
-  /// In tr, this message translates to:
-  /// **'YAKINDA'**
-  String get settings_comingSoon;
-
-  /// No description provided for @settings_systemUpdates.
-  ///
-  /// In tr, this message translates to:
-  /// **'Sistem Güncellemeleri'**
-  String get settings_systemUpdates;
-
-  /// No description provided for @settings_systemUpdatesSub.
-  ///
-  /// In tr, this message translates to:
-  /// **'Yeni özellikler — yakında'**
-  String get settings_systemUpdatesSub;
-
   /// No description provided for @settings_systemPreferences.
   ///
   /// In tr, this message translates to:

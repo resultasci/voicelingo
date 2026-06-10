@@ -388,15 +388,6 @@ class AppL10nTr extends AppL10n {
   String get settings_onceADay => 'GÜNDE BİR KEZ';
 
   @override
-  String get settings_comingSoon => 'YAKINDA';
-
-  @override
-  String get settings_systemUpdates => 'Sistem Güncellemeleri';
-
-  @override
-  String get settings_systemUpdatesSub => 'Yeni özellikler — yakında';
-
-  @override
   String get settings_systemPreferences => 'Sistem Tercihleri';
 
   @override

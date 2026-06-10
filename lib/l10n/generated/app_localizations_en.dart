@@ -389,15 +389,6 @@ class AppL10nEn extends AppL10n {
   String get settings_onceADay => 'ONCE A DAY';
 
   @override
-  String get settings_comingSoon => 'COMING SOON';
-
-  @override
-  String get settings_systemUpdates => 'System Updates';
-
-  @override
-  String get settings_systemUpdatesSub => 'New features — soon';
-
-  @override
   String get settings_systemPreferences => 'System Preferences';
 
   @override
