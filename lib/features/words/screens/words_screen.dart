@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/ai/gemini_service.dart';
 import '../../../core/audio/tts_speaker.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../core/logger/app_logger.dart';
+import '../../../core/widgets/app_bottom_sheet.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/word.dart';
 import '../../../providers/words_provider.dart';
 import '../../../theme/app_theme.dart';
+import '../controllers/review_controller.dart';
+import '../widgets/add_word_sheet.dart';
+import '../widgets/generate_words_sheet.dart';
 
 class WordsScreen extends ConsumerStatefulWidget {
   const WordsScreen({super.key});
@@ -19,16 +23,8 @@ class WordsScreen extends ConsumerStatefulWidget {
 }
 
 class _WordsScreenState extends ConsumerState<WordsScreen> {
-  bool _isReviewing = false;
-  bool _isDone = false;
-  bool _isSavingBatch = false;
-  List<Word> _reviewQueue = [];
-  int _reviewIndex = 0;
-  bool _revealed = false;
-  int _correct = 0;
-  bool _isRating = false;
-  final List<({String wordId, int quality})> _batch = [];
   final TtsSpeaker _tts = TtsSpeaker();
+  late final ReviewController _review;
 
   final _searchCtrl = TextEditingController();
   // Stable filter identity keys (decoupled from localized labels).
@@ -41,13 +37,29 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   void initState() {
     super.initState();
     _tts.init();
+    _review = ReviewController(
+      commit: (batch) =>
+          ref.read(wordsProvider.notifier).commitReviewBatch(batch),
+      onCommitError: () {
+        if (mounted) {
+          showErrorSnack(context, AppL10n.of(context).words_reviewSaveError);
+        }
+      },
+    );
+    _review.addListener(_onReviewChanged);
     _searchCtrl.addListener(() {
       setState(() => _query = _searchCtrl.text.trim().toLowerCase());
     });
   }
 
+  void _onReviewChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _review.removeListener(_onReviewChanged);
+    _review.dispose();
     _searchCtrl.dispose();
     _tts.dispose();
     super.dispose();
@@ -58,330 +70,55 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   void _startReview() {
     final words = ref.read(wordsProvider).value ?? [];
     final due = words.where((w) => w.isDue).toList();
-    if (due.isEmpty) return;
-    setState(() {
-      _reviewQueue = due;
-      _reviewIndex = 0;
-      _revealed = false;
-      _correct = 0;
-      _isReviewing = true;
-      _isDone = false;
-      _isRating = false;
-      _batch.clear();
-    });
+    _review.start(due);
   }
 
   Future<void> _rate(int quality) async {
-    if (_isRating) return;
-    if (_reviewIndex >= _reviewQueue.length) {
-      setState(() {
-        _isReviewing = false;
-        _isDone = true;
-      });
-      return;
-    }
+    if (!_review.isRating) HapticFeedback.lightImpact();
+    await _review.rate(quality);
+  }
 
-    setState(() => _isRating = true);
-    HapticFeedback.lightImpact();
-
-    final word = _reviewQueue[_reviewIndex];
-    if (quality >= 3) _correct++;
-    _batch.add((wordId: word.id, quality: quality));
-
-    if (_reviewIndex < _reviewQueue.length - 1) {
-      setState(() {
-        _reviewIndex++;
-        _revealed = false;
-        _isRating = false;
-      });
-    } else {
-      setState(() => _isSavingBatch = true);
-      try {
-        await ref.read(wordsProvider.notifier).commitReviewBatch(_batch);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppL10n.of(context).words_reviewSaveError,
-                  style: AppText.ink(13, color: context.c.error)),
-            ),
-          );
-        }
-      }
+  Future<void> _showAdd() async {
+    final entry = await showAppBottomSheet<({String word, String translation})>(
+      context,
+      glowColor: context.c.primaryContainer,
+      builder: (_) => const AddWordSheet(),
+    );
+    if (entry == null || !mounted) return;
+    try {
+      AppLogger.info(
+          'Kullanıcı arayüzden yeni kelime eklemeyi denedi: ${entry.word}',
+          tag: 'WordsScreen');
+      await ref
+          .read(wordsProvider.notifier)
+          .addWord(entry.word, entry.translation);
+      _speak(entry.word); // Eklenen kelimeyi hemen sesli oku
+    } on DuplicateWordException {
+      AppLogger.warning(
+          'Arayüzde kelime eklendi ama zaten vardı, uyarı gösteriliyor: ${entry.word}',
+          tag: 'WordsScreen');
       if (!mounted) return;
-      setState(() {
-        _isReviewing = false;
-        _isDone = true;
-        _isRating = false;
-        _isSavingBatch = false;
-      });
+      showWarnSnack(context, AppL10n.of(context).words_alreadyInLibrary);
+    } catch (e, st) {
+      AppLogger.error('Arayüzden kelime eklenirken hata fırlatıldı', e, st);
+      if (!mounted) return;
+      showErrorSnack(context, AppL10n.of(context).words_addFailed);
     }
   }
 
-  void _showAdd() {
+  Future<void> _showGenerate() async {
+    final added = await showAppBottomSheet<int>(
+      context,
+      glowColor: context.c.primaryContainer,
+      builder: (_) => const GenerateWordsSheet(),
+    );
+    if (added == null || !mounted) return;
     final l = AppL10n.of(context);
-    final wCtrl = TextEditingController();
-    final tCtrl = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) {
-        final c = ctx.c;
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: GlassPanel(
-            padding: const EdgeInsets.all(24),
-            glowColor: c.primaryContainer,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 3,
-                    margin: const EdgeInsets.only(bottom: 18),
-                    decoration: BoxDecoration(
-                      color: c.rule,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                SectionLabel(l.words_addNew, color: c.primaryContainer),
-                const SizedBox(height: 14),
-                Text(
-                  l.words_addToLibrary,
-                  style: AppText.title(22,
-                          color: c.primary, weight: FontWeight.w600)
-                      .copyWith(
-                    shadows: neonGlow(c.primary, blur: 8, opacity: 0.4),
-                  ),
-                ),
-                const SizedBox(height: 22),
-                Text(l.words_labelEnglish,
-                    style: AppText.label(10,
-                        color: c.inkMuted, weight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                NeonField(
-                    controller: wCtrl, autofocus: true, hint: l.words_hintWord),
-                const SizedBox(height: 16),
-                Text(l.words_labelTurkish,
-                    style: AppText.label(10,
-                        color: c.inkMuted, weight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                NeonField(controller: tCtrl, hint: l.words_hintTranslation),
-                const SizedBox(height: 22),
-                NeonButton(
-                  label: l.common_add,
-                  icon: Icons.add,
-                  onTap: () async {
-                    final w = wCtrl.text.trim();
-                    final t = tCtrl.text.trim();
-                    if (w.isEmpty || t.isEmpty) return;
-                    Navigator.pop(ctx);
-                    try {
-                      AppLogger.info(
-                          'Kullanıcı arayüzden yeni kelime eklemeyi denedi: $w',
-                          tag: 'WordsScreen');
-                      await ref.read(wordsProvider.notifier).addWord(w, t);
-                      _speak(w); // Eklenen kelimeyi hemen sesli oku
-                    } on DuplicateWordException {
-                      AppLogger.warning(
-                          'Arayüzde kelime eklendi ama zaten vardı, uyarı gösteriliyor: $w',
-                          tag: 'WordsScreen');
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            AppL10n.of(context).words_alreadyInLibrary,
-                            style: AppText.ink(13, color: context.c.warn),
-                          ),
-                        ),
-                      );
-                    } catch (e, st) {
-                      AppLogger.error(
-                          'Arayüzden kelime eklenirken hata fırlatıldı', e, st);
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(AppL10n.of(context).words_addFailed,
-                              style: AppText.ink(13, color: context.c.error)),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    ).whenComplete(() {
-      wCtrl.dispose();
-      tCtrl.dispose();
-    });
-  }
-
-  void _showGenerate() {
-    final l = AppL10n.of(context);
-    final topicCtrl = TextEditingController();
-    int count = 10;
-    bool loading = false;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      isDismissible: true,
-      builder: (ctx) {
-        final c = ctx.c;
-        // (controller disposed via whenComplete below)
-        return StatefulBuilder(
-          builder: (ctx, setSheet) {
-            Future<void> run() async {
-              final topic = topicCtrl.text.trim();
-              if (topic.isEmpty || loading) return;
-              setSheet(() => loading = true);
-              try {
-                final added = await ref
-                    .read(wordsProvider.notifier)
-                    .generateAndAddWords(topic, count);
-                if (!ctx.mounted) return;
-                Navigator.pop(ctx);
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      added > 0 ? l.words_genAdded(added) : l.words_genNone,
-                      style: AppText.ink(13,
-                          color: added > 0
-                              ? context.c.primaryContainer
-                              : context.c.warn),
-                    ),
-                  ),
-                );
-              } catch (e, st) {
-                AppLogger.error('Kelime üretimi başarısız', e, st);
-                if (!ctx.mounted) return;
-                setSheet(() => loading = false);
-                final msg = e is AiException ? e.message : l.words_genFailed;
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  SnackBar(
-                    content:
-                        Text(msg, style: AppText.ink(13, color: ctx.c.error)),
-                  ),
-                );
-              }
-            }
-
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-              ),
-              child: GlassPanel(
-                padding: const EdgeInsets.all(24),
-                glowColor: c.primaryContainer,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 36,
-                        height: 3,
-                        margin: const EdgeInsets.only(bottom: 18),
-                        decoration: BoxDecoration(
-                          color: c.rule,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Icon(Icons.auto_awesome,
-                            color: c.primaryContainer, size: 18),
-                        const SizedBox(width: 8),
-                        SectionLabel(l.words_genTitle,
-                            color: c.primaryContainer),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      l.words_genSubtitle,
-                      style: AppText.body(13, color: c.inkMuted),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(l.words_genTopicLabel,
-                        style: AppText.label(10,
-                            color: c.inkMuted, weight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    NeonField(
-                      controller: topicCtrl,
-                      autofocus: true,
-                      hint: l.words_genTopicHint,
-                    ),
-                    const SizedBox(height: 20),
-                    Text(l.words_genCount,
-                        style: AppText.label(10,
-                            color: c.inkMuted, weight: FontWeight.w600)),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 10,
-                      children: [5, 10, 15, 20].map((n) {
-                        final sel = n == count;
-                        return InkWell(
-                          onTap:
-                              loading ? null : () => setSheet(() => count = n),
-                          borderRadius: BorderRadius.circular(99),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 18, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: sel
-                                  ? c.primaryContainer.withOpacity(0.10)
-                                  : c.bgCard.withOpacity(0.5),
-                              border: Border.all(
-                                color: sel
-                                    ? c.primaryContainer
-                                    : c.rule.withOpacity(0.6),
-                              ),
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                            child: Text(
-                              '$n',
-                              style: AppText.label(12,
-                                  color: sel ? c.primaryContainer : c.inkMuted,
-                                  weight: FontWeight.w700),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 22),
-                    NeonButton(
-                      label: l.words_genButton,
-                      icon: Icons.auto_awesome,
-                      loading: loading,
-                      onTap: run,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    ).whenComplete(topicCtrl.dispose);
+    if (added > 0) {
+      showSuccessSnack(context, l.words_genAdded(added));
+    } else {
+      showWarnSnack(context, l.words_genNone);
+    }
   }
 
   List<Word> _applyFilter(List<Word> all) {
@@ -409,19 +146,16 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   Widget build(BuildContext context) {
     final l = AppL10n.of(context);
     final c = context.c;
-    if (_isDone) {
+    if (_review.isDone) {
       return _CompletionView(
-        correct: _correct,
-        total: _reviewQueue.length,
-        onClose: () => setState(() {
-          _isDone = false;
-          _isReviewing = false;
-        }),
+        correct: _review.correct,
+        total: _review.queue.length,
+        onClose: _review.closeCompletion,
       );
     }
 
-    if (_isReviewing) {
-      if (_isSavingBatch) {
+    if (_review.isReviewing) {
+      if (_review.isSaving) {
         return Center(
           child: GlassPanel(
             padding: const EdgeInsets.all(28),
@@ -444,14 +178,9 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
         );
       }
 
-      if (_reviewQueue.isEmpty || _reviewIndex >= _reviewQueue.length) {
+      if (!_review.hasCurrent) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            setState(() {
-              _isReviewing = false;
-              _isDone = true;
-            });
-          }
+          if (mounted) _review.forceComplete();
         });
         return Center(
           child: SizedBox(
@@ -464,14 +193,14 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
       }
 
       return _ReviewView(
-        word: _reviewQueue[_reviewIndex],
-        index: _reviewIndex,
-        total: _reviewQueue.length,
-        revealed: _revealed,
-        isRating: _isRating,
-        onReveal: () => setState(() => _revealed = true),
+        word: _review.current,
+        index: _review.index,
+        total: _review.queue.length,
+        revealed: _review.revealed,
+        isRating: _review.isRating,
+        onReveal: _review.reveal,
         onRate: _rate,
-        onClose: () => setState(() => _isReviewing = false),
+        onClose: _review.exitReview,
       );
     }
 
