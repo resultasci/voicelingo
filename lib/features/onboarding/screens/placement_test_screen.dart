@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../providers/profile_provider.dart';
+import '../../../features/profile/providers/profile_provider.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../core/theme/app_theme.dart';
 

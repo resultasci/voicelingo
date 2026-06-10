@@ -2,9 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../core/storage/cached_repository.dart';
-import '../core/storage/hive_boxes.dart';
-import '../core/models/user_profile.dart';
+import '../../../core/storage/cached_repository.dart';
+import '../../../core/storage/hive_boxes.dart';
+import '../../../core/models/user_profile.dart';
 
 /// Read-through Hive cache + Supabase upsert+select.
 ///

@@ -5,7 +5,7 @@ import '../../../core/ai/gemini_service.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../providers/words_provider.dart';
+import '../providers/words_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// AI ile konu bazlı kelime üretme formu. [showAppBottomSheet] içinde

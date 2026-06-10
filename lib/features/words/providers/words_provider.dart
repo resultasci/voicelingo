@@ -4,16 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // AppException hierarchy defines our own AuthException; hide Supabase's to avoid
 // the ambiguous-import clash (PostgrestException etc. still come from Supabase).
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
-import '../core/errors/app_exception.dart';
-import '../core/logger/app_logger.dart';
-import '../core/network/connectivity_service.dart';
-import '../core/offline/words_cache.dart';
-import '../features/gamification/models/daily_quest.dart';
-import '../features/gamification/providers/gamification_providers.dart';
-import '../core/models/word.dart';
-import '../core/services/notification_service.dart';
-import '../core/ai/gemini_service.dart';
-import 'profile_provider.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../core/logger/app_logger.dart';
+import '../../../core/network/connectivity_service.dart';
+import '../../../core/offline/words_cache.dart';
+import '../../gamification/models/daily_quest.dart';
+import '../../gamification/providers/gamification_providers.dart';
+import '../../../core/models/word.dart';
+import '../../../core/services/notification_service.dart';
+import '../../../core/ai/gemini_service.dart';
+import '../../profile/providers/profile_provider.dart';
 
 final wordsProvider =
     StateNotifierProvider<WordsNotifier, AsyncValue<List<Word>>>(

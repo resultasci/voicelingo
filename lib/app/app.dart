@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/widgets/connectivity_banner.dart';
 import '../l10n/generated/app_localizations.dart';
-import '../providers/locale_provider.dart';
-import '../providers/theme_provider.dart';
+import '../core/providers/locale_provider.dart';
+import '../core/providers/theme_provider.dart';
 import 'router/app_router.dart';
 import '../core/theme/app_theme.dart';
 

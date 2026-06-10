@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/storage/cached_repository.dart';
 import '../../../core/storage/hive_boxes.dart';
-import '../../../providers/profile_provider.dart';
+import '../../../features/profile/providers/profile_provider.dart';
 import '../models/course.dart';
 
 /// Course / Unit / Lesson + progress için repository.

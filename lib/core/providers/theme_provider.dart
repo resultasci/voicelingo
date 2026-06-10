@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/services/settings_service.dart';
+import '../services/settings_service.dart';
 
 /// Single source of truth for the app's [ThemeMode]. Backed by SharedPreferences
 /// via [SettingsService] so changes survive restarts.
