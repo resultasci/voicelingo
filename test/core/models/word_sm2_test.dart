@@ -40,8 +40,8 @@ void main() {
     });
 
     test('third+ review: interval = round(interval * easeFactor)', () {
-      final w =
-          makeWord(repetitions: 2, intervalDays: 6, easeFactor: 2.5).reviewed(5);
+      final w = makeWord(repetitions: 2, intervalDays: 6, easeFactor: 2.5)
+          .reviewed(5);
       expect(w.repetitions, 3);
       expect(w.intervalDays, 15); // round(6 * 2.5)
     });

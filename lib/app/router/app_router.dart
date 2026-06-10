@@ -48,6 +48,54 @@ class _AuthChangeNotifier extends ChangeNotifier {
   }
 }
 
+/// Auth/placement/onboarding gate matrisi — saf fonksiyon, tablo testiyle
+/// korunur (`test/app/router_redirect_test.dart`). null = yönlendirme yok.
+@visibleForTesting
+String? computeRedirect({
+  required bool signedIn,
+  required bool placementDone,
+  required bool onboardingDone,
+  required String path,
+}) {
+  final isLoggingIn = path == '/login';
+  final isResettingPassword = path == '/reset-password';
+  final isTakingPlacementTest = path == '/placement-test';
+  final isOnboarding = path == '/onboarding';
+
+  if (!signedIn && !isLoggingIn && !isResettingPassword) {
+    return '/login';
+  }
+
+  if (signedIn) {
+    // Auth ekranlarından geliyorsa uygun yere yönlendir
+    if (isLoggingIn || isResettingPassword) {
+      if (!placementDone) return '/placement-test';
+      if (!onboardingDone) return '/onboarding';
+      return '/';
+    }
+
+    // Placement henüz yapılmamışsa öncelikli
+    if (!placementDone && !isTakingPlacementTest) {
+      return '/placement-test';
+    }
+    if (placementDone && isTakingPlacementTest) {
+      // Placement biter, onboarding'e geç
+      return onboardingDone ? '/' : '/onboarding';
+    }
+
+    // Placement OK ama onboarding bekliyor
+    if (placementDone && !onboardingDone && !isOnboarding) {
+      return '/onboarding';
+    }
+    // Onboarding tamamsa ve hala /onboarding'de duruyorsa eve gönder
+    if (onboardingDone && isOnboarding) {
+      return '/';
+    }
+  }
+
+  return null;
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = _AuthChangeNotifier();
   ref.onDispose(authNotifier.dispose);
@@ -56,50 +104,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: authNotifier,
     redirect: (context, state) {
-      final session = supabase.auth.currentSession;
-      final isAuth = session != null;
-      final path = state.uri.toString();
-      final isLoggingIn = path == '/login';
-      final isResettingPassword = path == '/reset-password';
-      final isTakingPlacementTest = path == '/placement-test';
-      final isOnboarding = path == '/onboarding';
-
-      if (!isAuth && !isLoggingIn && !isResettingPassword) {
-        return '/login';
-      }
-
-      if (isAuth) {
-        final settings = ref.read(settingsServiceProvider);
-        final placementDone = settings.placementDone;
-        final onboardingDone = settings.onboardingDone;
-
-        // Auth ekranlarından geliyorsa uygun yere yönlendir
-        if (isLoggingIn || isResettingPassword) {
-          if (!placementDone) return '/placement-test';
-          if (!onboardingDone) return '/onboarding';
-          return '/';
-        }
-
-        // Placement henüz yapılmamışsa öncelikli
-        if (!placementDone && !isTakingPlacementTest) {
-          return '/placement-test';
-        }
-        if (placementDone && isTakingPlacementTest) {
-          // Placement biter, onboarding'e geç
-          return onboardingDone ? '/' : '/onboarding';
-        }
-
-        // Placement OK ama onboarding bekliyor
-        if (placementDone && !onboardingDone && !isOnboarding) {
-          return '/onboarding';
-        }
-        // Onboarding tamamsa ve hala /onboarding'de duruyorsa eve gönder
-        if (onboardingDone && isOnboarding) {
-          return '/';
-        }
-      }
-
-      return null;
+      final settings = ref.read(settingsServiceProvider);
+      return computeRedirect(
+        signedIn: supabase.auth.currentSession != null,
+        placementDone: settings.placementDone,
+        onboardingDone: settings.onboardingDone,
+        path: state.uri.toString(),
+      );
     },
     routes: [
       GoRoute(
