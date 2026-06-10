@@ -1,26 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/error_handler.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/models/conversation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../services/conversation_repository.dart';
 import 'conversation_view_screen.dart';
 
 final _historyProvider =
-    FutureProvider.autoDispose<List<ConversationSummary>>((ref) async {
-  final user = Supabase.instance.client.auth.currentUser;
-  if (user == null) return const [];
-  final rows = await Supabase.instance.client
-      .from('conversations')
-      .select()
-      .eq('user_id', user.id)
-      .order('updated_at', ascending: false)
-      .limit(100);
-  return (rows as List)
-      .map((e) => ConversationSummary.fromMap(e as Map<String, dynamic>))
-      .toList();
+    FutureProvider.autoDispose<List<ConversationSummary>>((ref) {
+  return ref.watch(conversationRepositoryProvider).listConversations();
 });
 
 class ConversationHistoryScreen extends ConsumerWidget {

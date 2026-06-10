@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
@@ -39,7 +38,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final c = context.c;
     final profileAsync = ref.watch(profileProvider);
     final wordsAsync = ref.watch(wordsProvider);
-    final email = Supabase.instance.client.auth.currentUser?.email ?? '';
+    final email = ref.read(authServiceProvider).currentUser?.email ?? '';
 
     return profileAsync.when(
       data: (profile) {

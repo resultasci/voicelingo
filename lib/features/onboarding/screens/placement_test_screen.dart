@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../features/profile/providers/profile_provider.dart';
+import '../../../features/profile/services/profile_repository.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -75,19 +75,8 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
       _saving = true;
       _result = cefrFromScore(_correct);
     });
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      try {
-        await Supabase.instance.client
-            .from('profiles')
-            .update({'cefr_level': _result}).eq('id', user.id);
-      } catch (_) {
-        // Best-effort: settings cache below still gates HomeScreen.
-      }
-    }
+    await ref.read(profileRepositoryProvider).saveCefrLevel(_result!);
     await ref.read(settingsServiceProvider).setPlacementDone(true);
-    // cefr_level az önce yazıldı — Hive'daki eski profil tekrar servis edilmesin.
-    await bustProfileCache();
     ref.invalidate(profileProvider);
     if (!mounted) return;
     setState(() => _saving = false);

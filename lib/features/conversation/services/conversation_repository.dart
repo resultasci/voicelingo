@@ -2,14 +2,48 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/ai/gemini_service.dart';
+import '../../../core/models/conversation.dart';
 
 /// Konuşma persistence katmanı — conversations/messages tabloları ve XP RPC'si.
 ///
-/// Tüm metodlar best-effort: persistence başarısız olsa da kullanıcı bellekte
-/// sohbete devam edebilmeli, bu yüzden hatalar yutulur ve null dönülür.
+/// Yazma metodları best-effort: persistence başarısız olsa da kullanıcı
+/// bellekte sohbete devam edebilmeli, bu yüzden hatalar yutulur ve null
+/// dönülür. Okuma metodları ([listConversations], [fetchMessages]) ise
+/// fırlatır — FutureProvider'ların error state'i kullanıcıya gösterilir.
 class ConversationRepository {
   ConversationRepository(this._db);
   final SupabaseClient _db;
+
+  /// Kullanıcının konuşma listesi (en son güncellenen önce).
+  /// Oturum yoksa boş liste.
+  Future<List<ConversationSummary>> listConversations({int limit = 100}) async {
+    final userId = _db.auth.currentUser?.id;
+    if (userId == null) return const [];
+    final rows = await _db
+        .from('conversations')
+        .select()
+        .eq('user_id', userId)
+        .order('updated_at', ascending: false)
+        .limit(limit);
+    return (rows as List)
+        .map((e) => ConversationSummary.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Bir konuşmanın persist edilmiş mesajları (eski → yeni).
+  Future<List<StoredMessage>> fetchMessages(String conversationId,
+      {int limit = 500}) async {
+    final rows = await _db
+        .from('messages')
+        .select(
+            'id,conversation_id,role,content,eval_score,eval_suggestion,eval_explanation,created_at')
+        .eq('conversation_id', conversationId)
+        .order('created_at', ascending: true)
+        .limit(limit);
+    return (rows as List)
+        .map((e) => StoredMessage.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
 
   /// Yeni conversation row'u açar; id döner. Oturum yoksa veya insert
   /// başarısızsa null.

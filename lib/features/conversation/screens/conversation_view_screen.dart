@@ -1,24 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/errors/error_handler.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/models/conversation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../services/conversation_repository.dart';
 
 final _messagesProvider = FutureProvider.autoDispose
-    .family<List<StoredMessage>, String>((ref, conversationId) async {
-  final rows = await Supabase.instance.client
-      .from('messages')
-      .select(
-          'id,conversation_id,role,content,eval_score,eval_suggestion,eval_explanation,created_at')
-      .eq('conversation_id', conversationId)
-      .order('created_at', ascending: true)
-      .limit(500);
-  return (rows as List)
-      .map((e) => StoredMessage.fromMap(e as Map<String, dynamic>))
-      .toList();
+    .family<List<StoredMessage>, String>((ref, conversationId) {
+  return ref
+      .watch(conversationRepositoryProvider)
+      .fetchMessages(conversationId);
 });
 
 class ConversationViewScreen extends ConsumerWidget {

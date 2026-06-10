@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../core/providers/locale_provider.dart';
@@ -92,7 +91,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final l = AppL10n.of(context);
     final c = context.c;
-    final email = Supabase.instance.client.auth.currentUser?.email ?? '';
+    final email = ref.read(authServiceProvider).currentUser?.email ?? '';
     final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(

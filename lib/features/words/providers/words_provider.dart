@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // AppException hierarchy defines our own AuthException; hide Supabase's to avoid
-// the ambiguous-import clash (PostgrestException etc. still come from Supabase).
+// the ambiguous-import clash (AuthState etc. still come from Supabase).
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../../../core/errors/app_exception.dart';
 import '../../../core/logger/app_logger.dart';
@@ -14,27 +14,22 @@ import '../../../core/models/word.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/ai/gemini_service.dart';
 import '../../profile/providers/profile_provider.dart';
+import '../services/words_repository.dart';
+
+// Tüketiciler DuplicateWordException'ı tarihsel olarak buradan import eder.
+export '../services/words_repository.dart' show DuplicateWordException;
 
 final wordsProvider =
     StateNotifierProvider<WordsNotifier, AsyncValue<List<Word>>>(
   (ref) => WordsNotifier(ref),
 );
 
-/// Raised by [WordsNotifier.addWord] when a duplicate word/lang/user is
-/// rejected by the Postgres unique index. Callers should catch and surface a
-/// localized message — never bubble this to Sentry.
-class DuplicateWordException extends AppException {
-  final String word;
-  DuplicateWordException(this.word)
-      : super('Kelime zaten ekli: $word', code: 'duplicate_word');
-}
-
 class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   WordsNotifier(this._ref) : super(const AsyncValue.loading()) {
     load();
     // Hesap değişiminde (signIn/signOut) bellekteki liste önceki kullanıcıya
     // ait kalmasın — provider global olduğu için autoDispose ile çözülmüyor.
-    _authSub = _db.auth.onAuthStateChange.listen((change) {
+    _authSub = _repo.authStateChanges.listen((change) {
       final event = change.event;
       if (event == AuthChangeEvent.signedIn ||
           event == AuthChangeEvent.signedOut) {
@@ -45,7 +40,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   }
 
   final Ref _ref;
-  final _db = Supabase.instance.client;
+  late final WordsRepository _repo = _ref.read(wordsRepositoryProvider);
   List<Word>? _cache;
   StreamSubscription<AuthState>? _authSub;
 
@@ -61,7 +56,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         state = AsyncValue.data(_cache!);
         return;
       }
-      final userId = _db.auth.currentUser?.id;
+      final userId = _repo.currentUserId;
       if (userId == null) {
         _cache = const [];
         state = const AsyncValue.data([]);
@@ -87,16 +82,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
         return;
       }
 
-      final data = await _db
-          .from('words')
-          .select(
-              'id,user_id,word,translation,ease_factor,interval_days,repetitions,next_review,created_at,ipa,example_sentence')
-          .eq('user_id', userId)
-          .order('created_at', ascending: false);
-
-      final words = (data as List)
-          .map((e) => Word.fromMap(e as Map<String, dynamic>))
-          .toList();
+      final words = await _repo.fetchAll(userId);
 
       // No auto-seeding: new users start with an empty library and populate it
       // via manual add or AI topic generation (see generateAndAddWords).
@@ -151,7 +137,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   }
 
   Future<void> addWord(String word, String translation) async {
-    final userId = _db.auth.currentUser?.id;
+    final userId = _repo.currentUserId;
     if (userId == null) {
       AppLogger.warning('Kullanıcı oturumu bulunamadı, kelime eklenemiyor.',
           tag: 'WordsProvider');
@@ -175,20 +161,14 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     try {
       AppLogger.debug('Yeni kelime ekleniyor: $trimmedWord',
           tag: 'WordsProvider');
-      final inserted = await _db
-          .from('words')
-          .insert({
-            'user_id': userId,
-            'word': trimmedWord,
-            'translation': translation.trim(),
-            'next_review': DateTime.now().toIso8601String().split('T')[0],
-          })
-          .select()
-          .single();
+      final newWord = await _repo.insertWord(
+        userId: userId,
+        word: trimmedWord,
+        translation: translation.trim(),
+      );
 
       // Insert zaten yeni satırı döndürüyor — tüm tabloyu yeniden çekmek yerine
       // listenin başına ekle (created_at desc sıralamasıyla uyumlu).
-      final newWord = Word.fromMap(inserted);
       _cache = [newWord, ...(_cache ?? state.value ?? const <Word>[])];
       state = AsyncValue.data(_cache!);
       unawaited(_ref.read(wordsCacheProvider).putAll(_cache!));
@@ -196,22 +176,15 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
           tag: 'WordsProvider');
 
       // Fire-and-forget enrichment: never block the user.
-      final newId = inserted['id'] as String?;
-      if (newId != null) {
-        _enrichWord(id: newId, word: trimmedWord);
-      }
+      _enrichWord(id: newWord.id, word: trimmedWord);
       unawaited(_bumpQuest(QuestType.learnWords, 1));
-    } on PostgrestException catch (e, st) {
-      if (e.code == '23505') {
-        AppLogger.warning(
-            'Postgres veritabanında kelime zaten mevcut (Unique Constraint).',
-            tag: 'WordsProvider');
-        throw DuplicateWordException(trimmedWord);
-      }
-      AppLogger.error('Kelime eklenirken veritabanı hatası oluştu', e, st);
+    } on DuplicateWordException {
+      AppLogger.warning(
+          'Postgres veritabanında kelime zaten mevcut (Unique Constraint).',
+          tag: 'WordsProvider');
       rethrow;
     } catch (e, st) {
-      AppLogger.error('Kelime eklenirken beklenmeyen bir hata oluştu', e, st);
+      AppLogger.error('Kelime eklenirken hata oluştu', e, st);
       rethrow;
     }
   }
@@ -222,7 +195,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   /// [AiException] (e.g. 429 daily limit) from the generation call — callers
   /// should catch and surface its localized message.
   Future<int> generateAndAddWords(String topic, int count) async {
-    final userId = _db.auth.currentUser?.id;
+    final userId = _repo.currentUserId;
     if (userId == null) {
       throw const AuthException('Oturum bulunamadı.');
     }
@@ -252,16 +225,9 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
 
     // Tek round-trip: RPC server tarafında ON CONFLICT DO NOTHING ile insert
     // eder, yalnız gerçekten eklenen satırları döndürür (partial dup'lar düşer).
-    final rows = await _db.rpc('add_words_batch', params: {
-      'p_words': [
-        for (final g in fresh)
-          {'word': g.en.trim(), 'translation': g.tr.trim()},
-      ],
-    });
-    final inserted = (rows as List)
-        .whereType<Map>()
-        .map((r) => (id: r['id'] as String, word: r['word'] as String))
-        .toList();
+    final inserted = await _repo.insertBatch([
+      for (final g in fresh) (word: g.en.trim(), translation: g.tr.trim()),
+    ]);
 
     _cache = null;
     await load(forceRefresh: true);
@@ -313,10 +279,11 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
       final enriched = await ai.enrichWord(word);
       if (enriched == null) return false;
       if (enriched.ipa == null && enriched.example == null) return false;
-      await _db.from('words').update({
-        if (enriched.ipa != null) 'ipa': enriched.ipa,
-        if (enriched.example != null) 'example_sentence': enriched.example,
-      }).eq('id', id);
+      await _repo.updateEnrichment(
+        id: id,
+        ipa: enriched.ipa,
+        example: enriched.example,
+      );
       return true;
     } catch (_) {
       return false;
@@ -326,12 +293,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   Future<void> reviewWord(Word word, int quality) async {
     final updatedWord = word.reviewed(quality);
     try {
-      await _db.from('words').update({
-        'ease_factor': updatedWord.easeFactor,
-        'interval_days': updatedWord.intervalDays,
-        'repetitions': updatedWord.repetitions,
-        'next_review': updatedWord.nextReview.toIso8601String().split('T')[0],
-      }).eq('id', word.id);
+      await _repo.updateReview(updatedWord);
 
       // Update cache; _cache yoksa mevcut state'i ezme ([] ile silme riski).
       final current = _cache ?? state.value;
@@ -375,9 +337,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
       _scheduleNextReviewNotification(updated);
     }
 
-    if (payload.isNotEmpty) {
-      await _db.rpc('commit_word_reviews', params: {'p_reviews': payload});
-    }
+    await _repo.commitReviews(payload);
 
     // Aggregate XP into a single RPC call — quality-weighted per CLAUDE.md.
     final aggregateXp = results.fold<int>(0, (acc, r) {
@@ -388,16 +348,12 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
     final avgQuality =
         results.fold<int>(0, (a, r) => a + r.quality) / results.length;
     try {
-      final tzo = DateTime.now().timeZoneOffset.inHours;
-      final sign = tzo >= 0 ? '+' : '-';
-      final tzStr = '$sign${tzo.abs().toString().padLeft(2, '0')}:00';
-      await _db.rpc('log_practice_session', params: {
-        'p_mode': 'word_review_batch',
-        'p_words_practiced': results.length,
-        'p_avg_score': avgQuality,
-        'p_xp_earned': aggregateXp,
-        'p_timezone_offset': tzStr,
-      });
+      await _repo.logPracticeSession(
+        mode: 'word_review_batch',
+        wordsPracticed: results.length,
+        avgScore: avgQuality,
+        xpEarned: aggregateXp,
+      );
       // XP/streak değişti — profil cache'ini düşür ki dashboard HUD güncellensin.
       await bustProfileCache();
       _ref.invalidate(profileProvider);
@@ -425,7 +381,7 @@ class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   }
 
   Future<void> deleteWord(String wordId) async {
-    await _db.from('words').delete().eq('id', wordId);
+    await _repo.delete(wordId);
     // Lokal listeden düş — tek silme için tüm tabloyu yeniden çekme.
     final current = _cache ?? state.value;
     if (current != null) {
