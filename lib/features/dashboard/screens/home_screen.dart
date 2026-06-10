@@ -8,7 +8,7 @@ import '../../../providers/nav_provider.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/settings_service.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/level_up_dialog.dart';
 import '../../conversation/screens/conversation_screen.dart';
 import '../../onboarding/screens/placement_test_screen.dart';

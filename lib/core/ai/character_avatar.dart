@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_theme.dart';
+import '../theme/app_theme.dart';
 import 'ai_character.dart';
 
 /// Code-drawn vector avatar for an [AICharacter] — no external image assets.

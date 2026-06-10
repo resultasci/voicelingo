@@ -10,7 +10,7 @@ import '../../../core/widgets/app_snackbar.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/word.dart';
 import '../../../providers/words_provider.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../controllers/review_controller.dart';
 import '../widgets/add_word_sheet.dart';
 import '../widgets/generate_words_sheet.dart';

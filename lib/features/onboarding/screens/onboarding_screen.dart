@@ -10,7 +10,7 @@ import '../../../features/conversation/services/characters_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../services/notification_service.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../services/onboarding_service.dart';
 
 /// 4 adımlı onboarding: welcome → permissions → goal → motivation.

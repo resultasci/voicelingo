@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// Shown when the user opens a Supabase password-recovery deep link.
 /// At this point Supabase has already exchanged the code for a session, so

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/ai/gemini_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// Kullanıcı balonunun altındaki değerlendirme rozeti; tıklanınca skor,
 /// açıklama ve gramer hatalarını içeren paneli açar.

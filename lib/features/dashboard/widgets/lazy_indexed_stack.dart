@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// IndexedStack benzeri davranır ama tab'ları **yalnızca ilk ziyaret edildiğinde**
 /// inşa eder. Ziyaret edildikten sonra widget state'i Offstage altında korunur

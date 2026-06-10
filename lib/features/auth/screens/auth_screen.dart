@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/brand_logo.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import 'forgot_password_screen.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {

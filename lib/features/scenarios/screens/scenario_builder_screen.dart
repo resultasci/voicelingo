@@ -5,7 +5,7 @@ import '../../../core/errors/error_handler.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../providers/profile_provider.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/dynamic_scenario.dart';
 import '../services/scenarios_service.dart';
 

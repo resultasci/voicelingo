@@ -7,7 +7,7 @@ import '../../../core/ai/character_avatar.dart';
 import '../../../core/ai/characters.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../services/characters_service.dart';
 
 /// AI karakteri seçim ekranı. Card layout, her birinde avatar + bio +

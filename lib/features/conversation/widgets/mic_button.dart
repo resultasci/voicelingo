@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/conversation_message.dart';
 
 /// Self-animating "AI is thinking" dot. Owns its controller so the blink loop

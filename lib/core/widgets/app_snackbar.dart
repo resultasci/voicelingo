@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_theme.dart';
+import '../theme/app_theme.dart';
 
 /// Tek satırlık, tema-duyarlı snackbar kısayolları — ekranlarda kopyalanan
 /// `ScaffoldMessenger...SnackBar(AppText.ink(...))` bloklarının yerine.

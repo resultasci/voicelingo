@@ -8,7 +8,7 @@ import '../../../providers/locale_provider.dart';
 import '../../../providers/theme_provider.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/settings_service.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../auth/screens/change_password_screen.dart';
 import '../../auth/screens/delete_account_screen.dart';
 

@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/conversation.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import 'conversation_view_screen.dart';
 
 final _historyProvider =

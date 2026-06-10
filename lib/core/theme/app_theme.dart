@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../core/perf/device_tier.dart';
+import '../perf/device_tier.dart';
 
 // Font asset names (declared in pubspec.yaml). Bundled .ttf — no runtime download.
 const _fontDisplay = 'SpaceGrotesk';

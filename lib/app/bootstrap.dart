@@ -13,7 +13,7 @@ import '../core/logger/app_logger.dart';
 import '../core/storage/hive_boxes.dart';
 import '../services/notification_service.dart';
 import '../services/settings_service.dart';
-import '../theme/app_theme.dart';
+import '../core/theme/app_theme.dart';
 import 'app.dart';
 
 /// Uygulamanın async başlatma akışı. `main()` sadece bunu çağırır.

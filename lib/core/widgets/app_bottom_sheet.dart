@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_theme.dart';
+import '../theme/app_theme.dart';
 
 /// Uygulamanın standart bottom sheet kabuğu: şeffaf arka plan, klavyeyle
 /// yukarı itilen padding, GlassPanel ve sürükleme tutamacı.

@@ -6,7 +6,7 @@ import '../../../models/user_profile.dart';
 import '../../../providers/nav_provider.dart';
 import '../../../providers/profile_provider.dart';
 import '../../../providers/words_provider.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../gamification/providers/gamification_providers.dart';
 import '../../gamification/widgets/daily_quests_card.dart';
 import '../../words/screens/flashcard_screen.dart';

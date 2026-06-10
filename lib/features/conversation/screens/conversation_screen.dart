@@ -6,7 +6,7 @@ import '../../../core/ai/character_avatar.dart';
 import '../../../core/audio/waveform_painter.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/scenario.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../scenarios/screens/scenario_picker_screen.dart';
 import '../controllers/conversation_controller.dart';
 import '../models/conversation_message.dart';

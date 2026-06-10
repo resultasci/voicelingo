@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/audio/tts_speaker.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../models/word.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/dictionary_entry.dart';
 import '../services/dictionary_service.dart';
 

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/audio/tts_speaker.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/locale_provider.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../models/scenario.dart';
 import '../../conversation/screens/conversation_screen.dart';
 import '../../grammar/screens/topic_detail_screen.dart';
