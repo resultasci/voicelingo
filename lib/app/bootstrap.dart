@@ -16,6 +16,7 @@ import '../core/services/notification_service.dart';
 import '../core/services/settings_service.dart';
 import '../core/storage/hive_boxes.dart';
 import '../core/theme/app_theme.dart';
+import '../features/profile/services/profile_repository.dart';
 import 'app.dart';
 
 /// Uygulamanın async başlatma akışı. `main()` sadece bunu çağırır.
@@ -101,6 +102,11 @@ Future<void> bootstrap() async {
     Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey),
   ]);
   PerfTrace.mark('parallel init done');
+
+  // 3.5) Profil ön-ısıtma (fire-and-forget): Supabase + Hive hazır. HomeScreen
+  // post-frame'de profili istediğinde cache sıcak ya da fetch zaten uçuşta
+  // olur — soğuk açılıştaki ~200-800ms placement-gate beklemesini yutar.
+  unawaited(ProfileRepository(Supabase.instance.client).prewarm());
 
   // 4) Sentry wrapper + runApp. Servis instance'ları ProviderScope override'ı
   // ile yayınlanır — provider'ların kendisi UnimplementedError fırlatır.
