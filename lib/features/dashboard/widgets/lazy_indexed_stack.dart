@@ -11,6 +11,10 @@ import '../../../core/theme/app_theme.dart';
 /// ConversationScreen gibi recorder/TTS başlatan ekranlar arka planda bile canlı
 /// kalır. LazyIndexedStack bunu önler.
 ///
+/// Ziyaret edilmiş ama aktif olmayan tab'lar [TickerMode] ile sarılır: gizli
+/// tab'lardaki tüm AnimationController'lar (profil halkası, shimmer, stagger)
+/// frame üretmeyi durdurur, tab'a dönüldüğünde otomatik devam eder.
+///
 /// Tab değişiminde içerik hafif bir fade + yukarı kayma ile girer. Animasyon
 /// IndexedStack'in DIŞINDA bir sarmalayıcıda koşar; child element ağacı yerinde
 /// kaldığı için tab state'i korunur. [reduceMotion] aktifse animasyon atlanır.
@@ -81,7 +85,10 @@ class _LazyIndexedStackState extends State<LazyIndexedStack>
               // Placeholder: zero-cost build, hiçbir state oluşturulmaz.
               return const SizedBox.shrink();
             }
-            return widget.children[i];
+            return TickerMode(
+              enabled: i == widget.index,
+              child: widget.children[i],
+            );
           }),
         ),
       ),

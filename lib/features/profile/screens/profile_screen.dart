@@ -208,14 +208,18 @@ class _Header extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              AnimatedBuilder(
-                animation: ringController,
-                builder: (_, __) => Transform.rotate(
-                  angle: ringController.value * 6.28,
-                  child: CustomPaint(
-                    painter: _DashedRingPainter(
-                        color: c.primaryContainer.withOpacity(0.55)),
-                    size: const Size(140, 140),
+              // Dönen halka yalnız kendi 140x140 katmanını boyasın; üstteki
+              // ListView içeriği her frame'de yeniden raster'lanmasın.
+              RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: ringController,
+                  builder: (_, __) => Transform.rotate(
+                    angle: ringController.value * 6.28,
+                    child: CustomPaint(
+                      painter: _DashedRingPainter(
+                          color: c.primaryContainer.withOpacity(0.55)),
+                      size: const Size(140, 140),
+                    ),
                   ),
                 ),
               ),
