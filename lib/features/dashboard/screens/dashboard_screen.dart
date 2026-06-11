@@ -19,9 +19,13 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppL10n.of(context);
     final profileAsync = ref.watch(profileProvider);
-    final wordsAsync = ref.watch(wordsProvider);
+    // Kelime listesinin tamamı değil dar projeksiyonlar izlenir — liste
+    // mutasyonları (enrichment, review) sayılar değişmedikçe dashboard'u
+    // rebuild etmez (bkz. dueWordsCountProvider/wordsCountProvider).
+    final wordsValueMissing =
+        ref.watch(wordsProvider.select((s) => s.value == null));
 
-    final initialLoading = profileAsync.isLoading && wordsAsync.value == null;
+    final initialLoading = profileAsync.isLoading && wordsValueMissing;
 
     return RefreshIndicator(
       color: context.c.primaryContainer,
@@ -53,7 +57,7 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 28),
                 _StatsHud(
                   profile: profileAsync.value,
-                  wordCount: wordsAsync.value?.length ?? 0,
+                  wordCount: ref.watch(wordsCountProvider),
                 ),
                 const SizedBox(height: 24),
                 _AiPracticeCard(
@@ -62,30 +66,39 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 28),
                 const DailyQuestsCard(),
                 const SizedBox(height: 28),
-                wordsAsync.when(
-                  data: (words) {
-                    final due = words.where((w) => w.isDue).toList();
-                    final total = words.length;
-                    return _DailyGoals(
-                      due: due.length,
-                      total: total,
-                      onTap: () {
-                        if (due.isNotEmpty) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => FlashcardScreen(dueWords: due)),
-                          );
-                        } else {
-                          ref.read(selectedTabProvider.notifier).state = 1;
-                        }
-                      },
-                    );
-                  },
-                  loading: () => const _LoadingDot(),
-                  error: (_, __) => const SizedBox.shrink(),
-                ),
+                const _DailyGoalsSection(),
               ],
             ),
+    );
+  }
+}
+
+/// Günlük hedef kartı kendi dar izlemelerini yapar: due/total int'leri
+/// değişmedikçe kelime listesi güncellemeleri bu bölümü rebuild etmez.
+/// Vadesi gelen liste yalnız tap anında okunur.
+class _DailyGoalsSection extends ConsumerWidget {
+  const _DailyGoalsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasValue = ref.watch(wordsProvider.select((s) => s.hasValue));
+    final hasError = ref.watch(wordsProvider.select((s) => s.hasError));
+    if (hasError && !hasValue) return const SizedBox.shrink();
+    if (!hasValue) return const _LoadingDot();
+
+    return _DailyGoals(
+      due: ref.watch(dueWordsCountProvider),
+      total: ref.watch(wordsCountProvider),
+      onTap: () {
+        final due = ref.read(dueWordsProvider);
+        if (due.isNotEmpty) {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => FlashcardScreen(dueWords: due)),
+          );
+        } else {
+          ref.read(selectedTabProvider.notifier).state = 1;
+        }
+      },
     );
   }
 }

@@ -25,6 +25,23 @@ final wordsProvider =
   (ref) => WordsNotifier(ref),
 );
 
+/// Dashboard projeksiyonları. Sayı provider'ları int eşitliği sayesinde
+/// kelime listesindeki alakasız mutasyonlarda (enrichment yazımı, yeniden
+/// sıralama) izleyen widget'ları rebuild etmez; vadesi gelen listenin kendisi
+/// yalnız tap anında `ref.read(dueWordsProvider)` ile alınmalıdır.
+final dueWordsProvider = Provider.autoDispose<List<Word>>((ref) {
+  final words = ref.watch(wordsProvider).value ?? const <Word>[];
+  return words.where((w) => w.isDue).toList();
+});
+
+final dueWordsCountProvider = Provider.autoDispose<int>(
+  (ref) => ref.watch(dueWordsProvider).length,
+);
+
+final wordsCountProvider = Provider.autoDispose<int>(
+  (ref) => ref.watch(wordsProvider).value?.length ?? 0,
+);
+
 class WordsNotifier extends StateNotifier<AsyncValue<List<Word>>> {
   WordsNotifier(this._ref) : super(const AsyncValue.loading()) {
     load();
