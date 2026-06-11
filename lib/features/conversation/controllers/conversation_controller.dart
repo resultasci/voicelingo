@@ -83,8 +83,13 @@ class ConversationController extends ChangeNotifier {
   StreamingTtsBuffer? _activeBuffer;
   bool _disposed = false;
 
-  ConvStatus _status = ConvStatus.idle;
-  ConvStatus get status => _status;
+  /// Status ayrı kanaldan yayınlanır: tur başına 4+ kez değişir ve input bar
+  /// gibi sıcak bölgeler yalnız bunu dinler. Mesaj listesi / karakter /
+  /// ttsRate gibi yapısal değişiklikler [notifyListeners] kanalında kalır
+  /// ([amplitudes] ValueNotifier'ı ile aynı desen).
+  final ValueNotifier<ConvStatus> statusNotifier =
+      ValueNotifier(ConvStatus.idle);
+  ConvStatus get status => statusNotifier.value;
 
   ConvError? _errorCode;
   ConvError? get errorCode => _errorCode;
@@ -109,22 +114,30 @@ class ConversationController extends ChangeNotifier {
   bool get handsFreeMode => _handsFreeMode;
 
   bool get canToggleMic =>
-      _status == ConvStatus.ready || _status == ConvStatus.listening;
+      status == ConvStatus.ready || status == ConvStatus.listening;
 
   void _notify() {
     if (!_disposed) notifyListeners();
   }
 
   void _setStatus(ConvStatus s) {
-    _status = s;
-    _notify();
+    if (_disposed) return;
+    statusNotifier.value = s;
   }
 
   void _setError(ConvError code, [String? detail]) {
-    _status = ConvStatus.error;
+    if (_disposed) return;
+    // Hata alanları status bildiriminden ÖNCE set edilmeli — listener'lar
+    // tetiklendiğinde errorCode/errorDetail okunabilir olmalı.
     _errorCode = code;
     _errorDetail = detail;
-    _notify();
+    if (statusNotifier.value == ConvStatus.error) {
+      // Aynı değere set ValueNotifier'ı tetiklemez; ardışık ikinci hatada
+      // yeni detayın ekrana yansıması için genel kanaldan duyur.
+      _notify();
+    } else {
+      statusNotifier.value = ConvStatus.error;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -183,13 +196,13 @@ class ConversationController extends ChangeNotifier {
 
       _tts.setCompletionHandler(() {
         if (_disposed) return;
-        if (_status == ConvStatus.playing) {
+        if (status == ConvStatus.playing) {
           _setStatus(ConvStatus.ready);
           // Hands-free mod → AI bittiğinde otomatik dinlemeye geç
           if (_handsFreeMode) {
             Future.delayed(const Duration(milliseconds: 250), () {
               if (_disposed) return;
-              if (_status == ConvStatus.ready) startListening();
+              if (status == ConvStatus.ready) startListening();
             });
           }
         }
@@ -246,6 +259,7 @@ class ConversationController extends ChangeNotifier {
     _activeBuffer?.dispose();
     unawaited(_amplitudeSub?.cancel());
     amplitudes.dispose();
+    statusNotifier.dispose();
     _tts.dispose();
     super.dispose();
   }
@@ -262,9 +276,9 @@ class ConversationController extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   Future<void> toggleMic() async {
-    if (_status == ConvStatus.listening) {
+    if (status == ConvStatus.listening) {
       await stopListening();
-    } else if (_status == ConvStatus.ready) {
+    } else if (status == ConvStatus.ready) {
       await startListening();
     }
   }
@@ -301,7 +315,7 @@ class ConversationController extends ChangeNotifier {
 
   void _onVadEvent(VadEvent event) {
     if (event == VadEvent.speechEnded || event == VadEvent.maxDurationReached) {
-      if (_status == ConvStatus.listening) stopListening();
+      if (status == ConvStatus.listening) stopListening();
     }
   }
 
@@ -499,7 +513,7 @@ class ConversationController extends ChangeNotifier {
   }
 
   Future<void> sendText(String text) async {
-    if (text.isEmpty || _status == ConvStatus.thinking) return;
+    if (text.isEmpty || status == ConvStatus.thinking) return;
     final userMsg = _addMessage(isUser: true, text: text);
     _lastUserText = text;
     unawaited(_persistMessage(userMsg));
@@ -592,7 +606,7 @@ class ConversationController extends ChangeNotifier {
 
   /// Geçmiş bir AI cevabını yeniden seslendirir.
   Future<void> replayMessage(ConversationMessage msg) async {
-    if (_status == ConvStatus.listening || _status == ConvStatus.thinking) {
+    if (status == ConvStatus.listening || status == ConvStatus.thinking) {
       return;
     }
     _setStatus(ConvStatus.playing);
@@ -652,7 +666,7 @@ class ConversationController extends ChangeNotifier {
 
   Future<void> reset() async {
     _messages.clear();
-    _status = ConvStatus.idle;
+    _setStatus(ConvStatus.idle);
     _errorCode = null;
     _errorDetail = null;
     _conversationId = null;
