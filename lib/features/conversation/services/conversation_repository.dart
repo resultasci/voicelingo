@@ -15,13 +15,14 @@ class ConversationRepository {
   final SupabaseClient _db;
 
   /// Kullanıcının konuşma listesi (en son güncellenen önce).
-  /// Oturum yoksa boş liste.
-  Future<List<ConversationSummary>> listConversations({int limit = 100}) async {
+  /// Oturum yoksa boş liste. Yalnız [ConversationSummary]'nin kullandığı
+  /// kolonlar çekilir; geçmiş ekranı sayfalamasız olduğundan 30 yeterli.
+  Future<List<ConversationSummary>> listConversations({int limit = 30}) async {
     final userId = _db.auth.currentUser?.id;
     if (userId == null) return const [];
     final rows = await _db
         .from('conversations')
-        .select()
+        .select('id,user_id,scenario,title,created_at,updated_at')
         .eq('user_id', userId)
         .order('updated_at', ascending: false)
         .limit(limit);
