@@ -101,6 +101,10 @@ class _CourseUnits extends ConsumerWidget {
     final c = context.c;
     final unitsAsync = ref.watch(unitsForCourseProvider(course.id));
     final progressAsync = ref.watch(lessonProgressMapProvider);
+    // Tüm ünitelerin ders haritası tek seferde — tile başına ayrı provider
+    // izlemek hem O(n) watcher yaratıyordu hem de build sırasında whenData
+    // ile state okuma riskine yol açıyordu.
+    final lessonsMapAsync = ref.watch(unitLessonsMapProvider(course.id));
 
     return unitsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -122,6 +126,16 @@ class _CourseUnits extends ConsumerWidget {
           );
         }
         final progress = progressAsync.value ?? const {};
+        final lessonsByUnit =
+            lessonsMapAsync.value ?? const <String, List<Lesson>>{};
+        final svc = ref.read(coursesServiceProvider);
+
+        bool lessonDone(Lesson lesson) {
+          final p = progress[lesson.id];
+          return p?.status == LessonStatus.completed ||
+              p?.status == LessonStatus.mastered;
+        }
+
         return ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: [
@@ -160,14 +174,29 @@ class _CourseUnits extends ConsumerWidget {
                 ],
               ),
             ),
+            // Unlock/ilerleme hesapları burada tek geçişte yapılır; tile'lar
+            // saf değer alır ve progress güncellemesinde yalnız değeri
+            // değişenler yeniden boyanır.
             for (var i = 0; i < units.length; i++)
-              _UnitTile(
-                unit: units[i],
-                index: i,
-                allUnits: units,
-                progressMap: progress,
-                locale: locale,
-              ),
+              () {
+                final unit = units[i];
+                final lessons = lessonsByUnit[unit.id] ?? const <Lesson>[];
+                final completedCount = lessons.where(lessonDone).length;
+                final unlocked =
+                    svc.isUnitUnlocked(unit, units, progress, lessonsByUnit);
+                final prevLessons = i > 0
+                    ? (lessonsByUnit[units[i - 1].id] ?? const <Lesson>[])
+                    : const <Lesson>[];
+                final prevDone = prevLessons.every(lessonDone);
+                return _UnitTile(
+                  unit: unit,
+                  index: i,
+                  locale: locale,
+                  completedCount: completedCount,
+                  lessonCount: lessons.length,
+                  isLocked: !unlocked && !prevDone && i > 0,
+                );
+              }(),
             const SizedBox(height: 24),
             const _CustomScenarioCard(),
           ],
@@ -177,165 +206,126 @@ class _CourseUnits extends ConsumerWidget {
   }
 }
 
-class _UnitTile extends ConsumerWidget {
+/// Saf değer alan tile — provider izlemez; unlock/ilerleme hesapları
+/// [_CourseUnits]'ta tek geçişte yapılır (tam lessonsByUnit haritasıyla,
+/// eski tek-girdili workaround yerine).
+class _UnitTile extends StatelessWidget {
   const _UnitTile({
     required this.unit,
     required this.index,
-    required this.allUnits,
-    required this.progressMap,
     required this.locale,
+    required this.completedCount,
+    required this.lessonCount,
+    required this.isLocked,
   });
 
   final CourseUnit unit;
   final int index;
-  final List<CourseUnit> allUnits;
-  final Map<String, UserLessonProgress> progressMap;
   final String locale;
+  final int completedCount;
+  final int lessonCount;
+  final bool isLocked;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l = AppL10n.of(context);
     final c = context.c;
-    final lessonsAsync = ref.watch(lessonsForUnitProvider(unit.id));
+    final allCompleted = lessonCount > 0 && completedCount == lessonCount;
+    final progressRatio = lessonCount == 0 ? 0.0 : completedCount / lessonCount;
 
-    return lessonsAsync.when(
-      loading: () => const SizedBox(height: 80),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (lessons) {
-        final allCompleted = lessons.isNotEmpty &&
-            lessons.every((l) {
-              final p = progressMap[l.id];
-              return p?.status == LessonStatus.completed ||
-                  p?.status == LessonStatus.mastered;
-            });
-        final completedCount = lessons.where((l) {
-          final p = progressMap[l.id];
-          return p?.status == LessonStatus.completed ||
-              p?.status == LessonStatus.mastered;
-        }).length;
-        final progressRatio =
-            lessons.isEmpty ? 0.0 : completedCount / lessons.length;
-
-        // Unlocked? prerequisite kontrolü
-        final svc = ref.read(coursesServiceProvider);
-        final lessonsByUnit = {unit.id: lessons};
-        final unlocked =
-            svc.isUnitUnlocked(unit, allUnits, progressMap, lessonsByUnit);
-
-        // prerequisite başka unit ise — onun ders listesini çekemediğimiz
-        // için bu UI tarafında varsayım: önceki unit tamamlanmadıysa kilitli.
-        final prevUnit = index > 0 ? allUnits[index - 1] : null;
-        bool prevDone = true;
-        if (prevUnit != null) {
-          final prevLessonsAsync =
-              ref.watch(lessonsForUnitProvider(prevUnit.id));
-          prevLessonsAsync.whenData((prev) {
-            prevDone = prev.every((l) {
-              final p = progressMap[l.id];
-              return p?.status == LessonStatus.completed ||
-                  p?.status == LessonStatus.mastered;
-            });
-          });
-        }
-        final isLocked = !unlocked && !prevDone && index > 0;
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: InkWell(
-            onTap: isLocked
-                ? null
-                : () => context.push('/lessons/unit/${unit.id}', extra: unit),
-            borderRadius: BorderRadius.circular(18),
-            child: Opacity(
-              opacity: isLocked ? 0.5 : 1.0,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: c.bgCard.withOpacity(0.65),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: allCompleted
-                        ? c.tertiary.withOpacity(0.5)
-                        : isLocked
-                            ? c.inkDim.withOpacity(0.2)
-                            : c.primaryContainer.withOpacity(0.4),
-                    width: allCompleted ? 2 : 1,
-                  ),
-                  boxShadow: allCompleted
-                      ? [
-                          BoxShadow(
-                            color: c.tertiary.withOpacity(0.2),
-                            blurRadius: 12,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: isLocked
+            ? null
+            : () => context.push('/lessons/unit/${unit.id}', extra: unit),
+        borderRadius: BorderRadius.circular(18),
+        child: Opacity(
+          opacity: isLocked ? 0.5 : 1.0,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: c.bgCard.withOpacity(0.65),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: allCompleted
+                    ? c.tertiary.withOpacity(0.5)
+                    : isLocked
+                        ? c.inkDim.withOpacity(0.2)
+                        : c.primaryContainer.withOpacity(0.4),
+                width: allCompleted ? 2 : 1,
+              ),
+              boxShadow: allCompleted
+                  ? [
+                      BoxShadow(
+                        color: c.tertiary.withOpacity(0.2),
+                        blurRadius: 12,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: allCompleted
+                            ? c.tertiary.withOpacity(0.2)
+                            : c.primaryContainer.withOpacity(0.18),
+                        border: Border.all(
                             color: allCompleted
-                                ? c.tertiary.withOpacity(0.2)
-                                : c.primaryContainer.withOpacity(0.18),
-                            border: Border.all(
-                                color: allCompleted
-                                    ? c.tertiary
-                                    : c.primaryContainer.withOpacity(0.5)),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            '${index + 1}',
-                            style: AppText.title(15,
-                                color: allCompleted
-                                    ? c.tertiary
-                                    : c.primaryContainer,
-                                weight: FontWeight.w800),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            unit.title(locale),
-                            style: AppText.title(15,
-                                color: c.ink, weight: FontWeight.w700),
-                          ),
-                        ),
-                        if (isLocked)
-                          Icon(Icons.lock_outline, color: c.inkDim, size: 18)
-                        else if (allCompleted)
-                          Icon(Icons.workspace_premium,
-                              color: c.tertiary, size: 22)
-                        else
-                          Icon(Icons.chevron_right, color: c.inkDim),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    LinearProgressIndicator(
-                      value: progressRatio,
-                      minHeight: 5,
-                      backgroundColor: c.inkDim.withOpacity(0.15),
-                      valueColor: AlwaysStoppedAnimation(
-                        allCompleted ? c.tertiary : c.primaryContainer,
+                                ? c.tertiary
+                                : c.primaryContainer.withOpacity(0.5)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '${index + 1}',
+                        style: AppText.title(15,
+                            color:
+                                allCompleted ? c.tertiary : c.primaryContainer,
+                            weight: FontWeight.w800),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$completedCount / ${lessons.length} ${l.lesson_lessonsSuffix}',
-                      style: AppText.label(10, color: c.inkDim),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        unit.title(locale),
+                        style: AppText.title(15,
+                            color: c.ink, weight: FontWeight.w700),
+                      ),
                     ),
+                    if (isLocked)
+                      Icon(Icons.lock_outline, color: c.inkDim, size: 18)
+                    else if (allCompleted)
+                      Icon(Icons.workspace_premium, color: c.tertiary, size: 22)
+                    else
+                      Icon(Icons.chevron_right, color: c.inkDim),
                   ],
                 ),
-              ),
+                const SizedBox(height: 10),
+                LinearProgressIndicator(
+                  value: progressRatio,
+                  minHeight: 5,
+                  backgroundColor: c.inkDim.withOpacity(0.15),
+                  valueColor: AlwaysStoppedAnimation(
+                    allCompleted ? c.tertiary : c.primaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '$completedCount / $lessonCount ${l.lesson_lessonsSuffix}',
+                  style: AppText.label(10, color: c.inkDim),
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

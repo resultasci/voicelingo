@@ -154,6 +154,20 @@ class CoursesService {
     return const [];
   }
 
+  /// Kursun tüm üniteleri için unitId → ders listesi haritası, tek `_tree()`
+  /// okumasıyla. Course tree ekranı tile başına [listLessons] çağırmak yerine
+  /// bunu bir kez kullanır — cache-hit başına tetiklenen arka plan refresh
+  /// sayısı da ünite sayısından 1'e iner.
+  Future<Map<String, List<Lesson>>> lessonsByUnitForCourse(
+      String courseId) async {
+    final tree = await _tree();
+    final c = tree
+        .whereType<_CourseWithTree>()
+        .where((c) => c.id == courseId)
+        .firstOrNull;
+    return c?.lessonsByUnit ?? const {};
+  }
+
   /// Kullanıcının tüm ders ilerlemesi (lesson_id → progress). Progress
   /// kullanıcıya özel + sık değişir → cache yok.
   Future<Map<String, UserLessonProgress>> listProgress() async {
@@ -279,6 +293,13 @@ final unitsForCourseProvider =
 final lessonsForUnitProvider =
     FutureProvider.autoDispose.family<List<Lesson>, String>(
   (ref, unitId) => ref.watch(coursesServiceProvider).listLessons(unitId),
+);
+
+/// Kursun tamamının ders haritası — course tree ekranının tek izleme noktası.
+final unitLessonsMapProvider =
+    FutureProvider.autoDispose.family<Map<String, List<Lesson>>, String>(
+  (ref, courseId) =>
+      ref.watch(coursesServiceProvider).lessonsByUnitForCourse(courseId),
 );
 
 final lessonProgressMapProvider =
