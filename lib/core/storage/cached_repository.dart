@@ -78,6 +78,26 @@ class CachedRepository {
     await box.delete(key);
   }
 
+  /// Cache girdisini fetch tetiklemeden okur (TTL kontrolü dahil). Fetch'in
+  /// null dönebildiği akışlar (ör. sözlük lookup) [getOrFetch]'e uymaz;
+  /// onlar peek/put çiftiyle aynı wrap formatını paylaşır.
+  static T? peek<T>({
+    required Box<Map> box,
+    required String key,
+    required T Function(Map<String, dynamic>) fromJson,
+    Duration maxAge = const Duration(hours: 24),
+  }) =>
+      _readCached(box, key, fromJson, maxAge);
+
+  /// Cache girdisini `_cached_at` damgasıyla yazar ([peek] ile çift).
+  static Future<void> put<T>({
+    required Box<Map> box,
+    required String key,
+    required Map<String, dynamic> Function(T) toJson,
+    required T value,
+  }) =>
+      box.put(key, _wrap(toJson(value)));
+
   static T? _readCached<T>(
     Box<Map> box,
     String key,

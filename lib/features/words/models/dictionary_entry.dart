@@ -39,12 +39,28 @@ class DictionaryEntry {
         antonyms: _stringList(map['antonyms']),
         collocations: _stringList(map['collocations']),
         etymologyBrief: map['etymology_brief'] as String?,
+        // Map.from: Hive round-trip'i iç map'leri Map<dynamic,dynamic> döndürür.
         examples: (map['examples'] as List? ?? const [])
-            .map((e) => DictExample.fromJson(e as Map<String, dynamic>))
+            .map((e) => DictExample.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
         cachedAt: DateTime.tryParse(map['cached_at'] as String? ?? '') ??
             DateTime.now(),
       );
+
+  /// Cache (Hive) serileştirmesi — `fromMap` ile tam round-trip uyumlu.
+  Map<String, dynamic> toMap() => {
+        'word': word,
+        'pos': pos,
+        'ipa': ipa,
+        'frequency_rank': frequencyRank,
+        'cefr_level': cefrLevel,
+        'synonyms': synonyms,
+        'antonyms': antonyms,
+        'collocations': collocations,
+        'etymology_brief': etymologyBrief,
+        'examples': examples.map((e) => e.toJson()).toList(),
+        'cached_at': cachedAt.toIso8601String(),
+      };
 
   static List<String> _stringList(dynamic raw) {
     if (raw is List) return raw.whereType<String>().toList();
@@ -61,4 +77,6 @@ class DictExample {
         en: json['en'] as String? ?? '',
         tr: json['tr'] as String?,
       );
+
+  Map<String, dynamic> toJson() => {'en': en, 'tr': tr};
 }
