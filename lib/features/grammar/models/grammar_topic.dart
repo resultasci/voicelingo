@@ -129,6 +129,15 @@ enum GrammarStatus {
       .firstWhere((s) => s.code == c, orElse: () => GrammarStatus.notStarted);
 }
 
+/// Quiz skorundan status türetir. Tek rubrik kaynağı: SQL'deki
+/// record_grammar_quiz CASE'i ile birebir aynı tutulmalı
+/// (≥95 mastered, ≥70 completed, aksi in_progress).
+GrammarStatus deriveGrammarStatus(int score) => score >= 95
+    ? GrammarStatus.mastered
+    : score >= 70
+        ? GrammarStatus.completed
+        : GrammarStatus.inProgress;
+
 class GrammarProgress {
   final String userId;
   final String topicId;

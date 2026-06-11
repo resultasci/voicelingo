@@ -92,8 +92,11 @@ class GrammarService {
         Hive.box<Map>(HiveBoxes.progress), _progressKey(user.id));
   }
 
-  /// Quiz tamamlandığında çağrılır. Score 0-100 arası; >=70 → completed,
-  /// >=95 → mastered.
+  /// Quiz tamamlandığında çağrılır. Score 0-100; rubrik [deriveGrammarStatus].
+  ///
+  /// Hızlı yol: record_grammar_quiz RPC'si select+upsert+XP'yi tek
+  /// round-trip'te ve atomik işler. Migration henüz canlıda değilse
+  /// (function-missing) eski 3-round-trip yola düşülür — davranış birebir.
   Future<GrammarProgress> recordQuizResult({
     required String topicId,
     required int score,
@@ -104,18 +107,54 @@ class GrammarService {
       throw StateError('Oturum yok.');
     }
 
-    final newStatus = score >= 95
-        ? GrammarStatus.mastered
-        : score >= 70
-            ? GrammarStatus.completed
-            : GrammarStatus.inProgress;
+    try {
+      final res = await _db.rpc('record_grammar_quiz', params: {
+        'p_topic_id': topicId,
+        'p_score': score,
+        'p_xp_reward': xpReward,
+      });
+      if (res is Map) {
+        final m = Map<String, dynamic>.from(res);
+        final progress = GrammarProgress.fromMap(
+            Map<String, dynamic>.from(m['progress'] as Map));
+        await invalidateProgressCache();
+        if (((m['xp_awarded'] as num?)?.toInt() ?? 0) > 0) {
+          // XP değişti — eski profil Hive'dan servis edilmesin.
+          await bustProfileCache();
+        }
+        return progress;
+      }
+      // Beklenmedik şekil — legacy yol denesin.
+    } on PostgrestException catch (e) {
+      // Yalnız function-missing'de fallback; diğer DB hataları aynen fırlar
+      // (merkezi error_handler map'ler).
+      if (!_isFunctionMissing(e)) rethrow;
+    }
+    return _recordQuizResultLegacy(
+        userId: user.id, topicId: topicId, score: score, xpReward: xpReward);
+  }
+
+  /// PGRST202: PostgREST schema cache'inde function yok; 42883: Postgres
+  /// undefined_function.
+  static bool _isFunctionMissing(PostgrestException e) =>
+      e.code == 'PGRST202' || e.code == '42883';
+
+  /// Eski 3-round-trip akış — record_grammar_quiz migrate edilene kadar
+  /// güvenlik ağı. RPC canlıda doğrulanınca kaldırılabilir.
+  Future<GrammarProgress> _recordQuizResultLegacy({
+    required String userId,
+    required String topicId,
+    required int score,
+    required int xpReward,
+  }) async {
+    final newStatus = deriveGrammarStatus(score);
 
     // Upsert. attempts'i +1 yapan SQL atomic değil ama best-effort yeterli;
     // double tap durumunda 1-2 attempt sapması kabul edilebilir.
     final existing = await _db
         .from('user_grammar_progress')
         .select('attempts, quiz_score')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('topic_id', topicId)
         .maybeSingle();
 
@@ -126,7 +165,7 @@ class GrammarService {
     final row = await _db
         .from('user_grammar_progress')
         .upsert({
-          'user_id': user.id,
+          'user_id': userId,
           'topic_id': topicId,
           'status': newStatus.code,
           'quiz_score': bestScore,
@@ -144,9 +183,10 @@ class GrammarService {
     // satırı yeniden servis eder (XP dalından bağımsız her yazımda).
     await invalidateProgressCache();
 
-    // Tamamlandıysa XP ödülü. Mastered'da XP zaten completed turunda verildi
-    // sayılır (idempotent: yalnız ilk completed'da XP verilir).
-    if (newStatus == GrammarStatus.completed &&
+    // Best score ilk kez 70 eşiğini geçtiyse XP (doğrudan mastered'a atlama
+    // dahil — RPC ile aynı kural; eski kod ≥95 ilk denemede XP'yi atlıyordu).
+    if ((newStatus == GrammarStatus.completed ||
+            newStatus == GrammarStatus.mastered) &&
         prevScore < 70 &&
         xpReward > 0) {
       try {

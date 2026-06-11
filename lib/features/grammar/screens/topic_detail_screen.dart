@@ -5,6 +5,7 @@ import '../../../core/audio/tts_speaker.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/profile/providers/profile_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../models/grammar_topic.dart';
 import '../services/grammar_service.dart';
@@ -273,6 +274,9 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
         xpReward: widget.topic.xpReward,
       );
       ref.invalidate(grammarProgressProvider);
+      // Servis XP yazımında bustProfileCache çağırır; tandem kuralı gereği
+      // provider da düşürülür ki dashboard HUD taze XP'yi göstersin.
+      ref.invalidate(profileProvider);
     } catch (_) {
       // Best-effort persistence
     }

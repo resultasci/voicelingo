@@ -83,4 +83,23 @@ void main() {
       expect(restored.xpReward, 30); // varsayılan
     });
   });
+
+  group('deriveGrammarStatus rubriği', () {
+    // SQL'deki record_grammar_quiz CASE'i ile birebir aynı olmalı —
+    // eşik değişirse migration da değişir.
+    const cases = <(int, GrammarStatus)>[
+      (0, GrammarStatus.inProgress),
+      (69, GrammarStatus.inProgress),
+      (70, GrammarStatus.completed),
+      (94, GrammarStatus.completed),
+      (95, GrammarStatus.mastered),
+      (100, GrammarStatus.mastered),
+    ];
+
+    for (final (score, expected) in cases) {
+      test('score $score → ${expected.code}', () {
+        expect(deriveGrammarStatus(score), expected);
+      });
+    }
+  });
 }
