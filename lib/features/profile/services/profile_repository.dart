@@ -81,11 +81,8 @@ class ProfileRepository {
       onConflict: 'id',
       ignoreDuplicates: true,
     );
-    final data = await _db
-        .from('profiles')
-        .select(_columns)
-        .eq('id', user.id)
-        .single();
+    final data =
+        await _db.from('profiles').select(_columns).eq('id', user.id).single();
     done();
     return UserProfile.fromMap(data);
   }

@@ -61,7 +61,8 @@ class GrammarService {
       fromJson: (m) {
         final result = <String, GrammarProgress>{};
         for (final e in (m['list'] as List? ?? const [])) {
-          final p = GrammarProgress.fromMap(Map<String, dynamic>.from(e as Map));
+          final p =
+              GrammarProgress.fromMap(Map<String, dynamic>.from(e as Map));
           result[p.topicId] = p;
         }
         return result;

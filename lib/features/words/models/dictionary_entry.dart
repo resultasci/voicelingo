@@ -41,7 +41,8 @@ class DictionaryEntry {
         etymologyBrief: map['etymology_brief'] as String?,
         // Map.from: Hive round-trip'i iç map'leri Map<dynamic,dynamic> döndürür.
         examples: (map['examples'] as List? ?? const [])
-            .map((e) => DictExample.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map((e) =>
+                DictExample.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
         cachedAt: DateTime.tryParse(map['cached_at'] as String? ?? '') ??
             DateTime.now(),

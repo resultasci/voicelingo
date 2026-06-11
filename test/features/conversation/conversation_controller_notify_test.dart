@@ -50,7 +50,8 @@ void main() {
     messenger.setMockMethodCallHandler(
         const MethodChannel('flutter_tts'), (_) async => null);
     messenger.setMockMethodCallHandler(
-        const MethodChannel('com.llfbandit.record/messages'), (_) async => null);
+        const MethodChannel('com.llfbandit.record/messages'),
+        (_) async => null);
   });
 
   group('bildirim kanalı ayrımı', () {
@@ -68,7 +69,8 @@ void main() {
       c.dispose();
     });
 
-    test('izinsiz startListening yalnız status kanalını tetikler; '
+    test(
+        'izinsiz startListening yalnız status kanalını tetikler; '
         'errorCode bildirim anında okunabilir', () async {
       final c = await makeController();
       var statusFired = 0;
