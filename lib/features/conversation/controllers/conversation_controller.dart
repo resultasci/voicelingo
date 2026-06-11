@@ -13,6 +13,7 @@ import '../../../core/audio/tts_speaker.dart';
 import '../../../core/audio/vad_detector.dart';
 import '../../../core/config/feature_flags.dart';
 import '../../../core/models/scenario.dart';
+import '../../../core/perf/perf_trace.dart';
 import '../../../core/services/settings_service.dart';
 import '../../../features/profile/providers/profile_provider.dart';
 import '../../gamification/models/daily_quest.dart';
@@ -312,6 +313,7 @@ class ConversationController extends ChangeNotifier {
       final path = await _audioSvc.stop();
 
       if (path != null && path.isNotEmpty) {
+        PerfTrace.start('turn');
         _setStatus(ConvStatus.thinking);
         await _processAudio(path);
       } else {
@@ -345,6 +347,7 @@ class ConversationController extends ChangeNotifier {
       final lang = bcp47ForTargetLanguage(profile?.targetLanguage) ?? 'en';
       final userText =
           await aiService.transcribeAudio(filePath, targetLanguage: lang);
+      PerfTrace.lap('turn', 'stt done');
 
       if (userText.isEmpty) {
         _setError(ConvError.noSpeech);
@@ -398,6 +401,7 @@ class ConversationController extends ChangeNotifier {
         systemPrompt: systemPrompt,
         cefr: cefr,
       );
+      PerfTrace.lap('turn', 'gemini response');
 
       if (_disposed) return;
 
@@ -529,6 +533,7 @@ class ConversationController extends ChangeNotifier {
         history,
         systemPrompt: systemPrompt,
       );
+      PerfTrace.lap('turn', 'chat response');
       if (_disposed) return;
 
       final msg = _addMessage(isUser: false, text: aiResponse);
@@ -559,6 +564,9 @@ class ConversationController extends ChangeNotifier {
 
   Future<void> _speakMessage(String text) async {
     try {
+      // Turn dışı çağrılarda (greeting, replay) lap/stop no-op'tur.
+      PerfTrace.lap('turn', 'tts speak');
+      PerfTrace.stop('turn');
       final flags = _read(resolvedFeatureFlagsProvider);
 
       unawaited(_activeBuffer?.cancel());

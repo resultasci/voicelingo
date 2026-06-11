@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/models/user_profile.dart';
+import '../../../core/perf/perf_trace.dart';
 import '../../../core/storage/cached_repository.dart';
 import '../../../core/storage/hive_boxes.dart';
 
@@ -36,6 +37,7 @@ final profileProvider = FutureProvider.autoDispose<UserProfile?>((ref) async {
       toJson: (p) => p.toMap(),
       maxAge: const Duration(hours: 6),
       fetchRemote: () async {
+        final done = PerfTrace.span('profile fetchRemote');
         final metaUsername = user.userMetadata?['username'] as String?;
         await supabase.from('profiles').upsert(
           {
@@ -53,6 +55,7 @@ final profileProvider = FutureProvider.autoDispose<UserProfile?>((ref) async {
                 'id,username,level,xp,streak_days,target_language,streak_last_date,seeded_at,cefr_level,streak_freezes,last_active_at,onboarding_completed_at,daily_minute_goal,learning_motivation')
             .eq('id', user.id)
             .single();
+        done();
         return UserProfile.fromMap(data);
       },
     );

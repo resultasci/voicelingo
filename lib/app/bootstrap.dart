@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/config/env.dart';
 import '../core/logger/app_logger.dart';
+import '../core/perf/perf_trace.dart';
 import '../core/services/notification_service.dart';
 import '../core/services/settings_service.dart';
 import '../core/storage/hive_boxes.dart';
@@ -26,6 +27,7 @@ import 'app.dart';
 ///     (hiçbiri birbirine bağımlı değil; sadece .env'e bağımlı)
 ///   - Sentry (varsa) → runApp
 Future<void> bootstrap() async {
+  PerfTrace.markBoot();
   WidgetsFlutterBinding.ensureInitialized();
 
   // ErrorWidget'ı production'da gizli, dev'de okunaklı yap.
@@ -67,6 +69,8 @@ Future<void> bootstrap() async {
     return;
   }
 
+  PerfTrace.mark('env loaded');
+
   // 2) Required env keys (sync read)
   final String supabaseUrl;
   final String supabaseAnonKey;
@@ -96,10 +100,14 @@ Future<void> bootstrap() async {
     }),
     Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey),
   ]);
+  PerfTrace.mark('parallel init done');
 
   // 4) Sentry wrapper + runApp. Servis instance'ları ProviderScope override'ı
   // ile yayınlanır — provider'ların kendisi UnimplementedError fırlatır.
   Future<void> bootApp() async {
+    PerfTrace.mark('runApp');
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => PerfTrace.mark('first frame'));
     runApp(ProviderScope(
       overrides: [
         settingsServiceProvider.overrideWithValue(settings),
