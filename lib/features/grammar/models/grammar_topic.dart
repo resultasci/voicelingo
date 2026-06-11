@@ -156,4 +156,14 @@ class GrammarProgress {
             ? DateTime.tryParse(map['completed_at'] as String)
             : null,
       );
+
+  /// Cache (Hive) serileştirmesi — `fromMap` ile tam round-trip uyumlu.
+  Map<String, dynamic> toMap() => {
+        'user_id': userId,
+        'topic_id': topicId,
+        'status': status.code,
+        'quiz_score': quizScore,
+        'attempts': attempts,
+        'completed_at': completedAt?.toIso8601String(),
+      };
 }

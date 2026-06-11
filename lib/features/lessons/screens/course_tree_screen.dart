@@ -39,6 +39,9 @@ class CourseTreeScreen extends ConsumerWidget {
             color: c.primaryContainer,
             backgroundColor: c.bgCard,
             onRefresh: () async {
+              // Hive girdisi düşmeden provider invalidate'i bayat satırı
+              // yeniden servis eder.
+              await ref.read(coursesServiceProvider).invalidateProgressCache();
               ref.invalidate(coursesListProvider);
               ref.invalidate(lessonProgressMapProvider);
               await ref.read(coursesListProvider.future);

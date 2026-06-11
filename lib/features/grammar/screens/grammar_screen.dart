@@ -39,6 +39,9 @@ class GrammarScreen extends ConsumerWidget {
             color: c.primaryContainer,
             backgroundColor: c.bgCard,
             onRefresh: () async {
+              // Hive girdisi düşmeden provider invalidate'i bayat satırı
+              // yeniden servis eder.
+              await ref.read(grammarServiceProvider).invalidateProgressCache();
               ref.invalidate(grammarTopicsProvider);
               ref.invalidate(grammarProgressProvider);
               await ref.read(grammarTopicsProvider.future);

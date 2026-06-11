@@ -40,6 +40,10 @@ class HiveBoxes {
   /// Course tree (courses → units → lessons) tek RPC'den dönen JSON.
   static const contentTree = 'content_tree_v1';
 
+  /// Kullanıcının ders + gramer ilerlemesi (SWR, 30dk TTL). Yazma noktaları
+  /// (complete_lesson, quiz) ilgili girdiyi düşürür.
+  static const progress = 'progress_v1';
+
   /// Bootstrap'tan çağrılır; tüm box'ları açıp [Hive] global'inden erişilebilir
   /// hale getirir. Bireysel feature'lar `Hive.box(HiveBoxes.words)` ile alır.
   static Future<void> openAll() async {
@@ -53,6 +57,7 @@ class HiveBoxes {
       Hive.openBox<Map>(characters),
       Hive.openBox<Map>(grammarTopics),
       Hive.openBox<Map>(contentTree),
+      Hive.openBox<Map>(progress),
     ]);
   }
 
@@ -68,6 +73,7 @@ class HiveBoxes {
       Hive.box<Map>(lessons).clear(),
       Hive.box<Map>(pendingOps).clear(),
       Hive.box<Map>(profiles).clear(),
+      Hive.box<Map>(progress).clear(),
     ]);
   }
 }

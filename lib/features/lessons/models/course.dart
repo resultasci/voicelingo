@@ -157,4 +157,16 @@ class UserLessonProgress {
             ? DateTime.tryParse(map['next_review_at'] as String)
             : null,
       );
+
+  /// Cache (Hive) serileştirmesi — `fromMap` ile tam round-trip uyumlu.
+  Map<String, dynamic> toMap() => {
+        'user_id': userId,
+        'lesson_id': lessonId,
+        'status': status.code,
+        'stars': stars,
+        'best_score': bestScore,
+        'attempts': attempts,
+        'last_attempt_at': lastAttemptAt?.toIso8601String(),
+        'next_review_at': nextReviewAt?.toIso8601String(),
+      };
 }

@@ -168,22 +168,53 @@ class CoursesService {
     return c?.lessonsByUnit ?? const {};
   }
 
-  /// Kullanıcının tüm ders ilerlemesi (lesson_id → progress). Progress
-  /// kullanıcıya özel + sık değişir → cache yok.
+  static String _progressKey(String userId) => 'lesson_progress_$userId';
+
+  /// Kullanıcının tüm ders ilerlemesi (lesson_id → progress). SWR cache'li
+  /// (30dk TTL): ekran açılışı cache'ten anında dolar, arka planda tazelenir.
+  /// Tek yazma noktası [completeLesson] girdiyi düşürür; bayatlık penceresi
+  /// yalnız harici yazımlarda (başka cihaz) kalır.
   Future<Map<String, UserLessonProgress>> listProgress() async {
     final user = _db.auth.currentUser;
     if (user == null) return const {};
-    final data = await _db
-        .from('user_lesson_progress')
-        .select(
-            'user_id,lesson_id,status,stars,best_score,attempts,last_attempt_at,next_review_at')
-        .eq('user_id', user.id);
-    final result = <String, UserLessonProgress>{};
-    for (final row in (data as List)) {
-      final p = UserLessonProgress.fromMap(row as Map<String, dynamic>);
-      result[p.lessonId] = p;
-    }
-    return result;
+    return CachedRepository.getOrFetch<Map<String, UserLessonProgress>>(
+      box: Hive.box<Map>(HiveBoxes.progress),
+      key: _progressKey(user.id),
+      fromJson: (m) {
+        final result = <String, UserLessonProgress>{};
+        for (final e in (m['list'] as List? ?? const [])) {
+          final p =
+              UserLessonProgress.fromMap(Map<String, dynamic>.from(e as Map));
+          result[p.lessonId] = p;
+        }
+        return result;
+      },
+      toJson: (map) => {'list': map.values.map((p) => p.toMap()).toList()},
+      maxAge: const Duration(minutes: 30),
+      fetchRemote: () async {
+        final data = await _db
+            .from('user_lesson_progress')
+            .select(
+                'user_id,lesson_id,status,stars,best_score,attempts,last_attempt_at,next_review_at')
+            .eq('user_id', user.id);
+        final result = <String, UserLessonProgress>{};
+        for (final row in (data as List)) {
+          final p = UserLessonProgress.fromMap(row as Map<String, dynamic>);
+          result[p.lessonId] = p;
+        }
+        return result;
+      },
+    );
+  }
+
+  /// Progress cache girdisini düşürür — pull-to-refresh ve yazma sonrası
+  /// `ref.invalidate(lessonProgressMapProvider)` ÖNCESİNDE çağrılmalı, yoksa
+  /// provider cache'teki satırı yeniden servis eder.
+  Future<void> invalidateProgressCache() async {
+    final user = _db.auth.currentUser;
+    if (user == null) return;
+    await CachedRepository.invalidate(
+        Hive.box<Map>(HiveBoxes.progress), _progressKey(user.id));
   }
 
   /// Ders tamamlama RPC çağrısı. Status, stars, XP otomatik DB tarafında.
@@ -201,8 +232,9 @@ class CoursesService {
     if (res['ok'] != true) {
       return LessonCompletionResult(ok: false, error: res['error'] as String?);
     }
-    // XP/streak DB tarafında değişti — profil cache'i taze veri çeksin.
+    // XP/streak + progress DB tarafında değişti — iki cache de taze çeksin.
     await bustProfileCache();
+    await invalidateProgressCache();
     return LessonCompletionResult(
       ok: true,
       status: res['status'] as String?,

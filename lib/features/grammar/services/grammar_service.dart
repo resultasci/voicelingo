@@ -48,18 +48,48 @@ class GrammarService {
     return GrammarTopic.fromMap(row);
   }
 
+  static String _progressKey(String userId) => 'grammar_progress_$userId';
+
   /// Kullanıcının tüm konulara ait progress'i (topic_id → progress map).
+  /// SWR cache'li (30dk TTL); yazma noktası [recordQuizResult] girdiyi düşürür.
   Future<Map<String, GrammarProgress>> listProgress() async {
     final user = _db.auth.currentUser;
     if (user == null) return const {};
-    final data =
-        await _db.from('user_grammar_progress').select().eq('user_id', user.id);
-    final result = <String, GrammarProgress>{};
-    for (final row in (data as List)) {
-      final p = GrammarProgress.fromMap(row as Map<String, dynamic>);
-      result[p.topicId] = p;
-    }
-    return result;
+    return CachedRepository.getOrFetch<Map<String, GrammarProgress>>(
+      box: Hive.box<Map>(HiveBoxes.progress),
+      key: _progressKey(user.id),
+      fromJson: (m) {
+        final result = <String, GrammarProgress>{};
+        for (final e in (m['list'] as List? ?? const [])) {
+          final p = GrammarProgress.fromMap(Map<String, dynamic>.from(e as Map));
+          result[p.topicId] = p;
+        }
+        return result;
+      },
+      toJson: (map) => {'list': map.values.map((p) => p.toMap()).toList()},
+      maxAge: const Duration(minutes: 30),
+      fetchRemote: () async {
+        final data = await _db
+            .from('user_grammar_progress')
+            .select()
+            .eq('user_id', user.id);
+        final result = <String, GrammarProgress>{};
+        for (final row in (data as List)) {
+          final p = GrammarProgress.fromMap(row as Map<String, dynamic>);
+          result[p.topicId] = p;
+        }
+        return result;
+      },
+    );
+  }
+
+  /// Progress cache girdisini düşürür — pull-to-refresh ve yazma sonrası
+  /// `ref.invalidate(grammarProgressProvider)` ÖNCESİNDE çağrılmalı.
+  Future<void> invalidateProgressCache() async {
+    final user = _db.auth.currentUser;
+    if (user == null) return;
+    await CachedRepository.invalidate(
+        Hive.box<Map>(HiveBoxes.progress), _progressKey(user.id));
   }
 
   /// Quiz tamamlandığında çağrılır. Score 0-100 arası; >=70 → completed,
@@ -109,6 +139,10 @@ class GrammarService {
         })
         .select()
         .single();
+
+    // Progress değişti — cache girdisi düşmezse provider invalidate'i bayat
+    // satırı yeniden servis eder (XP dalından bağımsız her yazımda).
+    await invalidateProgressCache();
 
     // Tamamlandıysa XP ödülü. Mastered'da XP zaten completed turunda verildi
     // sayılır (idempotent: yalnız ilk completed'da XP verilir).
