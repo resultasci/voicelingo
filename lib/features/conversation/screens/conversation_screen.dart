@@ -24,9 +24,11 @@ import 'conversation_history_screen.dart';
 
 /// Konuşma ekranı — iş mantığı [ConversationController]'da; burada yalnızca
 /// görsel katman, animasyon yan etkileri (pulse, scroll), haptics ve
-/// navigation var. Üç bölge (header / mesajlar / input bar) ayrı
-/// ListenableBuilder'larla dinler; controller notify'ları Scaffold +
-/// CosmicBackground kabuğunu rebuild etmez.
+/// navigation var. Controller iki kanaldan yayınlar: status değişimleri
+/// `statusNotifier` (tur başına 4+ kez), yapısal değişiklikler (mesaj,
+/// karakter) `notifyListeners`. Header/mesajlar her ikisini merge ile dinler;
+/// sıcak nokta olan input bar yalnız status'u dinler — mesaj eklenmesi artık
+/// input bar'ı, status flip'leri Scaffold kabuğunu rebuild etmez.
 class ConversationScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
   final ScenarioModel? scenario;
@@ -71,19 +73,24 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           mounted ? AppL10n.of(context).conv_replyFailed : '',
       onReplyError: _showReplyError,
     );
-    _c.addListener(_onControllerEvent);
+    _c.statusNotifier.addListener(_onStatusChanged);
+    _c.addListener(_onMessagesChanged);
     _c.init();
   }
 
-  /// Controller bildirimlerinin UI yan etkileri: mic pulse animasyonu ve
-  /// yeni mesajda en alta kaydırma. Rebuild'ler ListenableBuilder'larda.
-  void _onControllerEvent() {
+  /// Status kanalının UI yan etkisi: dinlerken mic pulse animasyonu.
+  void _onStatusChanged() {
     if (!mounted) return;
     if (_c.status == ConvStatus.listening) {
       if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
     } else if (_pulse.isAnimating) {
       _pulse.stop();
     }
+  }
+
+  /// Genel kanalın UI yan etkisi: yeni mesajda en alta kaydırma.
+  void _onMessagesChanged() {
+    if (!mounted) return;
     if (_c.messages.length > _lastMsgCount) {
       Future.delayed(const Duration(milliseconds: 80), _scrollToBottom);
     }
@@ -120,7 +127,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _c.removeListener(_onControllerEvent);
+    _c.statusNotifier.removeListener(_onStatusChanged);
+    _c.removeListener(_onMessagesChanged);
     _c.dispose();
     _pulse.dispose();
     _scrollCtrl.dispose();
@@ -240,13 +248,16 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             padding: const EdgeInsets.only(bottom: 110),
             child: Column(
               children: [
+                // Header ve mesajlar hem yapısal (karakter, mesaj listesi)
+                // hem status (chip, thinking bubble, error dalı) değişimine
+                // bağımlı — iki kanal merge edilir.
                 ListenableBuilder(
-                  listenable: _c,
+                  listenable: Listenable.merge([_c, _c.statusNotifier]),
                   builder: (_, __) => _buildHeader(),
                 ),
                 Expanded(
                   child: ListenableBuilder(
-                    listenable: _c,
+                    listenable: Listenable.merge([_c, _c.statusNotifier]),
                     builder: (_, __) =>
                         _c.status == ConvStatus.error && _c.messages.isEmpty
                             ? _buildError()
@@ -261,9 +272,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           left: 16,
           right: 16,
           bottom: 16,
-          child: ListenableBuilder(
-            listenable: _c,
-            builder: (_, __) => _buildInputBar(),
+          // Sıcak bölge: input bar yalnız status'a bağımlı (waveform kendi
+          // ValueNotifier'ını, gönder butonu TextEditingController'ı dinler).
+          // Mesaj/karakter notify'ları artık burayı rebuild etmez.
+          child: ValueListenableBuilder<ConvStatus>(
+            valueListenable: _c.statusNotifier,
+            builder: (_, __, ___) => _buildInputBar(),
           ),
         ),
       ],
@@ -452,9 +466,20 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           _c.messages.length + (_c.status == ConvStatus.thinking ? 1 : 0),
       itemBuilder: (context, i) {
         if (i == _c.messages.length) {
-          return _buildThinkingBubble();
+          return KeyedSubtree(
+            key: const ValueKey('thinking'),
+            child: _buildThinkingBubble(),
+          );
         }
-        return _buildBubble(_c.messages[i]);
+        // Mesaj nesneleri yerinde mutate edilir ve kimlik-stabildir (bkz.
+        // controller doc) → ObjectKey liste diff'ini korur; RepaintBoundary
+        // status/scroll kaynaklı rebuild'lerde balon raster'ını yeniden
+        // boyamayı engeller.
+        final msg = _c.messages[i];
+        return RepaintBoundary(
+          key: ObjectKey(msg),
+          child: _buildBubble(msg),
+        );
       },
     );
   }
@@ -819,12 +844,17 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   child: SizedBox(
                     width: 80,
                     height: 32,
-                    child: AnimatedBuilder(
-                      animation: _c.amplitudes,
-                      builder: (_, __) => CustomPaint(
-                        painter: WaveformPainter(
-                          amplitudes: _c.amplitudes.value,
-                          color: c.primaryContainer,
+                    // ~20-30fps amplitüd tiki yalnız bu 80x32 katmanı
+                    // boyasın; input bar'ın blur'lu raster'ı sabit kalır.
+                    child: RepaintBoundary(
+                      child: AnimatedBuilder(
+                        animation: _c.amplitudes,
+                        builder: (_, __) => CustomPaint(
+                          willChange: true,
+                          painter: WaveformPainter(
+                            amplitudes: _c.amplitudes.value,
+                            color: c.primaryContainer,
+                          ),
                         ),
                       ),
                     ),
