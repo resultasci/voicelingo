@@ -214,34 +214,69 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
     return wordsAsync.when(
       data: (words) {
         final filtered = _applyFilter(words);
-        return ListView(
+        // Kartlar SliverList.builder ile sanallaştırılır: filtre/arama
+        // setState'i artık tüm kartları değil yalnız görünenleri inşa eder;
+        // ValueKey sayesinde hayatta kalan kartların stagger state'i korunur
+        // (yeniden cascade animasyonu oynamaz).
+        return CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-          children: [
-            _Header(
-                count: words.length,
-                onAdd: _showAdd,
-                onGenerate: _showGenerate),
-            const SizedBox(height: 22),
-            _SearchBar(controller: _searchCtrl),
-            const SizedBox(height: 18),
-            _FilterChips(
-              filters: _filters,
-              selected: _filter,
-              onSelect: (f) => setState(() => _filter = f),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _Header(
+                        count: words.length,
+                        onAdd: _showAdd,
+                        onGenerate: _showGenerate),
+                    const SizedBox(height: 22),
+                    _SearchBar(controller: _searchCtrl),
+                    const SizedBox(height: 18),
+                    _FilterChips(
+                      filters: _filters,
+                      selected: _filter,
+                      onSelect: (f) => setState(() => _filter = f),
+                    ),
+                    const SizedBox(height: 22),
+                    if (words.isEmpty)
+                      _EmptyState(onAdd: _showAdd, onGenerate: _showGenerate)
+                    else if (filtered.isEmpty)
+                      _NoResults(query: _query)
+                    else if (words.any((w) => w.isDue)) ...[
+                      _ReviewBanner(
+                        count: filtered.where((w) => w.isDue).length,
+                        onTap: _startReview,
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 22),
-            if (words.isEmpty)
-              _EmptyState(onAdd: _showAdd, onGenerate: _showGenerate)
-            else if (filtered.isEmpty)
-              _NoResults(query: _query)
-            else
-              _WordGrid(
-                words: filtered,
-                onDelete: (id) =>
-                    ref.read(wordsProvider.notifier).deleteWord(id),
-                onStartReview: words.any((w) => w.isDue) ? _startReview : null,
-                onSpeak: _speak,
+            if (words.isNotEmpty && filtered.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                sliver: SliverList.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (context, i) {
+                    final w = filtered[i];
+                    return Padding(
+                      key: ValueKey(w.id),
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _StaggeredItem(
+                        index: i,
+                        child: _WordCard(
+                          word: w,
+                          onDelete: () =>
+                              ref.read(wordsProvider.notifier).deleteWord(w.id),
+                          onSpeak: () => _speak(w.word),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
           ],
         );
@@ -453,49 +488,6 @@ class _FilterChips extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-
-// =============================================================================
-class _WordGrid extends StatelessWidget {
-  final List<Word> words;
-  final void Function(String) onDelete;
-  final VoidCallback? onStartReview;
-  final Future<void> Function(String) onSpeak;
-  const _WordGrid({
-    required this.words,
-    required this.onDelete,
-    required this.onStartReview,
-    required this.onSpeak,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        if (onStartReview != null) ...[
-          _ReviewBanner(
-            count: words.where((w) => w.isDue).length,
-            onTap: onStartReview!,
-          ),
-          const SizedBox(height: 14),
-        ],
-        ...words.indexed.map((entry) {
-          final (index, w) = entry;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _StaggeredItem(
-              index: index,
-              child: _WordCard(
-                word: w,
-                onDelete: () => onDelete(w.id),
-                onSpeak: () => onSpeak(w.word),
-              ),
-            ),
-          );
-        }),
-      ],
     );
   }
 }
