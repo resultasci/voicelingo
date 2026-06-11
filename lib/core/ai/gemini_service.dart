@@ -203,24 +203,6 @@ class GeminiService {
     }
   }
 
-  /// Returns the raw JSON string from the evaluator. Kept for legacy callers
-  /// that need to persist the unparsed JSON blob.
-  Future<String> evaluateSpeechRaw(String text) async {
-    try {
-      final res = await _dio.post(
-        '/evaluate',
-        data: {'text': text},
-        options: Options(headers: _headers(contentType: 'application/json')),
-      );
-      _ensureOk(res);
-      final body = res.data;
-      if (body is String) return body;
-      return jsonEncode(body);
-    } on DioException catch (e) {
-      throw _fromDio(e);
-    }
-  }
-
   /// Audio STT. Gemini multimodal — accepts the same Opus files we record.
   Future<String> transcribeAudio(String filePath,
       {String? targetLanguage}) async {

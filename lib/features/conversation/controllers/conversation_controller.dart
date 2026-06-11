@@ -370,11 +370,11 @@ class ConversationController extends ChangeNotifier {
 
       final userMsg = _addMessage(isUser: true, text: userText);
       _lastUserText = userText;
-      unawaited(_persistMessage(userMsg));
+      final persisted = _persistMessage(userMsg);
 
       // Reply + evaluate in parallel — evaluation must never crash chat.
       final replyFuture = _replyTo(userText);
-      unawaited(_attachEvaluation(userMsg, userText));
+      unawaited(_attachEvaluation(userMsg, userText, persisted));
 
       await replyFuture;
     } catch (e) {
@@ -425,8 +425,10 @@ class ConversationController extends ChangeNotifier {
         if (turn.evaluation != null) userMsg.evaluation = turn.evaluation;
         _notify();
         _lastUserText = turn.transcript;
-        unawaited(_persistMessage(userMsg));
-        if (turn.evaluation != null) unawaited(_patchEvaluation(userMsg));
+        // Patch persist'e ZİNCİRLENİR: persist bitmeden koşarsa remoteId
+        // henüz null olur ve değerlendirme DB'ye hiç yazılmaz.
+        unawaited(
+            _persistMessage(userMsg).then((_) => _patchEvaluation(userMsg)));
         _maybePerfectScore(turn.evaluation);
       } else {
         // STT returned nothing — drop the placeholder.
@@ -487,8 +489,11 @@ class ConversationController extends ChangeNotifier {
     unawaited(_bumpQuest(QuestType.perfectScore));
   }
 
+  /// [persisted] mesajın persist future'ı — patch'ten önce beklenir, yoksa
+  /// remoteId henüz null'ken patch sessizce düşer ve değerlendirme DB'ye
+  /// yazılmaz.
   Future<void> _attachEvaluation(
-      ConversationMessage userMsg, String text) async {
+      ConversationMessage userMsg, String text, Future<void> persisted) async {
     try {
       final aiService = _read(geminiServiceProvider);
       final eval = await aiService.evaluateSpeech(text);
@@ -496,6 +501,7 @@ class ConversationController extends ChangeNotifier {
       userMsg.evaluation = eval;
       _notify();
       // Backfill the persisted row with evaluation fields.
+      await persisted;
       unawaited(_patchEvaluation(userMsg));
       _maybePerfectScore(eval);
     } catch (_) {
@@ -516,9 +522,9 @@ class ConversationController extends ChangeNotifier {
     if (text.isEmpty || status == ConvStatus.thinking) return;
     final userMsg = _addMessage(isUser: true, text: text);
     _lastUserText = text;
-    unawaited(_persistMessage(userMsg));
+    final persisted = _persistMessage(userMsg);
     _setStatus(ConvStatus.thinking);
-    unawaited(_attachEvaluation(userMsg, text));
+    unawaited(_attachEvaluation(userMsg, text, persisted));
     await _replyTo(text);
   }
 

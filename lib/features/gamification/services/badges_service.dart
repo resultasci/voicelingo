@@ -41,6 +41,35 @@ class BadgesService {
     return result;
   }
 
+  /// Streak rozet kodu → gereken gün sayısı (seed verisiyle birebir).
+  static const streakBadgeTargets = <String, int>{
+    'streak_3': 3,
+    'streak_7': 7,
+    'streak_30': 30,
+    'streak_100': 100,
+  };
+
+  /// Eşiği geçilmiş ama henüz kazanılmamış streak rozetlerini unlock eder.
+  /// Cold start'ta streak reconcile sonrası çağrılır (bootstrap.dart).
+  /// RPC double-award'ı zaten engeller; earned ön-kontrolü her boot'ta
+  /// gereksiz RPC çağrılarını kırpmak için.
+  Future<List<BadgeAwardResult>> awardDueStreakBadges(int streakDays) async {
+    final due = streakBadgeTargets.entries
+        .where((e) => streakDays >= e.value)
+        .map((e) => e.key)
+        .toList();
+    if (due.isEmpty) return const [];
+
+    final earnedCodes = (await listEarned()).map((e) => e.badge.code).toSet();
+    final results = <BadgeAwardResult>[];
+    for (final code in due) {
+      if (earnedCodes.contains(code)) continue;
+      final res = await tryAward(code);
+      if (res != null) results.add(res);
+    }
+    return results;
+  }
+
   /// Belirli bir rozetin koşulu sağlandıysa atomik olarak unlock et.
   /// Önceden kazanılmışsa veya kullanıcı oturum dışıysa null döner.
   /// Başarılı unlock'ta [Badge] + XP reward bilgisi döner.

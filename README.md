@@ -19,11 +19,11 @@
 
 | Modül | Açıklama |
 |-------|----------|
-| 🗣️ **Sesli sohbet** | Gemini multimodal STT + AI koç tek round-trip'te (transcript + cevap + değerlendirme). 4 farklı AI karakter (Lily, Mr. James, Sarah, Kai) — ayrı aksan, kişilik ve ders stili. |
+| 🗣️ **Sesli sohbet** | Gemini multimodal STT + AI koç tek round-trip'te (transcript + cevap + değerlendirme). 6 farklı AI karakter (Lily, Mr. James, Maya, Kai, Sarah, Omar) — ayrı aksan, kişilik ve ders stili. |
 | 🎧 **Eller serbest mod** | VAD (Voice Activity Detection) ile konuşma bitince otomatik durdurma; canlı dalga formu görselleştirmesi. |
-| 🧭 **Ders yolu (A1–C2)** | Yapılandırılmış ünite/ders ağacı, ön-koşul (prerequisite) ile kilit açma, SM-2 tabanlı tekrar planı, 3-yıldız puanlama. |
+| 🧭 **Ders yolu (A1–C2)** | Yapılandırılmış ünite/ders ağacı, ön-koşul (prerequisite) ile kilit açma, tamamlanan derslere tekrar planı (spaced repetition), 3-yıldız puanlama. |
 | 📚 **Gramer modülü** | Konu anlatımı + örnekler + quiz (boşluk doldurma / çoktan seçmeli), idempotent XP ödülü. |
-| 🔤 **Sözlük + AI enrichment** | IPA, örnek cümle, eş/zıt anlam, kolokasyon, etimoloji — cache'li, gerektiğinde AI'dan zenginleştirme. |
+| 🔤 **Sözlük + AI enrichment** | IPA, örnek cümle, eş/zıt anlam, kolokasyon, etimoloji — cache'li, gerektiğinde AI'dan zenginleştirme. Flashcard tekrarları SM-2 algoritmasıyla planlanır. |
 | 🎬 **Dinamik senaryolar** | Kullanıcı tarifinden AI ile senaryo üretimi (rol, hedefler, anahtar ifadeler); kişisel + hazır senaryo galerisi. |
 | 🏆 **Oyunlaştırma** | XP & otomatik seviye (DB trigger), günlük seri (streak) + dondurma, rozetler, günlük questler. |
 | 📈 **İlerleme analizi** | 90 günlük aktivite heatmap'i, mastery dökümü (kelime/gramer/ders), en sık yapılan hatalar. |

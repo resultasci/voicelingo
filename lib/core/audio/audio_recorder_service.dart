@@ -8,9 +8,8 @@ import 'package:record/record.dart';
 import '../errors/app_exception.dart';
 import 'vad_detector.dart';
 
-/// Yeni nesil ses kayıt servisi.
+/// Ses kayıt servisi.
 ///
-/// Mevcut [services/audio_service.dart]'tan farkları:
 ///   - Opus codec (raw WAV yerine ~10x daha küçük dosya)
 ///   - VOICE_COMMUNICATION audio source (Android echo/AGC otomatik)
 ///   - Amplitude stream broadcast (waveform UI'a beslenir)
@@ -44,7 +43,7 @@ class AudioRecorderService {
         '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.opus';
 
     const config = RecordConfig(
-      // Opus: Whisper bunu kabul ediyor, dosya ~%85 küçülüyor.
+      // Opus: Gemini multimodal STT bunu kabul ediyor, dosya ~%85 küçülüyor.
       encoder: AudioEncoder.opus,
       bitRate: 32000,
       sampleRate: 16000,

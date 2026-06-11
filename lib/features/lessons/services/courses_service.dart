@@ -31,52 +31,29 @@ class CoursesService {
           params: {'p_language': language},
         );
         if (res is! List) return const <Course>[];
-        final courses = <Course>[];
-        for (final raw in res) {
-          if (raw is! Map) continue;
-          final m = Map<String, dynamic>.from(raw);
-          final units = <CourseUnit>[];
-          final lessonsByUnit = <String, List<Lesson>>{};
-          final unitsRaw = m['units'];
-          if (unitsRaw is List) {
-            for (final ur in unitsRaw) {
-              if (ur is! Map) continue;
-              final um = Map<String, dynamic>.from(ur);
-              units.add(CourseUnit.fromMap(um));
-              final ll = um['lessons'];
-              if (ll is List) {
-                lessonsByUnit[um['id'] as String] = ll
-                    .whereType<Map>()
-                    .map((e) => Lesson.fromMap(Map<String, dynamic>.from(e)))
-                    .toList();
-              }
-            }
-          }
-          courses.add(_CourseWithTree(
-            base: Course.fromMap(m),
-            units: units,
-            lessonsByUnit: lessonsByUnit,
-          ));
-        }
-        return courses;
+        return _parseCourses(res);
       },
     );
   }
 
-  /// Cache serialize: We persist whatever RPC returned (already JSONB-shaped).
-  /// Re-fetch trips through `_treeFromJson` below.
+  /// Cache deserialize: aynı JSONB şekli hem RPC cevabında hem Hive'da —
+  /// her ikisi de [_parseCourses]'tan geçer.
   static List<Course> _treeFromJson(Map<String, dynamic> json) {
     final list = json['courses'];
     if (list is! List) return const <Course>[];
-    return list.whereType<Map>().map((raw) {
-      final m = Map<String, dynamic>.from(raw);
+    return _parseCourses(list);
+  }
+
+  static List<Course> _parseCourses(List raw) {
+    return raw.whereType<Map>().map((courseRaw) {
+      final m = Map<String, dynamic>.from(courseRaw);
       final units = <CourseUnit>[];
       final lessonsByUnit = <String, List<Lesson>>{};
-      final ur = m['units'];
-      if (ur is List) {
-        for (final u in ur) {
-          if (u is! Map) continue;
-          final um = Map<String, dynamic>.from(u);
+      final unitsRaw = m['units'];
+      if (unitsRaw is List) {
+        for (final ur in unitsRaw) {
+          if (ur is! Map) continue;
+          final um = Map<String, dynamic>.from(ur);
           units.add(CourseUnit.fromMap(um));
           final ll = um['lessons'];
           if (ll is List) {

@@ -14,8 +14,10 @@ import '../core/logger/app_logger.dart';
 import '../core/perf/perf_trace.dart';
 import '../core/services/notification_service.dart';
 import '../core/services/settings_service.dart';
+import '../core/services/streak_service.dart';
 import '../core/storage/hive_boxes.dart';
 import '../core/theme/app_theme.dart';
+import '../features/gamification/services/badges_service.dart';
 import '../features/profile/services/profile_repository.dart';
 import 'app.dart';
 
@@ -103,10 +105,12 @@ Future<void> bootstrap() async {
   ]);
   PerfTrace.mark('parallel init done');
 
-  // 3.5) Profil ön-ısıtma (fire-and-forget): Supabase + Hive hazır. HomeScreen
-  // post-frame'de profili istediğinde cache sıcak ya da fetch zaten uçuşta
-  // olur — soğuk açılıştaki ~200-800ms placement-gate beklemesini yutar.
-  unawaited(ProfileRepository(Supabase.instance.client).prewarm());
+  // 3.5) Streak reconcile → rozet kontrolü → profil ön-ısıtma
+  // (fire-and-forget, sıralı): reconcile gün atlamasında freeze tüketir /
+  // streak'i sıfırlar; prewarm'dan ÖNCE koşar ki Hive'a bayat streak
+  // yazılmasın. HomeScreen post-frame'de profili istediğinde cache sıcak ya
+  // da fetch zaten uçuşta olur.
+  unawaited(_reconcileStreakAndPrewarmProfile());
 
   // 4) Sentry wrapper + runApp. Servis instance'ları ProviderScope override'ı
   // ile yayınlanır — provider'ların kendisi UnimplementedError fırlatır.
@@ -140,6 +144,31 @@ Future<void> bootstrap() async {
   } else {
     await bootApp();
   }
+}
+
+/// Cold start arka plan zinciri: streak reconcile → hak edilen streak
+/// rozetleri → profil prewarm. Sıra önemli: reconcile/rozet XP'si profili
+/// değiştirebilir; prewarm en sona kalır ki Hive'a taze satır insin.
+/// Tamamı best-effort — offline açılışta sessizce geçilir, bir sonraki
+/// açılışta tekrar denenir.
+Future<void> _reconcileStreakAndPrewarmProfile() async {
+  final client = Supabase.instance.client;
+  try {
+    final result = await StreakService(client).reconcile();
+    if (result.status == StreakStatus.freezeUsed ||
+        result.status == StreakStatus.reset) {
+      // Streak server-side değişti — eski profil Hive'dan servis edilmesin.
+      await bustProfileCache();
+    }
+    final streak = result.currentStreak ?? 0;
+    if (streak > 0) {
+      final awards = await BadgesService(client).awardDueStreakBadges(streak);
+      if (awards.isNotEmpty) await bustProfileCache(); // rozet XP'si yazıldı
+    }
+  } catch (e) {
+    AppLogger.warning('Streak reconcile atlandı (best-effort): $e');
+  }
+  await ProfileRepository(client).prewarm();
 }
 
 /// Yakalanmamış Flutter framework + async Dart hatalarını Sentry'ye iletir.

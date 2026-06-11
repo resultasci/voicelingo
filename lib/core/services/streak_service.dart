@@ -1,20 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../models/user_profile.dart';
-
-/// Streak hesaplama + reset mantığı.
+/// Streak reset + freeze tüketimi.
 ///
-/// SQL hesaplaması yerine client-side yapıyoruz çünkü:
+/// Streak ARTIRIMI DB tarafındadır (log_practice_session vb. RPC'ler);
+/// bu servis yalnız gün atlamalarını cold start'ta toparlar çünkü:
 ///   - Cron schedule güvenilmez (Supabase Edge Function cron'ları kullanıcı bağımsız)
 ///   - Streak reset her cold start'ta hesaplanırsa "tam zamanında" güncellenir
-///   - Streak freeze tüketimi UI'da onay isteyebilir (her gün otomatik tüketmek istemiyoruz)
 ///
-/// Algoritma (her app açılışında [reconcile] çağırılır):
+/// Algoritma (her app açılışında [reconcile] çağırılır — bootstrap.dart):
 ///   1. `streakLastDate` bugün veya dün → streak korunur
 ///   2. `streakLastDate` 2 gün önce → 1 streak_freeze varsa harca, yoksa streak=0
 ///   3. `streakLastDate` 3+ gün önce → streak=0 (freeze yetmez)
-///   4. `streakLastDate` null → streak=0
+///   4. `streakLastDate` null → değişiklik yok (hiç aktivite olmamış)
 class StreakService {
   StreakService(this._db);
   final SupabaseClient _db;
@@ -54,9 +52,13 @@ class StreakService {
 
       case _StreakDecision.consumeFreeze:
         if (freezes > 0) {
+          // Freeze KAÇIRILAN günü (dünü) kapatır; last_date dün yapılır ki
+          // bugünkü aktivite DB tarafında streak'i normal +1 artırabilsin ve
+          // arka arkaya kaçırılan her gün ayrı freeze tüketsin.
+          final yesterday = _today().subtract(const Duration(days: 1));
           await _db.from('profiles').update({
             'streak_freezes': freezes - 1,
-            'streak_last_date': _today().toIso8601String(),
+            'streak_last_date': yesterday.toIso8601String(),
           }).eq('id', user.id);
           return StreakReconcileResult(
             status: StreakStatus.freezeUsed,
@@ -89,30 +91,6 @@ class StreakService {
     }
   }
 
-  /// Bir XP-kazandıran aksiyondan sonra çağrılır. Bugün zaten artırıldıysa
-  /// no-op; aksi halde streak_days+1 + streak_last_date=today.
-  ///
-  /// Burada UserProfile'ı dışarıdan alıyoruz çünkü caller zaten elinde
-  /// (genelde profileProvider üzerinden) sahip; ekstra round-trip tasarrufu.
-  Future<bool> recordActivity(UserProfile profile) async {
-    final user = _db.auth.currentUser;
-    if (user == null) return false;
-
-    final today = _today();
-    final last = profile.streakLastDate;
-    if (last != null && _isSameDay(last, today)) return false;
-
-    final isContinuing = last != null && _isYesterday(last, today);
-    final newStreak = isContinuing ? profile.streakDays + 1 : 1;
-
-    await _db.from('profiles').update({
-      'streak_days': newStreak,
-      'streak_last_date': today.toIso8601String(),
-      'last_active_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', user.id);
-    return true;
-  }
-
   Future<void> _resetStreak(String userId) async {
     await _db.from('profiles').update({
       'streak_days': 0,
@@ -138,14 +116,6 @@ class StreakService {
   DateTime _today([DateTime? now]) {
     final n = now ?? DateTime.now();
     return DateTime(n.year, n.month, n.day);
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
-
-  bool _isYesterday(DateTime last, DateTime today) {
-    final yesterday = today.subtract(const Duration(days: 1));
-    return _isSameDay(last, yesterday);
   }
 }
 

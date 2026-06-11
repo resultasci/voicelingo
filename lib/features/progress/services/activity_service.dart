@@ -22,6 +22,7 @@ class ActivityService {
       }
       return out;
     } catch (_) {
+      // best-effort: heatmap boş kalır, dashboard çalışmaya devam eder
       return const {};
     }
   }
@@ -34,6 +35,7 @@ class ActivityService {
       if (res['ok'] != true) return null;
       return MasterySummary.fromMap(res);
     } catch (_) {
+      // best-effort: kart "veri yok" durumuna düşer
       return null;
     }
   }
@@ -48,6 +50,7 @@ class ActivityService {
           .map((m) => TopError.fromMap(m.cast<String, dynamic>()))
           .toList();
     } catch (_) {
+      // best-effort: liste boş görünür
       return const [];
     }
   }
