@@ -56,3 +56,7 @@ design/dist/
 # Course/lab deliverables — local only, not part of the app
 lab_docs/
 PROJE_LAB_TALIMAT.md
+
+# AI assistant internal instructions/config — local only
+.claude/
+CLAUDE.md

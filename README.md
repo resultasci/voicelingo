@@ -37,14 +37,14 @@
 | Katman | Teknoloji |
 |--------|-----------|
 | **Uygulama** | Flutter 3.24+ · Dart `^3.5.3` |
-| **State / DI** | Riverpod 2.x (`flutter_riverpod`, `riverpod_annotation`) |
+| **State / DI** | Riverpod 2.x (`flutter_riverpod`) — codegen'siz, bilinçli tercih |
 | **Yönlendirme** | `go_router` 14 |
 | **Backend** | Supabase — Auth + Postgres + Edge Functions (Deno/TypeScript) |
 | **AI** | Google Gemini `gemini-2.5-flash` (multimodal: metin + ses), `ai-proxy` Edge Function üzerinden |
 | **Ses** | `record` (Opus kayıt) · özel `VadDetector` · `flutter_tts` |
 | **Yerel depolama** | `hive` · `shared_preferences` · `flutter_secure_storage` |
-| **Ağ** | `dio` |
-| **UI / görsel** | `fl_chart` · `lottie` · `confetti` · `shimmer` · `flutter_svg` · `cached_network_image` |
+| **Ağ** | `dio` (exponential backoff retry) |
+| **UI / görsel** | `lottie` · `confetti` · `shimmer` — grafikler ve marka logosu CustomPainter ile kod-çizimi |
 | **Bildirim** | `flutter_local_notifications` + `timezone` |
 | **Gözlemlenebilirlik** | Sentry (`sentry_flutter`) |
 | **Yerelleştirme** | `flutter_localizations` + `intl` (ARB → `flutter gen-l10n`) |
@@ -67,10 +67,19 @@ Supabase Edge Function  ── ai-proxy ──►  JWT doğrula → rate-limit (
 Supabase Postgres (RLS + FORCE RLS, RPC'ler, trigger'lar)
 ```
 
-- **Feature-first** klasör yapısı (`lib/features/<x>/{screens,widgets,services,models}`).
-- Tek **exception hiyerarşisi** (`AppException`) → lokalize, kullanıcıya dönük hata mesajları.
+- **Katmanlı feature-first** yapı: bağımlılık yönü `app → features → core`; core asla features/app import etmez. Kuralların tamamı: [ARCHITECTURE.md](ARCHITECTURE.md).
+- **Controller sözleşmesi:** State'in sahip olduğu `ChangeNotifier`, fonksiyon-injected bağımlılıklar, `BuildContext` yok, hatalar enum — UI'a lokalize edilerek çevrilir.
+- Tek **exception sınırı** (`AppException`): servisler üçüncü parti hataları tiplenmiş alt sınıflara çevirir; ekranlar yalnız lokalize `getErrorMessage` kullanır.
 - Tek **ses pipeline'ı** (`AudioRecorderService`: Opus + amplitude stream + VAD).
 - API anahtarları **yalnızca** Supabase function secret'ı olarak; istemci bundle'ında değil.
+
+### Performans
+
+- **Paralel bootstrap:** Settings+Notifications / Hive / Supabase init'leri eşzamanlı; profil boot biter bitmez arka planda ön-ısıtılır.
+- **Stale-while-revalidate cache katmanı** (`CachedRepository` + Hive): profil (6s), ders/gramer ilerlemesi (30dk), içerik ağacı ve gramer konuları (7g), sözlük (30g). Ekranlar cache'ten anında dolar, arka planda tazelenir; yazma noktaları ilgili girdiyi düşürür.
+- **Tek round-trip RPC'ler:** `complete_lesson`, `append_message`, `commit_word_reviews`, `record_grammar_quiz` — çok adımlı istemci akışları atomik sunucu fonksiyonlarına katlanmış.
+- **Render disiplini:** konuşma kontrolcüsü status'u ayrı `ValueNotifier` kanalından yayınlar (sıcak input bar mesaj eklenince rebuild olmaz), mesaj balonları/dalga formu `RepaintBoundary` ile izole, listeler sliver tabanlı sanal, gizli sekme animasyonları `TickerMode` ile duraklatılır.
+- **`PerfTrace`:** boot kırılımı ve konuşma turu gecikmesi için release'te no-op ölçüm işaretleri.
 
 ---
 
@@ -87,6 +96,7 @@ JWT doğrular, eylemi yönlendirir ve kullanıcı/UTC-gün başına yumuşak kot
 | `/evaluate` | Cümle değerlendirme (`{correct, score, explanation, grammar_errors, cefr_band?}`) | 200 |
 | `/transcribe` | Ses → metin (STT) | 100 |
 | `/enrich` | Kelime zenginleştirme (IPA + örnek) | 100 |
+| `/generate-words` | Konudan tematik kelime listesi üretimi | 20 |
 | `/generate-scenario` | Tarif → yapılandırılmış senaryo (JSON) | 30 |
 
 ### `account-admin` — hesap yönetimi
@@ -97,10 +107,10 @@ Kullanıcı verisinin güvenli silinmesi (doğrudan tablo silme + `auth.users` C
 
 ## 🗄️ Veritabanı (Supabase / Postgres)
 
-- **33 migration** — şema, RLS, rate-limit ledger, oyunlaştırma, ders yolu, gramer/sözlük, senaryolar, analiz view/RPC'leri ve bütünlük kısıtları.
+- **35 migration** — şema, RLS, rate-limit ledger, oyunlaştırma, ders yolu, gramer/sözlük, senaryolar, analiz view/RPC'leri ve bütünlük kısıtları.
 - **Güvenlik:** kullanıcıya ait tüm tablolarda RLS + `FORCE ROW LEVEL SECURITY`; `SECURITY DEFINER` fonksiyonlarda `search_path` sabitlenmiş.
 - **Bütünlük:** XP/level/skor/durum alanlarında 13 `CHECK` kısıtı (hepsi doğrulanmış), FK ve sık sorgulanan kolonlarda index'ler.
-- **Atomik mantık RPC'lerde:** `complete_lesson`, `add_xp`, badge/quest ilerleme, `incr_api_usage`, analiz RPC'leri; tek round-trip batch RPC'ler (`add_words_batch`, `commit_word_reviews`, `append_message`).
+- **Atomik mantık RPC'lerde:** `complete_lesson`, `add_xp`, `record_grammar_quiz`, badge/quest ilerleme, `incr_api_usage`, analiz RPC'leri; tek round-trip batch RPC'ler (`add_words_batch`, `commit_word_reviews`, `append_message`).
 
 ---
 
@@ -108,30 +118,30 @@ Kullanıcı verisinin güvenli silinmesi (doğrudan tablo silme + `auth.users` C
 
 ```text
 lib/
-├── app/                    # bootstrap (init, global error handler, Sentry) + root widget
-├── core/                   # Cross-cutting altyapı
+├── app/                    # bootstrap (paralel init, Sentry), router (+ gate'ler), kök widget
+├── core/                   # Cross-cutting altyapı (asla features/app import etmez)
 │   ├── ai/                 # GeminiService (ai-proxy istemcisi), AI karakterler
-│   ├── audio/              # AudioRecorderService (Opus), VadDetector, WaveformPainter
+│   ├── audio/              # AudioRecorderService (Opus), VadDetector, TtsSpeaker, Waveform
+│   ├── config/             # Env, feature flag'ler (app_config tablosundan)
 │   ├── errors/             # AppException hiyerarşisi + lokalize error_handler
-│   ├── network/            # Dio client fabrikası
-│   ├── offline/            # Hive read-through cache
-│   └── widgets/            # Paylaşılan widget'lar (ConnectivityBanner, LevelUpDialog)
-├── features/               # Feature-first modüller
+│   ├── models/             # 2+ feature'ın paylaştığı domain modeller
+│   ├── network/            # Dio fabrikası (retry), connectivity service
+│   ├── perf/               # DeviceTier bütçeleri + PerfTrace ölçüm işaretleri
+│   ├── storage/            # Hive box kayıtları + CachedRepository (SWR)
+│   ├── services/           # Settings, Notification, Streak
+│   ├── theme/              # COSMOS tasarım sistemi (AppPalette, koyu/açık)
+│   └── widgets/            # Paylaşılan widget'lar (ConnectivityBanner, BrandLogo…)
+├── features/               # Feature-first modüller — her biri:
+│   │                       #   screens/ widgets/ controllers/ services/ providers/ models/
 │   ├── auth/  conversation/  dashboard/  gamification/  grammar/
 │   ├── lessons/  onboarding/  profile/  progress/  scenarios/
-│   ├── settings/  words/
-│   └── …                   # her biri: screens/ widgets/ services/ models/
-├── l10n/                   # TR + EN ARB dosyaları (generate: true)
-├── models/                 # Domain modeller
-├── providers/              # Global Riverpod provider'lar (auth, theme, locale, words)
-├── router/                 # GoRouter yapılandırması
-├── services/               # Auth, Account, Notification, Settings
-└── theme/                  # COSMOS tasarım sistemi
+│   └── settings/  words/
+└── l10n/                   # TR + EN ARB dosyaları (generate: true)
 
 supabase/
 ├── functions/ai-proxy/      # Gemini proxy + rate limit
 ├── functions/account-admin/ # Hesap silme
-└── migrations/              # 33 migration
+└── migrations/              # 35 migration
 ```
 
 ---
@@ -190,18 +200,18 @@ flutter run
 
 | Komut | Açıklama |
 |-------|----------|
-| `flutter analyze` | Statik analiz / lint |
-| `flutter test` | Birim + widget testleri |
-| `dart format .` | Kod formatlama |
+| `flutter analyze --fatal-warnings` | Statik analiz (CI ile aynı; 0 issue beklenir) |
+| `flutter test` | Birim + widget testleri (94 test) |
+| `dart format lib test` | Kod formatlama |
 | `flutter gen-l10n` | ARB'lerden yerelleştirme üretimi |
-| `flutter build apk --release` | Android release derleme |
+| `flutter build apk --release` | Android release derleme (R8/ProGuard kuralları dahil) |
 
 ---
 
 ## ✅ Test & CI
 
-- `test/` altında birim testleri (Gemini servis yardımcıları, VAD, amplitude geçmişi, gramer modeli).
-- GitHub Actions CI (`.github/workflows/ci.yml`): **format kontrolü + analyze + test**.
+- **94 test**: router redirect gate matrisi, cache TTL/round-trip, hata eşleme, SM-2 review akışı, konuşma kontrolcüsü bildirim kanalları, VAD, sözlük cache'i, gramer rubriği ve daha fazlası.
+- GitHub Actions CI (`.github/workflows/ci.yml`): **format kontrolü + `analyze --fatal-warnings` + test** (coverage artifact'ı ile).
 
 ---
 
