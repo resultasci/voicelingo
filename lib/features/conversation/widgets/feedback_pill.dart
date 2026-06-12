@@ -23,7 +23,13 @@ class _FeedbackPillState extends State<FeedbackPill> {
     final c = context.c;
     final eval = widget.evaluation;
     final isHigh = eval.score >= 80;
-    final color = isHigh ? c.primaryFixed : c.tertiaryFixedDim;
+    // Üç kademe: 80+ başarı, 60-79 gelişiyor, <60 dikkat — skor panel
+    // açılmadan da renk + sayı ile okunur.
+    final color = isHigh
+        ? c.primaryFixed
+        : eval.score >= 60
+            ? c.tertiaryFixedDim
+            : c.error;
     final label = isHigh
         ? l.conv_feedbackGreat
         : l.conv_feedbackMoreNatural(
@@ -39,7 +45,7 @@ class _FeedbackPillState extends State<FeedbackPill> {
             borderRadius: BorderRadius.circular(99),
             onTap: () => setState(() => _expanded = !_expanded),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.10),
                 border: Border.all(color: color.withOpacity(0.45)),
@@ -48,6 +54,20 @@ class _FeedbackPillState extends State<FeedbackPill> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      '${eval.score}',
+                      style: AppText.label(10,
+                          color: color, weight: FontWeight.w800),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       label,

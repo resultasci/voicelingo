@@ -291,13 +291,17 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
     );
   }
 
+  /// Header: solda kimlik bloğu (avatar + ad + canlı durum satırı —
+  /// mesajlaşma uygulaması deseni), sağda yalnız sık kullanılan iki kontrol
+  /// (hız, hands-free); ikincil aksiyonlar overflow menüde. Eski tek satıra
+  /// sıkışan 4 ikon + durum chip'i dar ekranda başlığı eziyordu.
   Widget _buildHeader() {
     final l = AppL10n.of(context);
     final c = context.c;
     const compactBtn = VisualDensity(horizontal: -4, vertical: -4);
     const tightConstraints = BoxConstraints(minWidth: 36, minHeight: 36);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
       child: Row(
         children: [
           if (widget.showBackButton) ...[
@@ -314,49 +318,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             ),
             const SizedBox(width: 4),
           ],
-          Expanded(
-            child: widget.scenario != null
-                ? Text(
-                    widget.scenario!.title,
-                    style: AppText.title(18,
-                            color: c.primary, weight: FontWeight.w600)
-                        .copyWith(
-                      shadows: neonGlow(c.primary, blur: 8, opacity: 0.3),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : Semantics(
-                    label: l.conv_practiceMode,
-                    button: true,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(99),
-                      onTap: _openCharacterPicker,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CharacterAvatar(character: _c.character, size: 30),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              _c.character.displayName,
-                              style: AppText.title(17,
-                                      color: c.primary, weight: FontWeight.w600)
-                                  .copyWith(
-                                shadows:
-                                    neonGlow(c.primary, blur: 8, opacity: 0.3),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          Icon(Icons.expand_more, color: c.inkDim, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-          ),
+          Expanded(child: _buildIdentity(l, c)),
+          const SizedBox(width: 8),
           SpeedToggle(
             rate: _c.ttsRate,
             onChanged: _c.setTtsRate,
@@ -384,70 +347,145 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               },
             ),
           ),
-          Semantics(
-            label: l.nav_scenarios,
-            button: true,
-            child: IconButton(
-              icon: Icon(Icons.theater_comedy_outlined,
-                  color: c.primaryContainer, size: 20),
-              padding: const EdgeInsets.all(6),
-              constraints: tightConstraints,
-              visualDensity: compactBtn,
-              tooltip: l.conv_pickScenario,
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const ScenarioPickerScreen()));
-              },
-            ),
-          ),
-          if (_c.messages.isNotEmpty)
-            Semantics(
-              label: l.conv_newChat,
-              child: IconButton(
-                icon:
-                    Icon(Icons.add_comment_outlined, color: c.inkDim, size: 20),
-                padding: const EdgeInsets.all(6),
-                constraints: tightConstraints,
-                visualDensity: compactBtn,
-                onPressed: _c.reset,
-                tooltip: l.conv_newChat,
-              ),
-            ),
-          Semantics(
-            label: l.conv_chatHistory,
-            child: IconButton(
-              icon: Icon(Icons.history, color: c.primaryContainer, size: 20),
-              padding: const EdgeInsets.all(6),
-              constraints: tightConstraints,
-              visualDensity: compactBtn,
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const ConversationHistoryScreen()));
-              },
-            ),
-          ),
-          const SizedBox(width: 2),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, anim) => FadeTransition(
-              opacity: anim,
-              child: ScaleTransition(scale: anim, child: child),
-            ),
-            child: NeonChip(
-              key: ValueKey(_c.status),
-              text: _statusLabel(l),
-              color: _statusColor(c),
-              icon: _c.status == ConvStatus.connecting
-                  ? Icons.sync
-                  : _c.status == ConvStatus.listening
-                      ? Icons.fiber_manual_record
-                      : null,
-            ),
-          ),
+          _buildHeaderMenu(l, c),
         ],
       ),
+    );
+  }
+
+  /// Avatar + ad + durum satırı. Serbest sohbette karakter seçiciye götürür;
+  /// senaryo modunda başlık sabittir (karakter senaryoya kilitli değil ama
+  /// başlık senaryoyu tanıtır).
+  Widget _buildIdentity(AppL10n l, AppPalette c) {
+    final isListening = _c.status == ConvStatus.listening;
+    final statusColor = _statusColor(c);
+    final identity = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CharacterAvatar(character: _c.character, size: 38),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      widget.scenario?.title ?? _c.character.displayName,
+                      style: AppText.title(16,
+                              color: c.primary, weight: FontWeight.w600)
+                          .copyWith(
+                        shadows: neonGlow(c.primary, blur: 8, opacity: 0.3),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (widget.scenario == null) ...[
+                    const SizedBox(width: 2),
+                    Icon(Icons.expand_more, color: c.inkDim, size: 15),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: statusColor,
+                      boxShadow: isListening
+                          ? [BoxShadow(color: statusColor, blurRadius: 6)]
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      _statusLabel(l),
+                      style: AppText.label(10,
+                          color: c.inkMuted, weight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (widget.scenario != null) return identity;
+    return Semantics(
+      label: l.conv_changeCoach,
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: _openCharacterPicker,
+        child: identity,
+      ),
+    );
+  }
+
+  /// İkincil aksiyonlar (senaryo, yeni sohbet, geçmiş) — header kalabalığını
+  /// tek overflow menüye toplar.
+  Widget _buildHeaderMenu(AppL10n l, AppPalette c) {
+    PopupMenuItem<_HeaderAction> item(
+        _HeaderAction action, IconData icon, String label) {
+      return PopupMenuItem<_HeaderAction>(
+        value: action,
+        height: 44,
+        child: Row(
+          children: [
+            Icon(icon, color: c.primaryContainer, size: 18),
+            const SizedBox(width: 12),
+            Text(label, style: AppText.ink(13, color: c.ink)),
+          ],
+        ),
+      );
+    }
+
+    return PopupMenuButton<_HeaderAction>(
+      tooltip: l.conv_moreOptions,
+      icon: Icon(Icons.more_vert, color: c.inkDim, size: 20),
+      padding: const EdgeInsets.all(6),
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      color: c.bgCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: (c.isDark ? Colors.white : Colors.black).withOpacity(0.10),
+        ),
+      ),
+      onSelected: (action) {
+        switch (action) {
+          case _HeaderAction.scenario:
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const ScenarioPickerScreen()));
+          case _HeaderAction.newChat:
+            _c.reset();
+          case _HeaderAction.history:
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const ConversationHistoryScreen()));
+        }
+      },
+      itemBuilder: (_) => [
+        item(_HeaderAction.scenario, Icons.theater_comedy_outlined,
+            l.conv_pickScenario),
+        if (_c.messages.isNotEmpty)
+          item(_HeaderAction.newChat, Icons.add_comment_outlined,
+              l.conv_newChat),
+        item(_HeaderAction.history, Icons.history, l.conv_chatHistory),
+      ],
     );
   }
 
@@ -731,7 +769,25 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
             ),
           ),
           if (widget.scenario == null && !isBusy) ...[
+            // "Ne söyleyeceğim?" soğuk başlangıcını kırar: tek dokunuşla
+            // gönderilen hazır açılış cümleleri (hedef dilde — içerik, krom
+            // değil).
             const SizedBox(height: 24),
+            SectionLabel(l.conv_tryStarters),
+            const SizedBox(height: 10),
+            for (final starter in [
+              l.conv_starter1,
+              l.conv_starter2,
+              l.conv_starter3,
+            ])
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _StarterChip(
+                  text: starter,
+                  onTap: () => unawaited(_c.sendText(starter)),
+                ),
+              ),
+            const SizedBox(height: 16),
             SectionLabel(l.conv_readyScenarios),
             const SizedBox(height: 12),
             ScenarioStrip(
@@ -820,32 +876,19 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
           ),
           child: Row(
             children: [
-              const SizedBox(width: 14),
-              Expanded(
-                child: TextField(
-                  controller: _textCtrl,
-                  style: AppText.ink(14, color: c.ink),
-                  cursorColor: c.primaryContainer,
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _sendText(),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    hintText: l.conv_inputHint,
-                    hintStyle: AppText.body(13, color: c.inkDim),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
-                  ),
+              // Kayıt sırasında metin alanı işlevsizdir; yerine süre sayacı +
+              // tam genişlik dalga formu geçer (kayıt güvencesi + odak).
+              if (isListening) ...[
+                const SizedBox(width: 14),
+                _RecordingTimer(
+                  semanticsLabel: l.conv_statusListening,
                 ),
-              ),
-              if (isListening)
+                const SizedBox(width: 12),
                 Expanded(
-                  flex: 0,
                   child: SizedBox(
-                    width: 80,
                     height: 32,
-                    // ~20-30fps amplitüd tiki yalnız bu 80x32 katmanı
-                    // boyasın; input bar'ın blur'lu raster'ı sabit kalır.
+                    // ~20-30fps amplitüd tiki yalnız bu katmanı boyasın;
+                    // input bar'ın blur'lu raster'ı sabit kalır.
                     child: RepaintBoundary(
                       child: AnimatedBuilder(
                         animation: _c.amplitudes,
@@ -860,12 +903,33 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     ),
                   ),
                 ),
+                const SizedBox(width: 12),
+              ] else ...[
+                const SizedBox(width: 14),
+                Expanded(
+                  child: TextField(
+                    controller: _textCtrl,
+                    style: AppText.ink(14, color: c.ink),
+                    cursorColor: c.primaryContainer,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _sendText(),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      hintText: l.conv_inputHint,
+                      hintStyle: AppText.body(13, color: c.inkDim),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
               // Per-keystroke updates only swap this trailing button — listening
               // to the controller here avoids rebuilding the whole screen.
               ValueListenableBuilder<TextEditingValue>(
                 valueListenable: _textCtrl,
                 builder: (context, value, _) {
-                  if (value.text.isNotEmpty) {
+                  if (!isListening && value.text.isNotEmpty) {
                     return Semantics(
                       label: l.conv_sendMessage,
                       button: true,
@@ -892,6 +956,113 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                   );
                 },
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Header overflow menüsündeki ikincil aksiyonlar.
+enum _HeaderAction { scenario, newChat, history }
+
+/// Kayıt süresi sayacı — dinleme başladığında mount edilir, kendi 500ms
+/// tick'iyle yalnız kendini yeniden çizer.
+class _RecordingTimer extends StatefulWidget {
+  final String semanticsLabel;
+  const _RecordingTimer({required this.semanticsLabel});
+
+  @override
+  State<_RecordingTimer> createState() => _RecordingTimerState();
+}
+
+class _RecordingTimerState extends State<_RecordingTimer> {
+  late final DateTime _start;
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _start = DateTime.now();
+    _tick = Timer.periodic(
+      const Duration(milliseconds: 500),
+      (_) => setState(() {}),
+    );
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final secs = DateTime.now().difference(_start).inSeconds;
+    final label = '${secs ~/ 60}:${(secs % 60).toString().padLeft(2, '0')}';
+    return Semantics(
+      label: widget.semanticsLabel,
+      value: label,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: c.error,
+              boxShadow: [BoxShadow(color: c.error, blurRadius: 6)],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppText.label(13, color: c.ink, weight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Boş ekranda tek dokunuşla gönderilen açılış cümlesi satırı.
+class _StarterChip extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+  const _StarterChip({required this.text, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    return Semantics(
+      label: text,
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: c.primaryContainer.withOpacity(0.07),
+            border: Border.all(color: c.primaryContainer.withOpacity(0.30)),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.chat_bubble_outline,
+                  color: c.primaryContainer, size: 15),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  text,
+                  style: AppText.body(13, color: c.ink),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.north_east, color: c.inkDim, size: 14),
             ],
           ),
         ),

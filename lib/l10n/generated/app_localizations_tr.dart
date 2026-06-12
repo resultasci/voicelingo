@@ -96,12 +96,10 @@ class AppL10nTr extends AppL10n {
   String get auth_validation_passwordMismatch => 'Şifreler eşleşmiyor';
 
   @override
-  String get auth_error_sessionNotFound =>
-      'Oturum bulunamadı, lütfen tekrar giriş yap.';
+  String get auth_error_sessionNotFound => 'Oturum bulunamadı, lütfen tekrar giriş yap.';
 
   @override
-  String get auth_error_sessionExpired =>
-      'Oturum süren doldu, lütfen tekrar giriş yap.';
+  String get auth_error_sessionExpired => 'Oturum süren doldu, lütfen tekrar giriş yap.';
 
   @override
   String get error_network => 'Bağlantı sorunu. İnternetini kontrol et.';
@@ -113,12 +111,10 @@ class AppL10nTr extends AppL10n {
   String get error_unexpected => 'Beklenmeyen bir hata oluştu.';
 
   @override
-  String get error_rateLimit =>
-      'Günlük kullanım limitine ulaştın. Yarın tekrar dene.';
+  String get error_rateLimit => 'Günlük kullanım limitine ulaştın. Yarın tekrar dene.';
 
   @override
-  String get error_audioTooLong =>
-      'Ses kaydı çok uzun. Daha kısa bir kayıt dene.';
+  String get error_audioTooLong => 'Ses kaydı çok uzun. Daha kısa bir kayıt dene.';
 
   @override
   String get error_aiUnavailable => 'AI servisi şu an cevap vermiyor.';
@@ -130,8 +126,7 @@ class AppL10nTr extends AppL10n {
   String get error_offline => 'Çevrimdışı moddasın.';
 
   @override
-  String get error_audioInvalid =>
-      'Ses tanıma servisinden geçersiz cevap alındı.';
+  String get error_audioInvalid => 'Ses tanıma servisinden geçersiz cevap alındı.';
 
   @override
   String get error_evalInvalid => 'Değerlendirme servisi geçersiz yanıt döndü.';
@@ -268,8 +263,7 @@ class AppL10nTr extends AppL10n {
   String get conversation_pushToTalk => 'Konuşmak için basılı tut';
 
   @override
-  String get conversation_micPermissionDenied =>
-      'Mikrofon izni gerekli. Ayarlardan açabilirsin.';
+  String get conversation_micPermissionDenied => 'Mikrofon izni gerekli. Ayarlardan açabilirsin.';
 
   @override
   String get notification_reviewReminder_title => 'Hatırlatma Zamanı!';
@@ -306,8 +300,7 @@ class AppL10nTr extends AppL10n {
   String get boot_dotenvFailed_title => '.env yüklenemedi';
 
   @override
-  String get boot_dotenvFailed_description =>
-      '.env dosyası proje kökünde bulunmuyor veya okunamadı.';
+  String get boot_dotenvFailed_description => '.env dosyası proje kökünde bulunmuyor veya okunamadı.';
 
   @override
   String get dashboard_profileLoadError => 'Profil yüklenemedi.';
@@ -321,8 +314,7 @@ class AppL10nTr extends AppL10n {
   }
 
   @override
-  String get dashboard_greetingSubtitle =>
-      'Günlük galaktik hedeflerine hazır mısın?';
+  String get dashboard_greetingSubtitle => 'Günlük galaktik hedeflerine hazır mısın?';
 
   @override
   String get dashboard_statStreak => 'SERİ';
@@ -345,8 +337,7 @@ class AppL10nTr extends AppL10n {
   String get dashboard_aiTitle => 'Derin Uzay Pratiği';
 
   @override
-  String get dashboard_aiSubtitle =>
-      'Kişiselleştirilmiş AI asistanın ile günlük konuşma simülasyonunu başlat.';
+  String get dashboard_aiSubtitle => 'Kişiselleştirilmiş AI asistanın ile günlük konuşma simülasyonunu başlat.';
 
   @override
   String get dashboard_aiStart => 'Simülasyonu Başlat';
@@ -378,8 +369,7 @@ class AppL10nTr extends AppL10n {
   String get settings_dailyReviewReminder => 'Günlük Tekrar Hatırlatması';
 
   @override
-  String get settings_reminderSubtitle =>
-      'Vadesi gelen kelimeler için günde bir bildirim';
+  String get settings_reminderSubtitle => 'Vadesi gelen kelimeler için günde bir bildirim';
 
   @override
   String get settings_reminderTime => 'Hatırlatma Saati';
@@ -539,8 +529,7 @@ class AppL10nTr extends AppL10n {
   String get words_emptyTitle => 'Kütüphaneni oluştur';
 
   @override
-  String get words_emptyBody =>
-      'Bir konu seç, yapay zeka sana özel kelime listesi üretsin — ya da tek tek kelime ekle. Her kelime SM-2 algoritması ile doğru zamanda karşına çıkar.';
+  String get words_emptyBody => 'Bir konu seç, yapay zeka sana özel kelime listesi üretsin — ya da tek tek kelime ekle. Her kelime SM-2 algoritması ile doğru zamanda karşına çıkar.';
 
   @override
   String get words_addFirst => 'Elle kelime ekle';
@@ -552,8 +541,7 @@ class AppL10nTr extends AppL10n {
   String get words_genTitle => 'Kelime üret';
 
   @override
-  String get words_genSubtitle =>
-      'Bir konu yaz, yapay zeka senin için kelime listesi oluştursun.';
+  String get words_genSubtitle => 'Bir konu yaz, yapay zeka senin için kelime listesi oluştursun.';
 
   @override
   String get words_genTopicLabel => 'KONU';
@@ -579,8 +567,7 @@ class AppL10nTr extends AppL10n {
   }
 
   @override
-  String get words_genNone =>
-      'Eklenecek yeni kelime yok — hepsi zaten kütüphanende vardı.';
+  String get words_genNone => 'Eklenecek yeni kelime yok — hepsi zaten kütüphanende vardı.';
 
   @override
   String get words_genFailed => 'Kelimeler üretilemedi. Lütfen tekrar dene.';
@@ -668,8 +655,7 @@ class AppL10nTr extends AppL10n {
   }
 
   @override
-  String get flashcard_revealHint =>
-      'Çeviriyi görmek için \"Cevabı Göster\"e dokun';
+  String get flashcard_revealHint => 'Çeviriyi görmek için \"Cevabı Göster\"e dokun';
 
   @override
   String get flashcard_showAnswer => 'CEVABI GÖSTER';
@@ -678,8 +664,7 @@ class AppL10nTr extends AppL10n {
   String get flashcard_congrats => 'TEBRİKLER!';
 
   @override
-  String get flashcard_completeBody =>
-      'Bugünlük kelime tekrarını bitirdin. Kelimeler yarın senin için tekrar planlanacak.';
+  String get flashcard_completeBody => 'Bugünlük kelime tekrarını bitirdin. Kelimeler yarın senin için tekrar planlanacak.';
 
   @override
   String get flashcard_backHome => 'ANA SAYFAYA DÖN';
@@ -743,12 +728,10 @@ class AppL10nTr extends AppL10n {
   String get conv_errUnknown => 'Bilinmeyen hata.';
 
   @override
-  String get conv_greeting =>
-      'Merhaba! İngilizceni pratik yapmak için hazırım. Konuş!';
+  String get conv_greeting => 'Merhaba! İngilizceni pratik yapmak için hazırım. Konuş!';
 
   @override
-  String get conv_replyFailed =>
-      'Cevap alınamadı. Tekrar denemek için aşağıdaki butona dokun.';
+  String get conv_replyFailed => 'Cevap alınamadı. Tekrar denemek için aşağıdaki butona dokun.';
 
   @override
   String conv_aiNoResponse(String error) {
@@ -759,12 +742,10 @@ class AppL10nTr extends AppL10n {
   String get conv_practiceMode => 'Pratik Modu';
 
   @override
-  String get conv_handsFreeOnTip =>
-      'Eller serbest açık — AI bittikten sonra otomatik dinler';
+  String get conv_handsFreeOnTip => 'Eller serbest açık — AI bittikten sonra otomatik dinler';
 
   @override
-  String get conv_handsFreeOffTip =>
-      'Eller serbest kapalı — mikrofona basman gerekir';
+  String get conv_handsFreeOffTip => 'Eller serbest kapalı — mikrofona basman gerekir';
 
   @override
   String get conv_pickScenario => 'Senaryo seç';
@@ -792,6 +773,21 @@ class AppL10nTr extends AppL10n {
 
   @override
   String get conv_seeAll => 'Tümünü Gör';
+
+  @override
+  String get conv_tryStarters => 'SOHBET BAŞLATICILAR';
+
+  @override
+  String get conv_starter1 => 'Hi! Can we talk about my day?';
+
+  @override
+  String get conv_starter2 => 'Let\'s practice ordering food at a restaurant.';
+
+  @override
+  String get conv_starter3 => 'Can you help me improve my small talk?';
+
+  @override
+  String get conv_moreOptions => 'Diğer seçenekler';
 
   @override
   String get conv_inputHint => 'Mesajını yaz veya konuş…';
@@ -957,8 +953,7 @@ class AppL10nTr extends AppL10n {
   String get grammar_level => 'Seviye';
 
   @override
-  String get grammar_emptyTopics =>
-      'Henüz gramer konusu yok. Veritabanı yenilemesi (migration) uygulandı mı kontrol et.';
+  String get grammar_emptyTopics => 'Henüz gramer konusu yok. Veritabanı yenilemesi (migration) uygulandı mı kontrol et.';
 
   @override
   String get grammar_bestScore => 'En iyi skor';
@@ -991,8 +986,7 @@ class AppL10nTr extends AppL10n {
   String get lesson_courseTitle => 'Ders Yolu';
 
   @override
-  String get lesson_emptyCourse =>
-      'Henüz kurs yok. Veritabanında derslerin kurulu olduğundan emin ol.';
+  String get lesson_emptyCourse => 'Henüz kurs yok. Veritabanında derslerin kurulu olduğundan emin ol.';
 
   @override
   String get lesson_noUnits => 'Henüz ünite yok.';
@@ -1007,8 +1001,7 @@ class AppL10nTr extends AppL10n {
   String get lesson_customScenarioTitle => 'Özel Senaryo Oluştur';
 
   @override
-  String get lesson_customScenarioBody =>
-      'Yapay zeka ile dilediğin konuda pratik yap.';
+  String get lesson_customScenarioBody => 'Yapay zeka ile dilediğin konuda pratik yap.';
 
   @override
   String get lesson_typeVocab => 'Kelime';
@@ -1020,12 +1013,10 @@ class AppL10nTr extends AppL10n {
   String get lesson_typeListening => 'Dinleme';
 
   @override
-  String get lesson_grammarBridge =>
-      'Bu ders, ilgili gramer konusunu açar. Oradaki quiz\'i bitirince bu ders de tamamlanır.';
+  String get lesson_grammarBridge => 'Bu ders, ilgili gramer konusunu açar. Oradaki quiz\'i bitirince bu ders de tamamlanır.';
 
   @override
-  String get lesson_convBridge =>
-      'İlgili senaryoyu konuş. Minimum tur sayısı bu ders için sayılır.';
+  String get lesson_convBridge => 'İlgili senaryoyu konuş. Minimum tur sayısı bu ders için sayılır.';
 
   @override
   String get lesson_openGrammar => 'Grameri Aç';
@@ -1108,8 +1099,7 @@ class AppL10nTr extends AppL10n {
   String get progress_topMistakes => 'En sık hatalar (30 gün)';
 
   @override
-  String get progress_noMistakes =>
-      'Henüz hata kaydı yok — pratik yapmaya devam!';
+  String get progress_noMistakes => 'Henüz hata kaydı yok — pratik yapmaya devam!';
 
   @override
   String get heatmap_less => 'Az';
@@ -1121,8 +1111,7 @@ class AppL10nTr extends AppL10n {
   String get profile_defaultName => 'Kullanıcı';
 
   @override
-  String get profile_signOutWarning =>
-      'Tekrar giriş yapana kadar pratik kaydedilemez.';
+  String get profile_signOutWarning => 'Tekrar giriş yapana kadar pratik kaydedilemez.';
 
   @override
   String profile_levelTitle(int level) {
@@ -1136,8 +1125,7 @@ class AppL10nTr extends AppL10n {
   String get profile_fluency => 'AKICILIK';
 
   @override
-  String get profile_fluencyTooltip =>
-      'Akıcılık = doğru tekrar oranı × 50 + seri (≤30g) × 30 + XP (≤2000) × 20';
+  String get profile_fluencyTooltip => 'Akıcılık = doğru tekrar oranı × 50 + seri (≤30g) × 30 + XP (≤2000) × 20';
 
   @override
   String get profile_badgesTitle => 'Rozetler & Başarılar';
@@ -1185,12 +1173,10 @@ class AppL10nTr extends AppL10n {
   String get auth_err_invalidCredentials => 'E-posta veya şifre yanlış.';
 
   @override
-  String get auth_err_emailNotConfirmed =>
-      'E-posta adresini doğrulaman gerekiyor.';
+  String get auth_err_emailNotConfirmed => 'E-posta adresini doğrulaman gerekiyor.';
 
   @override
-  String get auth_err_alreadyRegistered =>
-      'Bu e-posta zaten kayıtlı. Giriş yapmayı dene.';
+  String get auth_err_alreadyRegistered => 'Bu e-posta zaten kayıtlı. Giriş yapmayı dene.';
 
   @override
   String get auth_err_noInternet => 'İnternet bağlantısı yok.';
@@ -1244,8 +1230,7 @@ class AppL10nTr extends AppL10n {
   String get auth_confirmTitle => 'Gelen kutunu aç.';
 
   @override
-  String get auth_confirmBody =>
-      'adresine bir doğrulama linki gönderdik. Linke tıkladıktan sonra giriş yapabilirsin.';
+  String get auth_confirmBody => 'adresine bir doğrulama linki gönderdik. Linke tıkladıktan sonra giriş yapabilirsin.';
 
   @override
   String get auth_backToLogin => 'Giriş Ekranına Dön';
@@ -1275,8 +1260,7 @@ class AppL10nTr extends AppL10n {
   String get cp_heading => 'Erişim Anahtarını Değiştir';
 
   @override
-  String get cp_subtitle =>
-      'Güvenliğin için önce mevcut şifreni doğrulamamız gerekiyor.';
+  String get cp_subtitle => 'Güvenliğin için önce mevcut şifreni doğrulamamız gerekiyor.';
 
   @override
   String get cp_success => 'Şifren başarıyla güncellendi.';
@@ -1300,15 +1284,13 @@ class AppL10nTr extends AppL10n {
   String get cp_updateBtn => 'ŞİFREYİ GÜNCELLE';
 
   @override
-  String get fp_rateLimit =>
-      'Çok fazla istek. Birkaç dakika sonra tekrar dene.';
+  String get fp_rateLimit => 'Çok fazla istek. Birkaç dakika sonra tekrar dene.';
 
   @override
   String get fp_title => 'Şifreni mi unuttun?';
 
   @override
-  String get fp_subtitle =>
-      'E-posta adresini gir, sana yeni bir şifre belirleyeceğin bir bağlantı gönderelim.';
+  String get fp_subtitle => 'E-posta adresini gir, sana yeni bir şifre belirleyeceğin bir bağlantı gönderelim.';
 
   @override
   String get fp_sendBtn => 'BAĞLANTI GÖNDER';
@@ -1317,8 +1299,7 @@ class AppL10nTr extends AppL10n {
   String get fp_sentTitle => 'Bağlantı yola çıktı.';
 
   @override
-  String get fp_sentBody =>
-      'adresine bir bağlantı gönderdik. Gelen kutunu (ve spam klasörünü) kontrol et — bağlantıya tıkladığında uygulama açılacak ve yeni şifreni belirleyebileceksin.';
+  String get fp_sentBody => 'adresine bir bağlantı gönderdik. Gelen kutunu (ve spam klasörünü) kontrol et — bağlantıya tıkladığında uygulama açılacak ve yeni şifreni belirleyebileceksin.';
 
   @override
   String get rp_mismatch => 'Şifreler eşleşmiyor.';
@@ -1330,8 +1311,7 @@ class AppL10nTr extends AppL10n {
   String get rp_title => 'Yeni Şifre Belirle';
 
   @override
-  String get rp_subtitle =>
-      'Bağlantı doğrulandı. Hesabın için yeni bir şifre seç.';
+  String get rp_subtitle => 'Bağlantı doğrulandı. Hesabın için yeni bir şifre seç.';
 
   @override
   String get rp_saveBtn => 'ŞİFREYİ KAYDET';
@@ -1361,8 +1341,7 @@ class AppL10nTr extends AppL10n {
   String get del_finalConfirm => 'Son Onay';
 
   @override
-  String get del_finalWarning =>
-      'Hesabını ve tüm verilerini kalıcı olarak silmek üzeresin. Bu işlem geri alınamaz.';
+  String get del_finalWarning => 'Hesabını ve tüm verilerini kalıcı olarak silmek üzeresin. Bu işlem geri alınamaz.';
 
   @override
   String get del_deleteAccount => 'Hesabı Sil';
@@ -1374,15 +1353,13 @@ class AppL10nTr extends AppL10n {
   String get del_downloadTitle => 'Verilerini İndir';
 
   @override
-  String get del_downloadBody =>
-      'Silmeden önce tüm verilerini (profil, kelimeler, pratik oturumları, mesajlar) JSON formatında indirip saklayabilirsin.';
+  String get del_downloadBody => 'Silmeden önce tüm verilerini (profil, kelimeler, pratik oturumları, mesajlar) JSON formatında indirip saklayabilirsin.';
 
   @override
   String get del_exportBtn => 'Verilerimi Dışa Aktar';
 
   @override
-  String get del_deleteIntro =>
-      'Bu işlem geri alınamaz. Hesabını sildiğinde aşağıdaki tüm veriler kalıcı olarak silinir:';
+  String get del_deleteIntro => 'Bu işlem geri alınamaz. Hesabını sildiğinde aşağıdaki tüm veriler kalıcı olarak silinir:';
 
   @override
   String get del_bullet1 => 'Profil ve kullanıcı adın';
@@ -1425,8 +1402,7 @@ class AppL10nTr extends AppL10n {
   String get onb_welcomeTitle => 'VoiceLingo\'ya hoş geldin';
 
   @override
-  String get onb_welcomeBody =>
-      'Konuş. Gelişeceksin. Tekrarla.\nAI koçun her konuşmada yanında.';
+  String get onb_welcomeBody => 'Konuş. Gelişeceksin. Tekrarla.\nAI koçun her konuşmada yanında.';
 
   @override
   String get onb_permTitle => 'İki hızlı izin';
@@ -1441,8 +1417,7 @@ class AppL10nTr extends AppL10n {
   String get onb_micDesc => 'Konuşmanı duy, telaffuza geri bildirim ver.';
 
   @override
-  String get onb_notifDesc =>
-      'Streak\'ini canlı tutmak için nazik hatırlatmalar.';
+  String get onb_notifDesc => 'Streak\'ini canlı tutmak için nazik hatırlatmalar.';
 
   @override
   String get onb_allow => 'İzin ver';
@@ -1460,8 +1435,7 @@ class AppL10nTr extends AppL10n {
   String get onb_motivTitle => 'Neden öğreniyorsun?';
 
   @override
-  String get onb_motivSubtitle =>
-      'Sana uygun senaryoları seçmemize yardım eder.';
+  String get onb_motivSubtitle => 'Sana uygun senaryoları seçmemize yardım eder.';
 
   @override
   String get onb_motivExam => 'Sınav';
@@ -1470,8 +1444,7 @@ class AppL10nTr extends AppL10n {
   String get onb_motivHobby => 'Hobi';
 
   @override
-  String get onb_charSubtitle =>
-      'Her koçun farklı sesi ve tarzı var. Ayarlardan istediğin zaman değiştirebilirsin.';
+  String get onb_charSubtitle => 'Her koçun farklı sesi ve tarzı var. Ayarlardan istediğin zaman değiştirebilirsin.';
 
   @override
   String get placement_title => 'Seviye Belirleme';
@@ -1485,8 +1458,7 @@ class AppL10nTr extends AppL10n {
   }
 
   @override
-  String get conn_offlineBanner =>
-      'Çevrimdışısın. İlerlemen bağlanınca senkronize olur.';
+  String get conn_offlineBanner => 'Çevrimdışısın. İlerlemen bağlanınca senkronize olur.';
 
   @override
   String get levelup_title => 'SEVİYE ATLADIN!';

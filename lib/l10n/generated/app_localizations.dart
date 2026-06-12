@@ -62,8 +62,7 @@ import 'app_localizations_tr.dart';
 /// be consistent with the languages listed in the AppL10n.supportedLocales
 /// property.
 abstract class AppL10n {
-  AppL10n(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppL10n(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -83,8 +82,7 @@ abstract class AppL10n {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
-      <LocalizationsDelegate<dynamic>>[
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
     delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
@@ -1458,6 +1456,36 @@ abstract class AppL10n {
   /// In tr, this message translates to:
   /// **'Tümünü Gör'**
   String get conv_seeAll;
+
+  /// No description provided for @conv_tryStarters.
+  ///
+  /// In tr, this message translates to:
+  /// **'SOHBET BAŞLATICILAR'**
+  String get conv_tryStarters;
+
+  /// No description provided for @conv_starter1.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hi! Can we talk about my day?'**
+  String get conv_starter1;
+
+  /// No description provided for @conv_starter2.
+  ///
+  /// In tr, this message translates to:
+  /// **'Let\'s practice ordering food at a restaurant.'**
+  String get conv_starter2;
+
+  /// No description provided for @conv_starter3.
+  ///
+  /// In tr, this message translates to:
+  /// **'Can you help me improve my small talk?'**
+  String get conv_starter3;
+
+  /// No description provided for @conv_moreOptions.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer seçenekler'**
+  String get conv_moreOptions;
 
   /// No description provided for @conv_inputHint.
   ///
@@ -2837,25 +2865,25 @@ class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'tr'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['en', 'tr'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppL10nDelegate old) => false;
 }
 
 AppL10n lookupAppL10n(Locale locale) {
+
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en':
-      return AppL10nEn();
-    case 'tr':
-      return AppL10nTr();
+    case 'en': return AppL10nEn();
+    case 'tr': return AppL10nTr();
   }
 
   throw FlutterError(
-      'AppL10n.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppL10n.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.'
+  );
 }
