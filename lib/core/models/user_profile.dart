@@ -12,8 +12,8 @@ class UserProfile {
   final int streakFreezes;
   final DateTime? lastActiveAt;
   final DateTime? onboardingCompletedAt;
-  // TODO: oturum süresi ölçümü gelene kadar kullanılmıyor (onboarding'de
-  // toplanıyor ama hiçbir akış dakika takibi yapmıyor).
+  // Not: onboarding'de toplanıyor; oturum süresi ölçümü gelene kadar hiçbir
+  // akış dakika takibi yapmadığı için yalnızca saklanıyor.
   final int dailyMinuteGoal;
   final String? learningMotivation;
 

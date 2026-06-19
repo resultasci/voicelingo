@@ -8,7 +8,8 @@
 //   POST /generate-scenario JSON  { description, category, difficulty, ... } -> structured JSON
 //
 // Authenticates the caller via the Supabase user JWT.
-// Atomic per-user/per-day rate limits via the public.incr_api_usage RPC.
+// No app-level rate limiting — Gemini's free-tier quota is the only ceiling;
+// a 429 from Gemini is surfaced to the user as a "kota doldu" message.
 //
 // Required Supabase function secrets:
 //   GEMINI_API_KEY                 (set with: supabase secrets set GEMINI_API_KEY=...)
@@ -25,19 +26,20 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const MODEL = "gemini-2.5-flash";
 
-// Per-user / per-UTC-day soft caps. Free tier is 250 RPD globally — these are
-// per-user budgets; the limits scale as billing tier upgrades.
-const LIMITS = {
-  turn: 300,
-  chat: 200,
-  evaluate: 200,
-  transcribe: 100,
-  enrich: 100,
-  "generate-scenario": 30,
-  "generate-words": 20,
-} as const;
-
-type Action = keyof typeof LIMITS;
+// Known proxy actions. We deliberately impose NO app-level per-user caps:
+// the only ceiling is Gemini's own free-tier quota (per-minute RPM / per-day
+// RPD on the project key, no billing). When that quota is exhausted Gemini
+// returns 429; geminiFailure() below turns that into a clear user-facing
+// "kota doldu" message. This set exists solely to validate the routed action.
+const VALID_ACTIONS = new Set<string>([
+  "turn",
+  "chat",
+  "evaluate",
+  "transcribe",
+  "enrich",
+  "generate-scenario",
+  "generate-words",
+]);
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -90,40 +92,19 @@ Deno.serve(async (req: Request) => {
   if (userErr || !userData.user) {
     return jsonError(401, "Invalid or expired session");
   }
-  const userId = userData.user.id;
 
   // --- Routing --------------------------------------------------------------
   const url = new URL(req.url);
   const segments = url.pathname.split("/").filter((s) => s.length > 0);
-  const action = segments[segments.length - 1] as Action | string;
+  const action = segments[segments.length - 1];
 
-  if (!Object.prototype.hasOwnProperty.call(LIMITS, action)) {
+  if (!VALID_ACTIONS.has(action)) {
     return jsonError(404, `Unknown action: ${action}`);
   }
 
-  // --- Rate limit ------------------------------------------------------------
-  const { data: countAfter, error: rpcErr } = await supabase.rpc(
-    "incr_api_usage",
-    { p_user_id: userId, p_action: action },
-  );
-  if (rpcErr) {
-    console.error("incr_api_usage failed:", rpcErr);
-    return jsonError(500, "Rate limit ledger unavailable");
-  }
-  const used = (countAfter as number | null) ?? 0;
-  const limit = LIMITS[action as Action];
-  if (used > limit) {
-    return new Response(
-      JSON.stringify({
-        error: `Günlük ${
-          labelFor(action as Action)
-        } limitine ulaştın (${limit}/gün). Yarın UTC 00:00'da sıfırlanır.`,
-        limit,
-        used,
-      }),
-      { status: 429, headers: JSON_HEADERS },
-    );
-  }
+  // No app-level rate limiting: Gemini's free-tier quota is the only ceiling.
+  // If it's exhausted, geminiCall returns status 429 and the handlers surface a
+  // user-facing "kota doldu" message via geminiFailure().
 
   // --- Dispatch -------------------------------------------------------------
   try {
@@ -140,23 +121,25 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-function labelFor(a: Action): string {
-  switch (a) {
-    case "turn":
-      return "konuşma turu";
-    case "chat":
-      return "sohbet";
-    case "evaluate":
-      return "değerlendirme";
-    case "transcribe":
-      return "ses tanıma";
-    case "enrich":
-      return "kelime zenginleştirme";
-    case "generate-scenario":
-      return "senaryo üretimi";
-    case "generate-words":
-      return "kelime üretimi";
+// Maps a failed Gemini call to a user-facing Response. A 429 (after retries)
+// means the free-tier quota — per-minute or per-day — is exhausted; tell the
+// user plainly so the UI can show it. Everything else is a transient upstream
+// fault surfaced as a generic 502.
+function geminiFailure(
+  result: { ok: false; status: number; err: string },
+  fallbackMsg: string,
+): Response {
+  if (result.status === 429) {
+    return new Response(
+      JSON.stringify({
+        error:
+          "Ücretsiz AI kullanım kotası şu an dolu. Lütfen biraz sonra ya da yarın tekrar dene.",
+        limit_reached: true,
+      }),
+      { status: 429, headers: JSON_HEADERS },
+    );
   }
+  return jsonError(502, fallbackMsg);
 }
 
 // ---------------------------------------------------------------------------
@@ -388,7 +371,7 @@ async function handleTurn(req: Request): Promise<Response> {
 
   if (!result.ok) {
     console.error("gemini /turn failed", result.status, result.err);
-    return jsonError(502, "AI servisi şu an cevap vermiyor.");
+    return geminiFailure(result, "AI servisi şu an cevap vermiyor.");
   }
 
   // Pass through the model's JSON directly — callers parse the structured fields.
@@ -449,7 +432,7 @@ async function handleChat(req: Request): Promise<Response> {
 
   if (!result.ok) {
     console.error("gemini /chat failed", result.status, result.err);
-    return jsonError(502, "AI servisi şu an cevap vermiyor.");
+    return geminiFailure(result, "AI servisi şu an cevap vermiyor.");
   }
 
   return jsonOk({ content: result.text });
@@ -497,7 +480,7 @@ async function handleEvaluate(req: Request): Promise<Response> {
 
   if (!result.ok) {
     console.error("gemini /evaluate failed", result.status, result.err);
-    return jsonError(502, "AI servisi şu an cevap vermiyor.");
+    return geminiFailure(result, "AI servisi şu an cevap vermiyor.");
   }
 
   return new Response(result.text || "{}", {
@@ -555,7 +538,7 @@ async function handleTranscribe(req: Request): Promise<Response> {
 
   if (!result.ok) {
     console.error("gemini /transcribe failed", result.status, result.err);
-    return jsonError(502, "Ses tanıma başarısız.");
+    return geminiFailure(result, "Ses tanıma başarısız.");
   }
 
   return jsonOk({ text: result.text });
@@ -601,7 +584,7 @@ async function handleEnrich(req: Request): Promise<Response> {
 
   if (!result.ok) {
     console.error("gemini /enrich failed", result.status, result.err);
-    return jsonError(502, "Zenginleştirme servisi şu an cevap vermiyor.");
+    return geminiFailure(result, "Zenginleştirme servisi şu an cevap vermiyor.");
   }
 
   return new Response(result.text || "{}", {
@@ -671,7 +654,7 @@ async function handleGenerateScenario(req: Request): Promise<Response> {
 
   if (!result.ok) {
     console.error("gemini /generate-scenario failed", result.status, result.err);
-    return jsonError(502, "Senaryo üretim servisi şu an cevap vermiyor.");
+    return geminiFailure(result, "Senaryo üretim servisi şu an cevap vermiyor.");
   }
 
   return new Response(result.text || "{}", {
@@ -723,7 +706,7 @@ async function handleGenerateWords(req: Request): Promise<Response> {
 
   if (!result.ok) {
     console.error("gemini /generate-words failed", result.status, result.err);
-    return jsonError(502, "Kelime üretim servisi şu an cevap vermiyor.");
+    return geminiFailure(result, "Kelime üretim servisi şu an cevap vermiyor.");
   }
 
   return new Response(result.text || '{"words":[]}', {

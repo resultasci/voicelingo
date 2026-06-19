@@ -7,7 +7,7 @@
 > Türk kullanıcılar için tasarlanmış, **AI destekli sesli İngilizce öğrenme** uygulaması.
 > Konuş, anında geri bildirim al, seviyeni gerçek bir AI koçla geliştir.
 
-**VoiceLingo**, Flutter ile yazılmış mobil-öncelikli bir uygulamadır. Konuşma, gramer, kelime, dinamik senaryolar ve yapılandırılmış A1–C2 ders yolunu; oyunlaştırma (XP, rozet, seri) ve ilerleme analiziyle birleştirir. Tüm AI çağrıları sunucu tarafında **Google Gemini** (`gemini-2.5-flash`, multimodal) üzerinden, API anahtarı asla istemciye sızmadan bir Supabase Edge Function proxy'siyle yapılır.
+**VoiceLingo**, Flutter ile yazılmış mobil-öncelikli bir uygulamadır. Konuşma, gramer, kelime, dinamik senaryolar ve yapılandırılmış A1–C2 ders yolunu; oyunlaştırma (XP, rozet, seri) ve ilerleme analiziyle birleştirir. Tüm AI çağrıları sunucu tarafında **Google Gemini** (`gemini-2.5-flash`, multimodal) üzerinden, API anahtarı asla istemciye sızmadan bir Supabase Edge Function proxy'siyle yapılır. Kota yönetimi Gemini'nin kendi free-tier sınırıyla sağlanır; 429 durumunda kullanıcıya lokalize mesaj gösterilir.
 
 - 📦 **Repo:** [github.com/resultasci/voicelingo](https://github.com/resultasci/voicelingo) (public)
 - 📱 **Platform:** Android & iOS (mobil-öncelikli)
@@ -19,7 +19,7 @@
 
 | Modül | Açıklama |
 |-------|----------|
-| 🗣️ **Sesli sohbet** | Gemini multimodal STT + AI koç tek round-trip'te (transcript + cevap + değerlendirme). 6 farklı AI karakter (Lily, Mr. James, Maya, Kai, Sarah, Omar) — ayrı aksan, kişilik ve ders stili. |
+| 🗣️ **Sesli sohbet** | Gemini multimodal STT + AI koç tek round-trip'te (transcript + cevap + değerlendirme). 6 farklı AI karakter (Lily, Mr. James, Maya, Kai, Sarah, Omar) — ayrı aksan, kişilik ve ders stili. Yenilenen pratik ekranı: canlı durum satırı, kayıt modunda süre sayacı + tam genişlik dalga formu, tek dokunuşla sohbet başlatıcılar, FeedbackPill 3 kademeli renk skoru. |
 | 🎧 **Eller serbest mod** | VAD (Voice Activity Detection) ile konuşma bitince otomatik durdurma; canlı dalga formu görselleştirmesi. |
 | 🧭 **Ders yolu (A1–C2)** | Yapılandırılmış ünite/ders ağacı, ön-koşul (prerequisite) ile kilit açma, tamamlanan derslere tekrar planı (spaced repetition), 3-yıldız puanlama. |
 | 📚 **Gramer modülü** | Konu anlatımı + örnekler + quiz (boşluk doldurma / çoktan seçmeli), idempotent XP ödülü. |
@@ -53,13 +53,13 @@
 
 ## 🏗️ Mimari
 
-İstemci hiçbir zaman doğrudan AI sağlayıcısına bağlanmaz. Tüm AI trafiği, JWT doğrulayan ve kullanıcı başına günlük kota uygulayan `ai-proxy` Edge Function'ından geçer:
+İstemci hiçbir zaman doğrudan AI sağlayıcısına bağlanmaz. Tüm AI trafiği, JWT doğrulayan `ai-proxy` Edge Function'ından geçer:
 
 ```text
 Flutter (GeminiService, Dio)
         │  Authorization: Bearer <JWT> + apikey
         ▼
-Supabase Edge Function  ── ai-proxy ──►  JWT doğrula → rate-limit (api ledger)
+Supabase Edge Function  ── ai-proxy ──►  JWT doğrula → eylemi yönlendir
         │                                         │
         │                                         ▼
         │                           Google Gemini API (gemini-2.5-flash)
@@ -87,17 +87,17 @@ Supabase Postgres (RLS + FORCE RLS, RPC'ler, trigger'lar)
 
 ### `ai-proxy` — tek AI ağ geçidi
 
-JWT doğrular, eylemi yönlendirir ve kullanıcı/UTC-gün başına yumuşak kota uygular (`incr_api_usage` RPC + api ledger). Kota aşımında `429`, oturum yoksa `401` döner.
+JWT doğrular, eylemi yönlendirir. Kota yönetimi Gemini'nin kendi free-tier sınırıyla sağlanır; kota dolduğunda `429` (kullanıcıya "kota doldu" mesajı), oturum yoksa `401` döner.
 
-| Endpoint | İşlev | Günlük limit / kullanıcı |
-|----------|-------|--------------------------|
-| `/turn` | Multimodal tur: ses → `{transcript, reply, evaluation}` (tek çağrı) | 300 |
-| `/chat` | Metin sohbet (AI koç cevabı) | 200 |
-| `/evaluate` | Cümle değerlendirme (`{correct, score, explanation, grammar_errors, cefr_band?}`) | 200 |
-| `/transcribe` | Ses → metin (STT) | 100 |
-| `/enrich` | Kelime zenginleştirme (IPA + örnek) | 100 |
-| `/generate-words` | Konudan tematik kelime listesi üretimi | 20 |
-| `/generate-scenario` | Tarif → yapılandırılmış senaryo (JSON) | 30 |
+| Endpoint | İşlev |
+|----------|-------|
+| `/turn` | Multimodal tur: ses → `{transcript, reply, evaluation}` (tek çağrı) |
+| `/chat` | Metin sohbet (AI koç cevabı) |
+| `/evaluate` | Cümle değerlendirme (`{correct, score, explanation, grammar_errors, cefr_band?}`) |
+| `/transcribe` | Ses → metin (STT) |
+| `/enrich` | Kelime zenginleştirme (IPA + örnek) |
+| `/generate-words` | Konudan tematik kelime listesi üretimi |
+| `/generate-scenario` | Tarif → yapılandırılmış senaryo (JSON) |
 
 ### `account-admin` — hesap yönetimi
 
@@ -107,10 +107,10 @@ Kullanıcı verisinin güvenli silinmesi (doğrudan tablo silme + `auth.users` C
 
 ## 🗄️ Veritabanı (Supabase / Postgres)
 
-- **35 migration** — şema, RLS, rate-limit ledger, oyunlaştırma, ders yolu, gramer/sözlük, senaryolar, analiz view/RPC'leri ve bütünlük kısıtları.
+- **35 migration** — şema, RLS, oyunlaştırma, ders yolu, gramer/sözlük, senaryolar, analiz view/RPC'leri ve bütünlük kısıtları.
 - **Güvenlik:** kullanıcıya ait tüm tablolarda RLS + `FORCE ROW LEVEL SECURITY`; `SECURITY DEFINER` fonksiyonlarda `search_path` sabitlenmiş.
 - **Bütünlük:** XP/level/skor/durum alanlarında 13 `CHECK` kısıtı (hepsi doğrulanmış), FK ve sık sorgulanan kolonlarda index'ler.
-- **Atomik mantık RPC'lerde:** `complete_lesson`, `add_xp`, `record_grammar_quiz`, badge/quest ilerleme, `incr_api_usage`, analiz RPC'leri; tek round-trip batch RPC'ler (`add_words_batch`, `commit_word_reviews`, `append_message`).
+- **Atomik mantık RPC'lerde:** `complete_lesson`, `add_xp`, `record_grammar_quiz`, badge/quest ilerleme, analiz RPC'leri; tek round-trip batch RPC'ler (`add_words_batch`, `commit_word_reviews`, `append_message`).
 
 ---
 
